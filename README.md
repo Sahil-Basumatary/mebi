@@ -4,4 +4,21 @@ A platform for university CS/cybersecurity students to find serious project part
 
 Built by Sahil Basumatary and Maahir Shah.
 
-Work in progress — more soon.
+## Stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS
+- PostgreSQL + Prisma
+- Clerk for authentication
+- Deployed on Vercel
+
+## Running locally
+
+```bash
+npm install
+npm run dev
+```
+
+Then open http://localhost:3000.
+
+Work in progress.
