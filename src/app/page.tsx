@@ -1,6 +1,8 @@
 "use client";
 
+import { SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/nextjs";
 import { Bell, Lightbulb, Search, Settings } from "lucide-react";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -8,6 +10,8 @@ import { Panel } from "@/components/ui/panel";
 import { Window } from "@/components/ui/window";
 
 export default function Home() {
+  const { isLoaded, userId } = useAuth();
+
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-12 px-6 py-16">
       <header className="flex items-start justify-between">
@@ -15,7 +19,31 @@ export default function Home() {
           <h1 className="text-5xl font-semibold tracking-tight">mebi</h1>
           <p className="text-muted mt-2">Design system preview</p>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          {!isLoaded ? null : userId ? (
+            <>
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/onboarding">Onboarding</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+              <UserButton />
+            </>
+          ) : (
+            <>
+              <SignInButton mode="modal">
+                <Button variant="outline" size="sm">
+                  Sign in
+                </Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button size="sm">Sign up</Button>
+              </SignUpButton>
+            </>
+          )}
+          <ThemeToggle />
+        </div>
       </header>
 
       <section className="flex flex-col gap-4">
