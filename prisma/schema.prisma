@@ -18,14 +18,18 @@ enum UserRole {
 }
 
 model User {
-  id         String    @id @default(cuid())
-  clerkId    String    @unique
-  email      String    @unique
-  fullName   String?
-  username   String?
-  imageUrl   String?
-  role       UserRole?
-  onboarded  Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  clerkId     String    @unique
+  email       String    @unique
+  fullName    String?
+  username    String?
+  bio         String?
+  imageUrl    String?
+  skills      String[]  @default([])
+  interests   String[]  @default([])
+  role        UserRole?
+  prefersSolo Boolean   @default(false)
+  onboarded   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
