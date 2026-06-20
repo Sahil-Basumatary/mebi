@@ -3,38 +3,38 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --canvas: #ffffff;
-  --surface: #ffffff;
-  --raised: #fafafa;
-  --border: #e6e6e8;
-  --border-strong: #0b0b0c;
-  --foreground: #0b0b0c;
-  --muted: #6b7280;
-  --primary: #0b0b0c;
-  --primary-hover: #1c1c1f;
-  --primary-foreground: #ffffff;
-  --hover: #f0f0f1;
-  --notification: #ef4444;
-  --upgrade: #2563eb;
-  --elev-soft: 0 1px 2px rgba(11, 11, 12, 0.06);
-  --elev-card: 0 4px 16px rgba(11, 11, 12, 0.06);
-  --elev-window: 0 12px 40px rgba(11, 11, 12, 0.14);
+  --canvas: #000000;
+  --surface: #050505;
+  --raised: #0b0b0b;
+  --border: #262626;
+  --border-strong: #ffffff;
+  --foreground: #ffffff;
+  --muted: #8f8f8f;
+  --primary: #ffffff;
+  --primary-hover: #e6e6e6;
+  --primary-foreground: #000000;
+  --hover: #121212;
+  --notification: #b94a48;
+  --upgrade: #0098c3;
+  --elev-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev-card: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --elev-window: 0 12px 40px rgba(0, 0, 0, 0.55);
 }
 
 .dark {
-  --canvas: #08080a;
-  --surface: #141417;
-  --raised: #1a1a1e;
-  --border: #262629;
+  --canvas: #000000;
+  --surface: #050505;
+  --raised: #0b0b0b;
+  --border: #262626;
   --border-strong: #ffffff;
-  --foreground: #f2f2f3;
-  --muted: #9a9aa2;
+  --foreground: #ffffff;
+  --muted: #8f8f8f;
   --primary: #ffffff;
   --primary-hover: #e6e6e6;
-  --primary-foreground: #0b0b0c;
-  --hover: rgba(255, 255, 255, 0.07);
-  --notification: #ef4444;
-  --upgrade: #3b82f6;
+  --primary-foreground: #000000;
+  --hover: #121212;
+  --notification: #b94a48;
+  --upgrade: #0098c3;
   --elev-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
   --elev-card: 0 4px 16px rgba(0, 0, 0, 0.45);
   --elev-window: 0 12px 40px rgba(0, 0, 0, 0.55);
@@ -58,6 +58,7 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --shadow-soft: var(--elev-soft);
   --shadow-card: var(--elev-card);
   --shadow-window: var(--elev-window);
