@@ -361,54 +361,52 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
-          <div className="border border-[#d8d8d8] bg-[#ffffff] p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-                  Project journey
-                </p>
-                <h2 className="mt-2 font-serif text-3xl font-light">One path, four checkpoints</h2>
-              </div>
-              <span className="hidden text-sm text-[#333333] sm:inline">Visual pipeline</span>
+        <section className="border border-[#d8d8d8] bg-[#ffffff] p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
+                Project journey
+              </p>
+              <h2 className="mt-2 font-serif text-3xl font-light">One path, four checkpoints</h2>
             </div>
-            <div className="mt-8 grid gap-4 md:grid-cols-4">
-              {timeline.map((stage, index) => (
-                <div key={stage.label} className="relative">
-                  {index < timeline.length - 1 ? (
-                    <div className="absolute left-8 top-8 hidden h-px w-[calc(100%+1rem)] bg-[#d8d8d8] md:block" />
-                  ) : null}
-                  <div className="relative z-10 flex h-full flex-col gap-4 border border-[#d8d8d8] bg-[#ffffff] p-4">
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm ${
-                        stage.active
-                          ? "border-[#000000] bg-[#000000] text-[#ffffff]"
-                          : "border-[#d8d8d8] bg-[#f4f4f4] text-[#333333]"
-                      }`}
-                    >
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="font-semibold">{stage.label}</p>
-                      <p className="mt-1 text-sm text-[#333333]">{stage.detail}</p>
-                    </div>
+            <span className="hidden text-sm text-[#333333] sm:inline">Visual pipeline</span>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-4">
+            {timeline.map((stage, index) => (
+              <div key={stage.label} className="relative">
+                {index < timeline.length - 1 ? (
+                  <div className="absolute left-8 top-8 hidden h-px w-[calc(100%+1rem)] bg-[#d8d8d8] md:block" />
+                ) : null}
+                <div className="relative z-10 flex h-full flex-col gap-4 border border-[#d8d8d8] bg-[#ffffff] p-4">
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm ${
+                      stage.active
+                        ? "border-[#000000] bg-[#000000] text-[#ffffff]"
+                        : "border-[#d8d8d8] bg-[#f4f4f4] text-[#333333]"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="font-semibold">{stage.label}</p>
+                    <p className="mt-1 text-sm text-[#333333]">{stage.detail}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </section>
 
-          <div className="border border-[#d8d8d8] bg-[#ffffff] p-8">
-            <p className="text-center text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-              Matching radar
-            </p>
-            <div className="mt-8 flex justify-center">
-              <MatchingRadar points={radarPoints} />
-            </div>
-            <p className="mx-auto mt-6 max-w-md text-center text-sm leading-6 text-[#333333]">
-              Radar improves when your project brief names a specific missing role.
-            </p>
+        <section className="border border-[#d8d8d8] bg-[#ffffff] p-8">
+          <p className="text-center text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
+            Matching radar
+          </p>
+          <div className="mt-8 flex justify-center">
+            <MatchingRadar points={radarPoints} />
           </div>
+          <p className="mx-auto mt-6 max-w-md text-center text-sm leading-6 text-[#333333]">
+            Radar improves when your project brief names a specific missing role.
+          </p>
         </section>
 
         <section>
