@@ -6,39 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 function listPreview(values: string[], fallback: string): string {
   if (!values.length) return fallback;
-  return values.slice(0, 4).join(", ");
-}
-
-function ProgressRing({ value, label }: { value: number; label: string }) {
-  return (
-    <div
-      className="relative flex h-40 w-40 items-center justify-center rounded-full"
-      style={{
-        background: `conic-gradient(#000000 ${value * 3.6}deg, #d8d8d8 0deg)`,
-      }}
-    >
-      <div className="flex h-[7.6rem] w-[7.6rem] flex-col items-center justify-center rounded-full bg-[#ffffff] text-center">
-        <span className="font-serif text-4xl font-light">{value}%</span>
-        <span className="mt-1 max-w-20 text-[10px] font-semibold tracking-[0.16em] text-[#555555] uppercase">
-          {label}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function Meter({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div className="mb-2 flex items-center justify-between text-xs">
-        <span className="font-semibold tracking-[0.16em] text-[#555555] uppercase">{label}</span>
-        <span className="text-[#333333]">{value}%</span>
-      </div>
-      <div className="h-2 bg-[#d8d8d8]">
-        <div className="h-full bg-[#000000]" style={{ width: `${value}%` }} />
-      </div>
-    </div>
-  );
+  return values.slice(0, 6).join(", ");
 }
 
 type RadarPoint = {
@@ -84,15 +52,7 @@ function MatchingRadar({ points }: { points: RadarPoint[] }) {
         {points.map((_, index) => {
           const outer = radarCoordinate(index, points.length, 44);
           return (
-            <line
-              key={index}
-              x1="50"
-              y1="50"
-              x2={outer.x}
-              y2={outer.y}
-              stroke="#e6e6e6"
-              strokeWidth="0.5"
-            />
+            <line key={index} x1="50" y1="50" x2={outer.x} y2={outer.y} stroke="#e6e6e6" strokeWidth="0.5" />
           );
         })}
         <polygon points={pointList(points)} fill="rgba(0,0,0,0.12)" stroke="#000000" strokeWidth="0.9" />
@@ -126,7 +86,9 @@ function MatchingRadar({ points }: { points: RadarPoint[] }) {
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="flex h-16 w-16 flex-col items-center justify-center rounded-full border border-[#d8d8d8] bg-[#ffffff]/90">
-          <span className="font-serif text-2xl font-light">{Math.round(points.reduce((total, point) => total + point.value, 0) / points.length)}</span>
+          <span className="font-serif text-2xl font-light">
+            {Math.round(points.reduce((total, point) => total + point.value, 0) / points.length)}
+          </span>
           <span className="text-[9px] font-semibold tracking-[0.16em] text-[#555555] uppercase">Score</span>
         </div>
       </div>
@@ -136,125 +98,121 @@ function MatchingRadar({ points }: { points: RadarPoint[] }) {
 
 export default async function DashboardPage() {
   const user = await requireOnboardedUser();
-  const projects = await prisma.project.findMany({
-    where: { ownerId: user.id },
-    orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-    take: 3,
-  });
+  const [projects, activeCount, completedCount] = await Promise.all([
+    prisma.project.findMany({
+      where: { ownerId: user.id },
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      take: 3,
+    }),
+    prisma.project.count({ where: { ownerId: user.id, status: "ACTIVE" } }),
+    prisma.project.count({ where: { ownerId: user.id, status: "COMPLETED" } }),
+  ]);
   const activeProject = projects.find((project) => project.status === "ACTIVE") ?? projects[0];
-  const skillsPreview = listPreview(user.skills, "No skills captured");
-  const pipelineRows = [
-    {
-      stage: "Idea intake",
-      status: user.bio ? "Profile signal present" : "Missing project thesis",
-      owner: "You",
-      signal: user.bio || "Write the one-line problem you want to solve.",
-      action: "Tighten brief",
-    },
-    {
-      stage: "Partner search",
-      status: user.skills.length ? "Searchable skills online" : "Skills not indexed",
-      owner: "mebi",
-      signal: skillsPreview,
-      action: "Find gaps",
-    },
-    {
-      stage: "Build sprint",
-      status: activeProject ? `${activeProject.progress}% complete` : "No active sprint",
-      owner: "Team",
-      signal: activeProject?.name ?? "Project model not created yet",
-      action: activeProject ? "Review project" : "Create project",
-    },
-    {
-      stage: "Proof capture",
-      status: "No evidence logged",
-      owner: "Portfolio",
-      signal: "Decisions, contribution, metric, artifact",
-      action: "Log proof",
-    },
-  ];
-  const actionTape = [
-    ["1", "Write a project brief", "Turn your current interests into a buildable request."],
-    ["2", "Name the missing role", "Decide whether you need backend, design, data, or product help."],
-    ["3", "Create proof checklist", "Define the evidence you want to show in interviews."],
-  ];
-  const timeline = [
-    { label: "Profile", detail: "Live", active: true },
-    { label: "Project", detail: activeProject ? "Live" : "Next", active: Boolean(activeProject) },
-    { label: "Partner", detail: "Waiting", active: false },
-    { label: "Proof", detail: activeProject?.status === "COMPLETED" ? "Ready" : "Waiting", active: activeProject?.status === "COMPLETED" },
-  ];
-  const readiness = Math.round((1 + Number(user.skills.length > 0) + Number(user.interests.length > 0)) * 12.5);
   const hasProfileSignal = Boolean(user.bio && user.skills.length && user.interests.length);
+
+  // One adaptive next move. The whole page points at exactly this, so it never
+  // competes with a second "do this" block elsewhere.
   const nextAction = !user.bio
     ? {
-        eyebrow: "Recommended next",
         label: "Tighten profile signal",
         href: "/onboarding",
-        detail: "Your profile needs a sharper problem signal before project and partner flows can work well.",
+        detail: "Your profile needs a sharper problem signal before project and partner flows work well.",
       }
     : activeProject?.status === "ACTIVE"
       ? {
-          eyebrow: "Recommended next",
           label: "Review active project",
           href: `/projects/${activeProject.id}`,
-          detail: "You have a live project. Update progress before opening more discovery loops.",
+          detail: "You have a live project. Move its progress before opening more discovery loops.",
         }
-    : hasProfileSignal
-      ? {
-          eyebrow: "Recommended next",
-          label: "Review partner direction",
-          href: "/partners",
-          detail: "Your profile has enough signal to start thinking about the missing role for a serious build.",
-        }
-      : {
-          eyebrow: "Recommended next",
-          label: "Start project brief",
-          href: "/projects",
-          detail: "Move from profile intent into a project brief before searching for teammates.",
-        };
-  const radarPoints = [
+      : hasProfileSignal
+        ? {
+            label: "Review partner direction",
+            href: "/partners",
+            detail: "Your profile has enough signal to start naming the missing role for a serious build.",
+          }
+        : {
+            label: "Start project brief",
+            href: "/projects",
+            detail: "Move from profile intent into a project brief before searching for teammates.",
+          };
+
+  // Single source of truth for "where am I" — replaces the old journey timeline,
+  // diagnostic ledger, and next-actions tape, which all said this three ways.
+  const buildPath = [
+    {
+      label: "Profile",
+      status: user.bio ? "Signal present" : "Missing thesis",
+      done: Boolean(user.bio && user.skills.length),
+      href: "/onboarding",
+      action: "Edit",
+    },
+    {
+      label: "Project",
+      status: activeProject ? `${activeProject.progress}% built` : "Not started",
+      done: Boolean(activeProject),
+      href: activeProject ? `/projects/${activeProject.id}` : "/projects",
+      action: activeProject ? "Open" : "Create",
+    },
+    {
+      label: "Partner",
+      status: user.skills.length ? "Ready to search" : "Index skills first",
+      done: false,
+      href: "/partners",
+      action: "Find",
+    },
+    {
+      label: "Proof",
+      status: completedCount ? `${completedCount} captured` : "No evidence yet",
+      done: completedCount > 0,
+      href: "/community",
+      action: "Log",
+    },
+  ];
+
+  // Flat count strip (GitHub profile style), not cards: pure at-a-glance numbers.
+  const stats = [
+    { label: "Skills", value: user.skills.length },
+    { label: "Interests", value: user.interests.length },
+    { label: "Active", value: activeCount },
+    { label: "Completed", value: completedCount },
+    { label: "Requests", value: 0 },
+  ];
+
+  const radarPoints: RadarPoint[] = [
     { label: "Skills", value: user.skills.length ? 80 : 20 },
     { label: "Interests", value: user.interests.length ? 65 : 20 },
     { label: "Role", value: user.role ? 70 : 20 },
     { label: "Brief", value: activeProject ? 75 : user.bio ? 45 : 10 },
-    { label: "Proof", value: activeProject?.status === "COMPLETED" ? 60 : 15 },
+    { label: "Proof", value: completedCount ? 60 : 15 },
   ];
+
+  const identityFacts = [
+    { label: "Role", value: user.role || "Not set" },
+    { label: "Skills", value: listPreview(user.skills, "None captured") },
+    { label: "Interests", value: listPreview(user.interests, "None captured") },
+  ];
+
   const rightRail = (
     <div className="flex h-full flex-col">
       <div>
-        <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
-          Today
-        </p>
+        <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">Today</p>
         <h2 className="mt-4 font-serif text-3xl leading-tight font-light">Make one thing buildable.</h2>
         <p className="mt-4 text-sm leading-6 text-[#333333]">
-          The best next move is not browsing. It is turning your intent into a short project brief
-          with one clear missing role.
+          The best next move is not browsing. It is turning intent into a short project brief with one
+          clear missing role.
         </p>
       </div>
-      <div className="mt-8 border-y border-[#d8d8d8] py-5">
-        <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
-          Matching radar
-        </p>
-        <div className="mt-5 space-y-4">
-          <Meter label="Skill signal" value={user.skills.length ? 80 : 25} />
-          <Meter label="Role clarity" value={user.role ? 70 : 20} />
-          <Meter label="Project brief" value={user.bio ? 45 : 10} />
-        </div>
-      </div>
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
-          Calm rule
-        </p>
+      <div className="mt-8 border-t border-[#d8d8d8] pt-5">
+        <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">Calm rule</p>
         <p className="mt-3 text-sm leading-6 text-[#333333]">
-          One visible next action beats ten possible dashboard widgets.
+          One visible next action beats ten dashboard widgets.
         </p>
       </div>
       <div className="mt-auto border-t border-[#d8d8d8] pt-5">
-        <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
-          Not started yet
+        <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">Coming online</p>
+        <p className="mt-3 text-sm leading-6 text-[#333333]">
+          Teammate requests, proof artifacts, and community signal arrive once your first project is live.
         </p>
-        <p className="mt-3 text-sm leading-6 text-[#333333]">Project record, teammate requests, proof artifacts.</p>
       </div>
     </div>
   );
@@ -262,74 +220,104 @@ export default async function DashboardPage() {
   return (
     <AppShell rightRail={rightRail}>
       <div className="flex flex-col gap-10">
-        <section className="grid gap-px border border-[#d8d8d8] bg-[#d8d8d8] xl:grid-cols-[1.25fr_0.75fr]">
-          <div className="bg-[#ffffff] p-8 lg:p-10">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-              Command Center
-            </p>
-            <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.8rem,6vw,5.5rem)] leading-[0.98] font-light tracking-[-0.04em]">
-              Get your first serious project live.
-            </h1>
-            <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
-              Your profile is the starting signal. The cockpit now focuses on one user-friendly
-              journey: brief the project, find the missing partner, then capture proof.
-            </p>
-            <div className="mt-8 max-w-xl border border-[#d8d8d8] bg-[#f7f7f7] p-5">
+        <section className="border border-[#d8d8d8] bg-[#ffffff] p-8 lg:p-10">
+          <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Command Center</p>
+          <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.6rem,5.5vw,5rem)] leading-[0.98] font-light tracking-[-0.04em]">
+            Get your first serious project live.
+          </h1>
+          <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
+            Brief the project, find the missing partner, then capture proof. One path, one next move.
+          </p>
+          <div className="mt-8 flex max-w-2xl flex-col gap-4 border-t border-[#d8d8d8] pt-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
               <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
-                {nextAction.eyebrow}
+                Recommended next
               </p>
-              <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <p className="max-w-sm text-sm leading-6 text-[#333333]">{nextAction.detail}</p>
-                <Button asChild className="shrink-0 rounded-full bg-[#000000] px-6 text-[#ffffff] hover:bg-[#333333]">
-                  <Link href={nextAction.href}>{nextAction.label}</Link>
-                </Button>
-              </div>
+              <p className="mt-3 max-w-md text-sm leading-6 text-[#333333]">{nextAction.detail}</p>
             </div>
-          </div>
-          <div className="flex flex-col items-center justify-center bg-[#f4f4f4] p-8 lg:p-10">
-            <ProgressRing value={readiness} label="Ready" />
-            <p className="mt-6 text-center text-sm leading-6 text-[#333333]">
-              Profile signal is live. Project, partner, and proof are the next layers.
-            </p>
+            <Button asChild className="shrink-0 rounded-full bg-[#000000] px-6 text-[#ffffff] hover:bg-[#333333]">
+              <Link href={nextAction.href}>{nextAction.label}</Link>
+            </Button>
           </div>
         </section>
 
-        <section className="border border-[#d8d8d8] bg-[#ffffff] p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-              Next actions
-            </p>
-            <span className="text-sm text-[#333333]">Start here</span>
+        <section className="grid grid-cols-3 gap-px border border-[#d8d8d8] bg-[#d8d8d8] sm:grid-cols-5">
+          {stats.map((stat) => (
+            <div key={stat.label} className="bg-[#ffffff] px-4 py-5">
+              <p className="font-serif text-4xl leading-none font-light">{stat.value}</p>
+              <p className="mt-3 text-[11px] font-semibold tracking-[0.18em] text-[#555555] uppercase">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </section>
+
+        <section className="border border-[#d8d8d8] bg-[#ffffff] p-6 lg:p-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Build path</p>
+              <h2 className="mt-2 font-serif text-3xl font-light">Four checkpoints, one route</h2>
+            </div>
+            <span className="hidden font-mono text-[11px] tracking-[0.16em] text-[#555555] sm:inline">
+              PROFILE → PROJECT → PARTNER → PROOF
+            </span>
           </div>
-          <div className="mt-5 grid gap-px bg-[#d8d8d8] md:grid-cols-3">
-            {actionTape.map(([step, title, detail]) => (
-              <div key={step} className="bg-[#ffffff] p-5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#000000] text-sm text-[#ffffff]">
-                  {step}
-                </span>
-                <p className="mt-5 font-semibold">{title}</p>
-                <p className="mt-2 text-sm leading-6 text-[#333333]">{detail}</p>
+          <div className="mt-8 grid gap-px bg-[#d8d8d8] md:grid-cols-4">
+            {buildPath.map((stage, index) => (
+              <div key={stage.label} className="flex flex-col gap-5 bg-[#ffffff] p-5">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm ${
+                      stage.done
+                        ? "bg-[#000000] text-[#ffffff]"
+                        : "border border-[#d8d8d8] bg-[#f4f4f4] text-[#333333]"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="font-mono text-[10px] tracking-[0.16em] text-[#999999]">
+                    {stage.done ? "DONE" : "OPEN"}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-semibold">{stage.label}</p>
+                  <p className="mt-1 text-sm text-[#333333]">{stage.status}</p>
+                </div>
+                <Link
+                  href={stage.href}
+                  className="mt-auto inline-flex w-fit items-center gap-1 border-b border-[#000000] pb-0.5 text-sm font-medium text-[#000000] transition-opacity hover:opacity-60"
+                >
+                  {stage.action}
+                </Link>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="border border-[#d8d8d8] bg-[#ffffff] p-6">
+        <section className="border border-[#d8d8d8] bg-[#ffffff] p-6 lg:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-                Project pipeline
+                Active build records
               </p>
-              <h2 className="mt-2 font-serif text-3xl font-light">Active build records</h2>
+              <h2 className="mt-2 font-serif text-3xl font-light">What you are shipping</h2>
             </div>
-            <Button asChild variant="secondary" className="rounded-full border-[#d8d8d8] bg-[#ffffff] px-5 text-[#000000] hover:bg-[#f4f4f4]">
+            <Button
+              asChild
+              variant="secondary"
+              className="rounded-full border-[#d8d8d8] bg-[#ffffff] px-5 text-[#000000] hover:bg-[#f4f4f4]"
+            >
               <Link href="/projects">Open pipeline</Link>
             </Button>
           </div>
           {projects.length ? (
             <div className="mt-6 grid gap-px bg-[#d8d8d8]">
               {projects.map((project) => (
-                <Link key={project.id} href={`/projects/${project.id}`} className="grid gap-4 bg-[#ffffff] p-5 transition-colors hover:bg-[#f7f7f7] md:grid-cols-[1fr_10rem] md:items-center">
+                <Link
+                  key={project.id}
+                  href={`/projects/${project.id}`}
+                  className="grid gap-4 bg-[#ffffff] p-5 transition-colors hover:bg-[#f7f7f7] md:grid-cols-[1fr_10rem] md:items-center"
+                >
                   <div>
                     <div className="flex flex-wrap items-center gap-3">
                       <p className="font-semibold">{project.name}</p>
@@ -361,91 +349,30 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        <section className="border border-[#d8d8d8] bg-[#ffffff] p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-                Project journey
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-light">One path, four checkpoints</h2>
+        <section className="grid gap-px border border-[#d8d8d8] bg-[#d8d8d8] lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="bg-[#ffffff] p-8">
+            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Matching radar</p>
+            <div className="mt-8 flex justify-center">
+              <MatchingRadar points={radarPoints} />
             </div>
-            <span className="hidden text-sm text-[#333333] sm:inline">Visual pipeline</span>
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-4">
-            {timeline.map((stage, index) => (
-              <div key={stage.label} className="relative">
-                {index < timeline.length - 1 ? (
-                  <div className="absolute left-8 top-8 hidden h-px w-[calc(100%+1rem)] bg-[#d8d8d8] md:block" />
-                ) : null}
-                <div className="relative z-10 flex h-full flex-col gap-4 border border-[#d8d8d8] bg-[#ffffff] p-4">
-                  <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm ${
-                      stage.active
-                        ? "border-[#000000] bg-[#000000] text-[#ffffff]"
-                        : "border-[#d8d8d8] bg-[#f4f4f4] text-[#333333]"
-                    }`}
-                  >
-                    {index + 1}
-                  </span>
-                  <div>
-                    <p className="font-semibold">{stage.label}</p>
-                    <p className="mt-1 text-sm text-[#333333]">{stage.detail}</p>
-                  </div>
+          <div className="flex flex-col bg-[#ffffff] p-8">
+            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Your signal</p>
+            <h2 className="mt-2 font-serif text-3xl font-light">What the radar reads</h2>
+            <dl className="mt-8 divide-y divide-[#d8d8d8] border-y border-[#d8d8d8]">
+              {identityFacts.map((fact) => (
+                <div key={fact.label} className="grid gap-1 py-4 sm:grid-cols-[7rem_1fr] sm:gap-4">
+                  <dt className="text-[11px] font-semibold tracking-[0.18em] text-[#555555] uppercase">
+                    {fact.label}
+                  </dt>
+                  <dd className="text-sm leading-6 text-[#222222]">{fact.value}</dd>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="border border-[#d8d8d8] bg-[#ffffff] p-8">
-          <p className="text-center text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-            Matching radar
-          </p>
-          <div className="mt-8 flex justify-center">
-            <MatchingRadar points={radarPoints} />
-          </div>
-          <p className="mx-auto mt-6 max-w-md text-center text-sm leading-6 text-[#333333]">
-            Radar improves when your project brief names a specific missing role.
-          </p>
-        </section>
-
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-                Diagnostic ledger
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-light">Deeper operating detail</h2>
-            </div>
-            <p className="font-mono text-[11px] tracking-[0.16em] text-[#555555]">ADVANCED</p>
-          </div>
-          <div className="overflow-x-auto border border-[#d8d8d8]">
-            <table className="w-full min-w-[860px] border-collapse text-left text-sm">
-              <thead className="bg-[#f4f4f4] text-[11px] tracking-[0.2em] text-[#555555] uppercase">
-                <tr>
-                  <th className="border-b border-[#d8d8d8] px-4 py-3 font-semibold">Stage</th>
-                  <th className="border-b border-[#d8d8d8] px-4 py-3 font-semibold">Status</th>
-                  <th className="border-b border-[#d8d8d8] px-4 py-3 font-semibold">Owner</th>
-                  <th className="border-b border-[#d8d8d8] px-4 py-3 font-semibold">Signal</th>
-                  <th className="border-b border-[#d8d8d8] px-4 py-3 font-semibold">Next action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#d8d8d8] bg-[#ffffff]">
-                {pipelineRows.map((row) => (
-                  <tr key={row.stage}>
-                    <td className="px-4 py-4 font-semibold">{row.stage}</td>
-                    <td className="px-4 py-4 text-[#333333]">{row.status}</td>
-                    <td className="px-4 py-4 text-[#333333]">{row.owner}</td>
-                    <td className="max-w-sm px-4 py-4 text-[#333333]">{row.signal}</td>
-                    <td className="px-4 py-4">
-                      <span className="border border-[#d8d8d8] bg-[#f4f4f4] px-2 py-1 text-xs">
-                        {row.action}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </dl>
+            <p className="mt-auto pt-6 text-sm leading-6 text-[#333333]">
+              The shape sharpens when your project brief names a specific missing role. Skills and
+              interests widen the base; proof lifts the top edge.
+            </p>
           </div>
         </section>
       </div>
