@@ -19,16 +19,17 @@ import { cn } from "@/lib/utils";
 
 const primaryNav = [
   { href: "/dashboard", label: "Command Center", short: "Home", icon: Home },
-  { href: "/projects", label: "Project Pipeline", short: "Projects", icon: FolderKanban },
-  { href: "/partners", label: "Partner Intelligence", short: "Partners", icon: Users },
-  { href: "/inbox", label: "Requests Desk", short: "Requests", icon: Bell },
+  { href: "/projects", label: "Projects", short: "Projects", icon: FolderKanban },
+  { href: "/partners", label: "Partners", short: "Partners", icon: Users },
+  { href: "/inbox", label: "Requests", short: "Requests", icon: Bell },
+  { href: "/community", label: "Proof", short: "Proof", icon: FileText },
+  { href: "/events", label: "Events", short: "Events", icon: CalendarDays },
+  { href: "/settings", label: "Settings", short: "Settings", icon: Settings },
 ];
 
-const secondaryNav = [
-  { href: "/community", label: "Proof Library", icon: FileText },
-  { href: "/events", label: "Events & Signals", icon: CalendarDays },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+// Overflow sections move here once the top bar runs out of room. Empty for now
+// so the bar stays flat, but the menu wiring stays ready for scale.
+const secondaryNav: { href: string; label: string; icon: typeof Home }[] = [];
 
 type AppShellProps = {
   children: ReactNode;
@@ -54,7 +55,7 @@ export function AppShell({ children, rightRail }: AppShellProps) {
             >
               mebi
             </Link>
-            <nav className="hidden items-center gap-7 md:flex">
+            <nav className="hidden items-center gap-5 lg:flex xl:gap-7">
               {primaryNav.map((item) => (
                 <Link key={item.href} href={item.href} className="group relative py-1 text-[13px] font-medium tracking-[-0.01em]">
                   <span
@@ -75,7 +76,7 @@ export function AppShell({ children, rightRail }: AppShellProps) {
                 </Link>
               ))}
 
-              <div className="relative">
+              <div className={cn("relative", secondaryNav.length === 0 && "hidden")}>
                 <button
                   type="button"
                   onClick={() => setMoreOpen((value) => !value)}
@@ -141,11 +142,11 @@ export function AppShell({ children, rightRail }: AppShellProps) {
         </aside>
       ) : null}
 
-      <div className={cn("min-h-screen bg-[#ffffff] pb-20 text-[#000000] md:pb-0", rightRail && "2xl:pr-72")}>
+      <div className={cn("min-h-screen bg-[#ffffff] pb-20 text-[#000000] lg:pb-0", rightRail && "2xl:pr-72")}>
         <main className="mx-auto w-full max-w-7xl px-4 py-8 lg:px-8">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 border-t border-[#1a1a1a] bg-[#000000] px-2 py-2 text-[#9a9a9a] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 border-t border-[#1a1a1a] bg-[#000000] px-2 py-2 text-[#9a9a9a] lg:hidden">
         {primaryNav.map((item) => {
           const Icon = item.icon;
           return (
