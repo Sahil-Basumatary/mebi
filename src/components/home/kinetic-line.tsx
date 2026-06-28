@@ -14,7 +14,7 @@ type KineticLineProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
-  as?: "div" | "span" | "p" | "h2" | "h3";
+  as?: "div" | "span" | "p" | "h1" | "h2" | "h3";
   variant?: "default" | "headline";
 };
 
@@ -82,6 +82,14 @@ export function KineticLine({
       <p ref={setNodeRef} style={style} className={lineClassName}>
         {children}
       </p>
+    );
+  }
+
+  if (Component === "h1") {
+    return (
+      <h1 ref={setNodeRef} style={style} className={lineClassName}>
+        {children}
+      </h1>
     );
   }
 
