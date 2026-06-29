@@ -1,12 +1,34 @@
+import type { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { requireOnboardedUser } from "@/lib/current-user";
+import { scoreMatch } from "@/lib/match";
 import { prisma } from "@/lib/prisma";
+import { cn } from "@/lib/utils";
+import { HeroConstellation } from "./hero-constellation";
+
+const ROLE_LABEL: Record<UserRole, string> = {
+  BUILDER: "Builder",
+  SPECIALIST: "Specialist",
+  LEARNER: "Learner",
+};
 
 function listPreview(values: string[], fallback: string): string {
   if (!values.length) return fallback;
   return values.slice(0, 6).join(", ");
+}
+
+function builderName(fullName: string | null, username: string | null): string {
+  return fullName || username || "KCL builder";
+}
+
+function builderInitials(fullName: string | null, username: string | null): string {
+  return builderName(fullName, username)
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 type RadarPoint = {
@@ -96,9 +118,74 @@ function MatchingRadar({ points }: { points: RadarPoint[] }) {
   );
 }
 
+const STAGE_ICONS = [
+  // Profile 
+  <svg
+    key="profile"
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.4}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-full w-full"
+  >
+    <circle cx="24" cy="17" r="7" />
+    <path d="M11 39c0-7.2 5.8-13 13-13s13 5.8 13 13" />
+  </svg>,
+  // Project 
+  <svg
+    key="project"
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.4}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-full w-full"
+  >
+    <rect x="9" y="11" width="30" height="26" rx="1.5" />
+    <line x1="19" y1="11" x2="19" y2="37" />
+    <line x1="29" y1="11" x2="29" y2="37" />
+    <line x1="12.5" y1="17" x2="15.5" y2="17" />
+    <line x1="22.5" y1="17" x2="25.5" y2="17" />
+    <line x1="32.5" y1="17" x2="35.5" y2="17" />
+  </svg>,
+  // Partner
+  <svg
+    key="partner"
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.4}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-full w-full"
+  >
+    <circle cx="16" cy="18" r="5.5" />
+    <circle cx="32" cy="30" r="5.5" />
+    <line x1="20" y1="21.5" x2="28" y2="26.5" />
+  </svg>,
+  //proof
+  <svg
+    key="proof"
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.4}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-full w-full"
+  >
+    <path d="M15 8h11l7 7v23a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" />
+    <path d="M26 8v7h7" />
+    <path d="M18 29l4 4 8-9" />
+  </svg>,
+];
+
 export default async function DashboardPage() {
   const user = await requireOnboardedUser();
-  const [projects, activeCount, completedCount] = await Promise.all([
+  const [projects, activeCount, completedCount, partnerPool] = await Promise.all([
     prisma.project.findMany({
       where: { ownerId: user.id },
       orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
@@ -106,17 +193,35 @@ export default async function DashboardPage() {
     }),
     prisma.project.count({ where: { ownerId: user.id, status: "ACTIVE" } }),
     prisma.project.count({ where: { ownerId: user.id, status: "COMPLETED" } }),
+    prisma.user.findMany({
+      where: { onboarded: true, id: { not: user.id } },
+      orderBy: { updatedAt: "desc" },
+      take: 40,
+      select: {
+        id: true,
+        fullName: true,
+        username: true,
+        imageUrl: true,
+        skills: true,
+        interests: true,
+        role: true,
+      },
+    }),
   ]);
+
+  const overlapBuilders = partnerPool
+    .map((candidate) => ({ candidate, breakdown: scoreMatch(user, candidate) }))
+    .filter((entry) => entry.breakdown.score > 0)
+    .sort((a, b) => b.breakdown.score - a.breakdown.score)
+    .slice(0, 3);
   const activeProject = projects.find((project) => project.status === "ACTIVE") ?? projects[0];
   const hasProfileSignal = Boolean(user.bio && user.skills.length && user.interests.length);
 
-  // One adaptive next move. The whole page points at exactly this, so it never
-  // competes with a second "do this" block elsewhere.
   const nextAction = !user.bio
     ? {
         label: "Tighten profile signal",
         href: "/onboarding",
-        detail: "Your profile needs a sharper problem signal before project and partner flows work well.",
+        detail: "Your profile needs serious aura improvement before you find a partner.",
       }
     : activeProject?.status === "ACTIVE"
       ? {
@@ -136,8 +241,6 @@ export default async function DashboardPage() {
             detail: "Move from profile intent into a project brief before searching for teammates.",
           };
 
-  // Single source of truth for "where am I" — replaces the old journey timeline,
-  // diagnostic ledger, and next-actions tape, which all said this three ways.
   const buildPath = [
     {
       label: "Profile",
@@ -169,7 +272,6 @@ export default async function DashboardPage() {
     },
   ];
 
-  // Flat count strip (GitHub profile style), not cards: pure at-a-glance numbers.
   const stats = [
     { label: "Skills", value: user.skills.length },
     { label: "Interests", value: user.interests.length },
@@ -221,14 +323,23 @@ export default async function DashboardPage() {
     <AppShell rightRail={rightRail}>
       <div className="flex flex-col gap-10">
         <section className="border border-[#d8d8d8] bg-[#ffffff] p-8 lg:p-10">
-          <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Command Center</p>
-          <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.6rem,5.5vw,5rem)] leading-[0.98] font-light tracking-[-0.04em]">
-            Get your first serious project live.
-          </h1>
-          <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
-            Brief the project, find the missing partner, then capture proof. One path, one next move.
-          </p>
-          <div className="mt-8 flex max-w-2xl flex-col gap-4 border-t border-[#d8d8d8] pt-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="grid items-center gap-10 lg:grid-cols-[1fr_auto]">
+            <div className="min-w-0">
+              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
+                Command Center
+              </p>
+              <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.6rem,5.5vw,5rem)] leading-[0.98] font-light tracking-[-0.04em]">
+                Get your first serious project live.
+              </h1>
+              <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
+                Brief the project, find the missing partner, then capture proof. One path, one next move.
+              </p>
+            </div>
+            <div className="relative hidden h-44 w-44 shrink-0 justify-self-end lg:block xl:h-52 xl:w-52">
+              <HeroConstellation />
+            </div>
+          </div>
+          <div className="mt-8 flex flex-col gap-4 border-t border-[#d8d8d8] pt-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
                 Recommended next
@@ -253,42 +364,135 @@ export default async function DashboardPage() {
         </section>
 
         <section className="border border-[#d8d8d8] bg-[#ffffff] p-6 lg:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
+                Builders similar to you
+              </p>
+              <h2 className="mt-2 font-serif text-3xl font-light">
+                {overlapBuilders.length ? "People worth reaching out to" : "Be one of the first"}
+              </h2>
+            </div>
+            <Link
+              href="/partners"
+              className="shrink-0 items-center gap-1 self-start border-b border-[#000000] pb-0.5 text-sm font-medium text-[#000000] transition-opacity hover:opacity-60 sm:inline-flex sm:self-auto"
+            >
+              Browse all
+            </Link>
+          </div>
+          {overlapBuilders.length ? (
+            <div className="mt-6 grid gap-px bg-[#d8d8d8]">
+              {overlapBuilders.map(({ candidate, breakdown }) => {
+                const shared = [...breakdown.sharedSkills, ...breakdown.sharedInterests].slice(0, 4);
+                return (
+                  <Link
+                    key={candidate.id}
+                    href="/partners"
+                    className="flex items-center gap-4 bg-[#ffffff] p-5 transition-colors hover:bg-[#f7f7f7]"
+                  >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#d8d8d8] bg-[#f4f4f4] text-sm font-semibold text-[#555555]">
+                      {candidate.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={candidate.imageUrl}
+                          alt={builderName(candidate.fullName, candidate.username)}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        builderInitials(candidate.fullName, candidate.username)
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="font-semibold">{builderName(candidate.fullName, candidate.username)}</p>
+                        {candidate.role ? (
+                          <span className="border border-[#d8d8d8] bg-[#f4f4f4] px-2 py-0.5 text-[10px] font-semibold tracking-[0.16em] text-[#555555] uppercase">
+                            {ROLE_LABEL[candidate.role]}
+                          </span>
+                        ) : null}
+                      </div>
+                      {shared.length ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {shared.map((tag) => (
+                            <span
+                              key={tag}
+                              className="border border-[#000000] bg-[#000000] px-2 py-0.5 text-[11px] text-[#ffffff]"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="hidden shrink-0 font-mono text-[11px] tracking-[0.16em] text-[#555555] sm:inline">
+                      {breakdown.sharedSkills.length + breakdown.sharedInterests.length} SHARED
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-6 border border-[#d8d8d8] bg-[#f7f7f7] p-5">
+              <p className="text-sm leading-6 text-[#333333]">
+                No overlapping builders yet. As more KCL students onboard, the people who share your skills and
+                interests show up here.{" "}
+                <Link href="/partners" className="border-b border-[#000000] font-medium text-[#000000]">
+                  Search partners
+                </Link>
+                .
+              </p>
+            </div>
+          )}
+        </section>
+
+        <section className="border border-[#d8d8d8] bg-[#ffffff] p-6 lg:p-8">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Build path</p>
-              <h2 className="mt-2 font-serif text-3xl font-light">Four checkpoints, one route</h2>
+              <h2 className="mt-2 font-serif text-3xl font-light">Four checkpoints</h2>
             </div>
             <span className="hidden font-mono text-[11px] tracking-[0.16em] text-[#555555] sm:inline">
               PROFILE → PROJECT → PARTNER → PROOF
             </span>
           </div>
-          <div className="mt-8 grid gap-px bg-[#d8d8d8] md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {buildPath.map((stage, index) => (
-              <div key={stage.label} className="flex flex-col gap-5 bg-[#ffffff] p-5">
-                <div className="flex items-center justify-between">
+              <div
+                key={stage.label}
+                className="group/step flex flex-col border border-[#d8d8d8] bg-[#ffffff] transition-all duration-200 hover:-translate-y-1 hover:border-[#111111] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)]"
+              >
+                <div className="relative aspect-[3/2] w-full overflow-hidden bg-[#000000]">
+                  <div className="flex h-full w-full items-center justify-center">
+                    <div className="h-12 w-12 text-[#ffffff] transition-transform duration-200 group-hover/step:scale-110">
+                      {STAGE_ICONS[index]}
+                    </div>
+                  </div>
                   <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm ${
+                    className={cn(
+                      "absolute top-3 left-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm",
                       stage.done
-                        ? "bg-[#000000] text-[#ffffff]"
-                        : "border border-[#d8d8d8] bg-[#f4f4f4] text-[#333333]"
-                    }`}
+                        ? "bg-[#ffffff] text-[#000000]"
+                        : "border border-[#666666] bg-transparent text-[#ffffff]",
+                    )}
                   >
                     {index + 1}
                   </span>
-                  <span className="font-mono text-[10px] tracking-[0.16em] text-[#999999]">
+                  <span className="absolute top-4 right-3 font-mono text-[10px] tracking-[0.16em] text-[#bbbbbb]">
                     {stage.done ? "DONE" : "OPEN"}
                   </span>
                 </div>
-                <div>
-                  <p className="font-semibold">{stage.label}</p>
-                  <p className="mt-1 text-sm text-[#333333]">{stage.status}</p>
+                <div className="flex flex-1 flex-col gap-4 p-5">
+                  <div>
+                    <p className="font-semibold">{stage.label}</p>
+                    <p className="mt-1 text-sm text-[#333333]">{stage.status}</p>
+                  </div>
+                  <Link
+                    href={stage.href}
+                    className="mt-auto inline-flex w-fit items-center gap-1 border-b border-[#000000] pb-0.5 text-sm font-medium text-[#000000] transition-opacity hover:opacity-60"
+                  >
+                    {stage.action}
+                  </Link>
                 </div>
-                <Link
-                  href={stage.href}
-                  className="mt-auto inline-flex w-fit items-center gap-1 border-b border-[#000000] pb-0.5 text-sm font-medium text-[#000000] transition-opacity hover:opacity-60"
-                >
-                  {stage.action}
-                </Link>
               </div>
             ))}
           </div>
@@ -302,13 +506,12 @@ export default async function DashboardPage() {
               </p>
               <h2 className="mt-2 font-serif text-3xl font-light">What you are shipping</h2>
             </div>
-            <Button
-              asChild
-              variant="secondary"
-              className="rounded-full border-[#d8d8d8] bg-[#ffffff] px-5 text-[#000000] hover:bg-[#f4f4f4]"
+            <Link
+              href="/projects"
+              className="shrink-0 items-center gap-1 self-start border-b border-[#000000] pb-0.5 text-sm font-medium text-[#000000] transition-opacity hover:opacity-60 sm:inline-flex sm:self-auto"
             >
-              <Link href="/projects">Open pipeline</Link>
-            </Button>
+              Open pipeline
+            </Link>
           </div>
           {projects.length ? (
             <div className="mt-6 grid gap-px bg-[#d8d8d8]">
@@ -357,8 +560,8 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex flex-col bg-[#ffffff] p-8">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Your signal</p>
-            <h2 className="mt-2 font-serif text-3xl font-light">What the radar reads</h2>
+            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Your abilities</p>
+            <h2 className="mt-2 font-serif text-3xl font-light">What the radar means</h2>
             <dl className="mt-8 divide-y divide-[#d8d8d8] border-y border-[#d8d8d8]">
               {identityFacts.map((fact) => (
                 <div key={fact.label} className="grid gap-1 py-4 sm:grid-cols-[7rem_1fr] sm:gap-4">
