@@ -1,7 +1,6 @@
 import type { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { Button } from "@/components/ui/button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { prisma } from "@/lib/prisma";
@@ -346,9 +345,15 @@ export default async function DashboardPage() {
               </p>
               <p className="mt-3 max-w-md text-sm leading-6 text-[#333333]">{nextAction.detail}</p>
             </div>
-            <Button asChild className="shrink-0 rounded-full bg-[#000000] px-6 text-[#ffffff] hover:bg-[#333333]">
-              <Link href={nextAction.href}>{nextAction.label}</Link>
-            </Button>
+            <Link
+              href={nextAction.href}
+              className="group inline-flex shrink-0 items-center gap-4 text-[15px] font-medium text-[#000000]"
+            >
+              <span>{nextAction.label}</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#000000] text-xl leading-none transition-colors group-hover:bg-[#000000] group-hover:text-[#ffffff]">
+                &rarr;
+              </span>
+            </Link>
           </div>
         </section>
 

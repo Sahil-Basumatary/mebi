@@ -47,17 +47,17 @@ export function AppShell({ children, rightRail }: AppShellProps) {
   return (
     <div className="min-h-screen bg-[#ffffff] text-[#000000]">
       <header className="sticky top-0 z-50 border-b border-[#1a1a1a] bg-[#000000] text-[#ffffff]">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-4 lg:px-8">
-          <div className="flex min-w-0 items-center gap-7">
+        <div className="mx-auto flex h-16 w-full max-w-[88rem] items-center justify-between gap-6 px-6 lg:px-12">
+          <div className="flex min-w-0 items-center gap-8">
             <Link
               href="/dashboard"
-              className="flex h-9 items-center border border-[#ffffff] px-2.5 font-[family-name:var(--font-newsreader)] text-xl leading-none font-light tracking-[-0.04em]"
+              className="flex h-10 items-center border border-[#ffffff] px-3 font-[family-name:var(--font-newsreader)] text-[1.4rem] leading-none font-light tracking-[-0.04em] transition-colors hover:bg-[#ffffff] hover:text-[#000000]"
             >
               mebi
             </Link>
-            <nav className="hidden items-center gap-5 lg:flex xl:gap-7">
+            <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
               {primaryNav.map((item) => (
-                <Link key={item.href} href={item.href} className="group relative py-1 text-[13px] font-medium tracking-[-0.01em]">
+                <Link key={item.href} href={item.href} className="group relative py-1 text-[14px] font-medium tracking-[-0.01em]">
                   <span
                     className={cn(
                       isActive(item.href)
@@ -80,7 +80,7 @@ export function AppShell({ children, rightRail }: AppShellProps) {
                 <button
                   type="button"
                   onClick={() => setMoreOpen((value) => !value)}
-                  className="flex items-center gap-1 py-1 text-[13px] font-medium tracking-[-0.01em] text-[#9a9a9a] transition-colors hover:text-[#ffffff]"
+                  className="flex items-center gap-1 py-1 text-[14px] font-medium tracking-[-0.01em] text-[#9a9a9a] transition-colors hover:text-[#ffffff]"
                 >
                   More
                   <ChevronDown
@@ -143,7 +143,7 @@ export function AppShell({ children, rightRail }: AppShellProps) {
       ) : null}
 
       <div className={cn("min-h-screen bg-[#ffffff] pb-20 text-[#000000] lg:pb-0", rightRail && "2xl:pr-72")}>
-        <main className="mx-auto w-full max-w-7xl px-4 py-8 lg:px-8">{children}</main>
+        <main className="mx-auto w-full max-w-[88rem] px-6 py-8 lg:px-12">{children}</main>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 border-t border-[#1a1a1a] bg-[#000000] px-2 py-2 text-[#9a9a9a] lg:hidden">
