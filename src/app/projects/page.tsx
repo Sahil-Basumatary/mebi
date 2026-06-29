@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
               Project Pipeline
             </p>
             <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.5rem,5vw,4.8rem)] leading-[0.98] font-light tracking-[-0.04em]">
-              Turn a rough idea into a serious build.
+              Turn a rough idea into something extraordinary.
             </h1>
             <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
               Create the project brief here, then use it as the source of truth for partner matching,
@@ -42,8 +42,7 @@ export default async function ProjectsPage() {
                 Primary action
               </p>
               <p className="mt-4 text-sm leading-6 text-[#333333]">
-                A project should start with one clear problem, one missing role, and one visible next
-                milestone.
+                A project should start with one clear problem, one missing role, and one next step.
               </p>
             </div>
             <Button asChild className="mt-8 rounded-full bg-[#000000] px-6 text-[#ffffff] hover:bg-[#333333]">
@@ -62,7 +61,7 @@ export default async function ProjectsPage() {
             <h2 className="mt-3 font-serif text-3xl font-light">Create from intent, not noise.</h2>
             <p className="mt-4 text-sm leading-6 text-[#333333]">
               Keep the first version tight. A good project record should tell a serious builder what
-              the problem is, what stack is likely, and what progress would count as real.
+              the problem is, what stack is likely, and what progress is expected.
             </p>
           </div>
           <ProjectForm />
@@ -76,8 +75,7 @@ export default async function ProjectsPage() {
               </p>
               <h2 className="font-serif text-3xl font-light">Your project workspace</h2>
               <p className="max-w-2xl text-sm leading-6 text-[#333333]">
-                Public projects will become useful for partner matching. Private projects let you
-                shape the brief before anyone else sees it.
+                Public projects is visible to everyone, while Private projects is only visible to you.
               </p>
             </div>
             <span className="text-sm text-[#333333]">{projects.length} project{projects.length === 1 ? "" : "s"}</span>
@@ -120,10 +118,9 @@ export default async function ProjectsPage() {
               <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
                 No projects yet
               </p>
-              <h3 className="mt-3 font-serif text-3xl font-light">Your first project becomes the matching anchor.</h3>
+              <h3 className="mt-3 font-serif text-3xl font-light">Your first project is important for matching.</h3>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-[#333333]">
-                Create one clear project brief first. Partner search works better when the system has
-                an actual build to match against.
+                Create one clear project brief first so we can match you with the right partners.
               </p>
             </div>
           )}
