@@ -1,9 +1,19 @@
 import type { UserRole } from "@prisma/client";
+import { Check } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch, type MatchBreakdown } from "@/lib/match";
 import { prisma } from "@/lib/prisma";
 import { PartnerFilters } from "./partner-filters";
+import { PartnerRequestDialog } from "./partner-request-dialog";
+
+type Relationship = "none" | "outgoing" | "incoming" | "partnered";
+
+type ViewerProject = {
+  id: string;
+  name: string;
+};
 
 const ROLE_LABEL: Record<UserRole, string> = {
   BUILDER: "Builder",
@@ -88,7 +98,68 @@ function Tag({ label, highlight }: { label: string; highlight?: boolean }) {
   );
 }
 
-function PartnerRow({ ranked, featured }: { ranked: RankedPartner; featured?: boolean }) {
+function PartnerAction({
+  ranked,
+  relationship,
+  viewerProjects,
+}: {
+  ranked: RankedPartner;
+  relationship: Relationship;
+  viewerProjects: ViewerProject[];
+}) {
+  const { user, breakdown } = ranked;
+
+  if (relationship === "partnered") {
+    return (
+      <span className="inline-flex h-9 items-center gap-2 rounded-full border border-[#000000] bg-[#000000] px-5 text-sm font-medium text-[#ffffff]">
+        <Check size={16} strokeWidth={2.5} />
+        Partnered
+      </span>
+    );
+  }
+
+  if (relationship === "incoming") {
+    return (
+      <Link
+        href="/inbox"
+        className="inline-flex h-9 items-center rounded-full border border-[#000000] px-5 text-sm font-medium text-[#000000] transition-colors hover:bg-[#000000] hover:text-[#ffffff]"
+      >
+        Respond in inbox
+      </Link>
+    );
+  }
+
+  if (relationship === "outgoing") {
+    return (
+      <span className="inline-flex h-9 items-center gap-2 rounded-full border border-[#d8d8d8] px-5 text-sm font-medium text-[#555555]">
+        <Check size={16} strokeWidth={2} />
+        Request sent
+      </span>
+    );
+  }
+
+  return (
+    <PartnerRequestDialog
+      toUserId={user.id}
+      toName={displayName(user)}
+      sharedSkills={breakdown.sharedSkills}
+      sharedInterests={breakdown.sharedInterests}
+      projects={viewerProjects}
+    />
+  );
+}
+
+function PartnerRow({
+  ranked,
+  featured,
+  relationship,
+  viewerProjects,
+}: {
+  ranked: RankedPartner;
+  featured?: boolean;
+  relationship: Relationship;
+  viewerProjects: ViewerProject[];
+}) {
   const { user, breakdown } = ranked;
   const sharedSkillSet = new Set(breakdown.sharedSkills.map((tag) => tag.toLowerCase()));
   const sharedInterestSet = new Set(breakdown.sharedInterests.map((tag) => tag.toLowerCase()));
@@ -140,14 +211,7 @@ function PartnerRow({ ranked, featured }: { ranked: RankedPartner; featured?: bo
             {breakdown.sharedSkills.length + breakdown.sharedInterests.length} SHARED
           </span>
         ) : null}
-        <button
-          type="button"
-          disabled
-          title="Partnership requests arrive in the next milestone"
-          className="inline-flex h-9 items-center rounded-full bg-[#000000] px-5 text-sm font-medium text-[#ffffff] disabled:opacity-45"
-        >
-          Request to partner
-        </button>
+        <PartnerAction ranked={ranked} relationship={relationship} viewerProjects={viewerProjects} />
       </div>
     </div>
   );
@@ -183,6 +247,45 @@ export default async function PartnersPage({
       role: true,
     },
   });
+
+  // Pull the viewer's existing connections so each row shows the right action
+  // (request, sent, respond, or partnered) instead of letting people fire
+  // duplicate requests into a void.
+  const [partnerships, pendingRequests, viewerProjects] = await Promise.all([
+    prisma.partnership.findMany({
+      where: { OR: [{ userAId: viewer.id }, { userBId: viewer.id }] },
+      select: { userAId: true, userBId: true },
+    }),
+    prisma.partnershipRequest.findMany({
+      where: {
+        status: "PENDING",
+        OR: [{ fromUserId: viewer.id }, { toUserId: viewer.id }],
+      },
+      select: { fromUserId: true, toUserId: true },
+    }),
+    prisma.project.findMany({
+      where: { ownerId: viewer.id, status: "ACTIVE" },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  const partneredIds = new Set(
+    partnerships.map((p) => (p.userAId === viewer.id ? p.userBId : p.userAId)),
+  );
+  const outgoingIds = new Set<string>();
+  const incomingIds = new Set<string>();
+  for (const request of pendingRequests) {
+    if (request.fromUserId === viewer.id) outgoingIds.add(request.toUserId);
+    else incomingIds.add(request.fromUserId);
+  }
+
+  function relationshipFor(userId: string): Relationship {
+    if (partneredIds.has(userId)) return "partnered";
+    if (outgoingIds.has(userId)) return "outgoing";
+    if (incomingIds.has(userId)) return "incoming";
+    return "none";
+  }
 
   const skillFacets = uniqueSorted(pool.flatMap((user) => user.skills));
   const interestFacets = uniqueSorted(pool.flatMap((user) => user.interests));
@@ -224,7 +327,7 @@ export default async function PartnersPage({
         <header className="grid gap-px border border-[#d8d8d8] bg-[#d8d8d8] xl:grid-cols-[1.2fr_0.8fr]">
           <div className="bg-[#ffffff] p-8 lg:p-10">
             <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-              Partner Intelligence
+              Find a Partner
             </p>
             <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.5rem,5vw,4.8rem)] leading-[0.98] font-light tracking-[-0.04em]">
               Find serious builders for the missing role.
@@ -285,7 +388,13 @@ export default async function PartnersPage({
                 ) : null}
                 <div className="grid gap-px bg-[#d8d8d8]">
                   {recommended.map((item) => (
-                    <PartnerRow key={item.user.id} ranked={item} featured />
+                    <PartnerRow
+                      key={item.user.id}
+                      ranked={item}
+                      featured
+                      relationship={relationshipFor(item.user.id)}
+                      viewerProjects={viewerProjects}
+                    />
                   ))}
                 </div>
               </section>
@@ -305,7 +414,12 @@ export default async function PartnersPage({
               {ranked.length ? (
                 <div className="grid gap-px bg-[#d8d8d8]">
                   {ranked.map((item) => (
-                    <PartnerRow key={item.user.id} ranked={item} />
+                    <PartnerRow
+                      key={item.user.id}
+                      ranked={item}
+                      relationship={relationshipFor(item.user.id)}
+                      viewerProjects={viewerProjects}
+                    />
                   ))}
                 </div>
               ) : (
