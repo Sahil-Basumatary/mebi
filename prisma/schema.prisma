@@ -27,22 +27,40 @@ enum ProjectStatus {
   COMPLETED
 }
 
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+enum NotificationType {
+  REQUEST_RECEIVED
+  REQUEST_ACCEPTED
+  REQUEST_DECLINED
+}
+
 model User {
-  id          String    @id @default(cuid())
-  clerkId     String    @unique
-  email       String    @unique
-  fullName    String?
-  username    String?
-  bio         String?
-  imageUrl    String?
-  skills      String[]  @default([])
-  interests   String[]  @default([])
-  role        UserRole?
-  prefersSolo Boolean   @default(false)
-  onboarded   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  projects    Project[]
+  id               String               @id @default(cuid())
+  clerkId          String               @unique
+  email            String               @unique
+  fullName         String?
+  username         String?
+  bio              String?
+  imageUrl         String?
+  skills           String[]             @default([])
+  interests        String[]             @default([])
+  role             UserRole?
+  prefersSolo      Boolean              @default(false)
+  onboarded        Boolean              @default(false)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  projects         Project[]
+  sentRequests     PartnershipRequest[] @relation("SentRequests")
+  receivedRequests PartnershipRequest[] @relation("ReceivedRequests")
+  partnershipsA    Partnership[]        @relation("PartnershipUserA")
+  partnershipsB    Partnership[]        @relation("PartnershipUserB")
+  notifications    Notification[]
 }
 
 model Project {
@@ -59,7 +77,59 @@ model Project {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   owner         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  requests      PartnershipRequest[]
 
   @@index([ownerId, status])
   @@index([visibility, status])
+}
+
+model PartnershipRequest {
+  id               String        @id @default(cuid())
+  fromUserId       String
+  toUserId         String
+  message          String
+  sharedSkills     String[]      @default([])
+  sharedInterests  String[]      @default([])
+  projectInterest  String?
+  relatedProjectId String?
+  status           RequestStatus @default(PENDING)
+  createdAt        DateTime      @default(now())
+  respondedAt      DateTime?
+  fromUser         User          @relation("SentRequests", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser           User          @relation("ReceivedRequests", fields: [toUserId], references: [id], onDelete: Cascade)
+  relatedProject   Project?      @relation(fields: [relatedProjectId], references: [id], onDelete: SetNull)
+
+  @@index([toUserId, status])
+  @@index([fromUserId, status])
+}
+
+// Accepted link between two builders. We always store the pair lexicographically
+// (userAId < userBId) so the unique constraint blocks duplicate partnerships
+// regardless of who sent the original request.
+model Partnership {
+  id              String   @id @default(cuid())
+  userAId         String
+  userBId         String
+  sourceRequestId String?  @unique
+  createdAt       DateTime @default(now())
+  userA           User     @relation("PartnershipUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB           User     @relation("PartnershipUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  message   String
+  actorName String?
+  requestId String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
 }
