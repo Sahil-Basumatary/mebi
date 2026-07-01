@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const primaryNav = [
@@ -39,6 +39,22 @@ type AppShellProps = {
 export function AppShell({ children, rightRail }: AppShellProps) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [unreadRequests, setUnreadRequests] = useState(0);
+
+  // Refresh the unread count on every route change so visiting the inbox (which
+  // clears notifications server-side) immediately drops the red dot.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/inbox/unread")
+      .then((response) => (response.ok ? response.json() : { count: 0 }))
+      .then((data: { count?: number }) => {
+        if (active) setUnreadRequests(data.count ?? 0);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -67,6 +83,9 @@ export function AppShell({ children, rightRail }: AppShellProps) {
                   >
                     {item.label}
                   </span>
+                  {item.href === "/inbox" && unreadRequests > 0 ? (
+                    <span className="absolute -top-0.5 -right-2.5 h-1.5 w-1.5 rounded-full bg-[#ff4d4d]" />
+                  ) : null}
                   <span
                     className={cn(
                       "absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 bg-[#ffffff] transition-all duration-300 ease-out",
@@ -123,11 +142,11 @@ export function AppShell({ children, rightRail }: AppShellProps) {
             <button
               type="button"
               title="Command palette ships in the next milestone"
-              className="hidden items-center gap-2 border border-[#262626] bg-[#0a0a0a] px-3 py-2 text-xs text-[#9a9a9a] transition-colors hover:border-[#3a3a3a] hover:text-[#dddddd] sm:flex"
+              className="hidden w-72 items-center gap-2 border border-[#262626] bg-[#0a0a0a] px-3 py-2 text-xs text-[#9a9a9a] transition-colors hover:border-[#3a3a3a] hover:text-[#dddddd] sm:flex"
             >
               <Search size={15} strokeWidth={1.75} />
               <span>Search</span>
-              <span className="ml-2 border border-[#2a2a2a] px-1.5 py-0.5 font-mono text-[10px] text-[#9a9a9a]">
+              <span className="ml-auto border border-[#2a2a2a] px-1.5 py-0.5 font-mono text-[10px] text-[#9a9a9a]">
                 ⌘K
               </span>
             </button>
@@ -154,11 +173,16 @@ export function AppShell({ children, rightRail }: AppShellProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-2 py-2 text-[10px] transition-colors",
+                "relative flex flex-col items-center justify-center gap-1 px-2 py-2 text-[10px] transition-colors",
                 isActive(item.href) ? "text-[#ffffff]" : "hover:text-[#ffffff]",
               )}
             >
-              <Icon size={18} strokeWidth={1.75} />
+              <span className="relative">
+                <Icon size={18} strokeWidth={1.75} />
+                {item.href === "/inbox" && unreadRequests > 0 ? (
+                  <span className="absolute -top-1 -right-1.5 h-1.5 w-1.5 rounded-full bg-[#ff4d4d]" />
+                ) : null}
+              </span>
               <span className="max-w-full truncate">{item.short}</span>
             </Link>
           );
