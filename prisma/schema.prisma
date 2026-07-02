@@ -40,6 +40,12 @@ enum NotificationType {
   REQUEST_DECLINED
 }
 
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
 model User {
   id               String               @id @default(cuid())
   clerkId          String               @unique
@@ -48,6 +54,9 @@ model User {
   username         String?
   bio              String?
   imageUrl         String?
+  githubUsername   String?
+  showGithub       Boolean              @default(true)
+  themePreference  ThemePreference      @default(LIGHT)
   skills           String[]             @default([])
   interests        String[]             @default([])
   role             UserRole?
