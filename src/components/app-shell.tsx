@@ -1,6 +1,5 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import {
   Bell,
   CalendarDays,
@@ -15,6 +14,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { AccountMenu } from "@/components/account-menu";
 import { cn } from "@/lib/utils";
 
 const primaryNav = [
@@ -150,7 +150,7 @@ export function AppShell({ children, rightRail }: AppShellProps) {
                 ⌘K
               </span>
             </button>
-            <UserButton />
+            <AccountMenu />
           </div>
         </div>
       </header>
