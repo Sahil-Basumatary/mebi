@@ -1,6 +1,7 @@
 import type { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { LongStemArrow } from "@/components/ui/long-stem-arrow";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { prisma } from "@/lib/prisma";
@@ -351,7 +352,7 @@ export default async function DashboardPage() {
             >
               <span>{nextAction.label}</span>
               <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#000000] text-xl leading-none transition-colors group-hover:bg-[#000000] group-hover:text-[#ffffff]">
-                &rarr;
+                <LongStemArrow />
               </span>
             </Link>
           </div>
