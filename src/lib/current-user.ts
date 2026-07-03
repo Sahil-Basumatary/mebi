@@ -18,3 +18,24 @@ export async function requireOnboardedUser() {
 
   return user;
 }
+
+// Resolves the signed-in user's saved theme so the root layout can seed
+// next-themes on the server and avoid a flash on first paint. Logged-out
+// visitors (marketing/auth) fall back to the app's default light palette.
+export async function getInitialTheme(): Promise<"light" | "dark" | "system"> {
+  const { userId } = await auth();
+  if (!userId) {
+    return "light";
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    select: { themePreference: true },
+  });
+
+  if (!user) {
+    return "light";
+  }
+
+  return user.themePreference.toLowerCase() as "light" | "dark" | "system";
+}

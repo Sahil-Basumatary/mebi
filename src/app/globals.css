@@ -19,6 +19,23 @@
   --elev-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
   --elev-card: 0 4px 16px rgba(0, 0, 0, 0.45);
   --elev-window: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --app-canvas: #ffffff;
+  --app-fg: #000000;
+  --app-surface: #f6f6f6;
+  --app-surface-2: #f2f2f2;
+  --app-border: #e6e6e6;
+  --app-border-strong: #d8d8d8;
+  --app-muted: #6b6b6b;
+  --app-muted-2: #9a9a9a;
+  --app-hover: #f4f4f4;
+  --app-accent: #000000;
+  --app-accent-fg: #ffffff;
+  --app-accent-hover: #1a1a1a;
+  --app-chrome: #000000;
+  --app-chrome-fg: #ffffff;
+  --app-chrome-border: #1a1a1a;
+  --app-chrome-muted: #9a9a9a;
+  --app-chrome-hover: #161616;
 }
 
 .dark {
@@ -38,6 +55,24 @@
   --elev-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
   --elev-card: 0 4px 16px rgba(0, 0, 0, 0.45);
   --elev-window: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+  --app-canvas: #0b0b0b;
+  --app-fg: #f2f2f2;
+  --app-surface: #151515;
+  --app-surface-2: #1b1b1b;
+  --app-border: #262626;
+  --app-border-strong: #333333;
+  --app-muted: #9a9a9a;
+  --app-muted-2: #6f6f6f;
+  --app-hover: #1a1a1a;
+  --app-accent: #ffffff;
+  --app-accent-fg: #000000;
+  --app-accent-hover: #e6e6e6;
+  --app-chrome: #ffffff;
+  --app-chrome-fg: #000000;
+  --app-chrome-border: #e2e2e2;
+  --app-chrome-muted: #6b6b6b;
+  --app-chrome-hover: #f0f0f0;
 }
 
 @theme inline {
@@ -54,10 +89,27 @@
   --color-hover: var(--hover);
   --color-notification: var(--notification);
   --color-upgrade: var(--upgrade);
+  --color-app-canvas: var(--app-canvas);
+  --color-app-fg: var(--app-fg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-2: var(--app-surface-2);
+  --color-app-border: var(--app-border);
+  --color-app-border-strong: var(--app-border-strong);
+  --color-app-muted: var(--app-muted);
+  --color-app-muted-2: var(--app-muted-2);
+  --color-app-hover: var(--app-hover);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-fg: var(--app-accent-fg);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-chrome: var(--app-chrome);
+  --color-app-chrome-fg: var(--app-chrome-fg);
+  --color-app-chrome-border: var(--app-chrome-border);
+  --color-app-chrome-muted: var(--app-chrome-muted);
+  --color-app-chrome-hover: var(--app-chrome-hover);
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-guardian-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --shadow-soft: var(--elev-soft);
   --shadow-card: var(--elev-card);
@@ -93,4 +145,24 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+@keyframes marquee-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee-x {
+  animation: marquee-x var(--marquee-duration, 40s) linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-x {
+    animation: none;
+  }
 }
