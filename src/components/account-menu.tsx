@@ -3,8 +3,8 @@
 import { useClerk, useUser } from "@clerk/nextjs";
 import { Bell, FolderKanban, Home, LogOut, Settings, Users } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSettingsModal } from "@/components/settings/settings-modal";
 
 const menuLinks = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -24,13 +24,8 @@ function initialsFrom(name: string): string {
 export function AccountMenu() {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const pathname = usePathname();
+  const { open: openSettings } = useSettingsModal();
   const [open, setOpen] = useState(false);
-
-  // Navigating away should never leave the menu floating over a fresh page.
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,7 +58,7 @@ export function AccountMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Open account menu"
-        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#2a2a2a] bg-[#161616] text-xs font-semibold text-[#dddddd] transition-colors hover:border-[#4a4a4a]"
+        className="border-app-chrome-fg/25 bg-app-chrome-fg/10 text-app-chrome-fg hover:border-app-chrome-fg/50 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border text-xs font-semibold transition-colors"
       >
         {avatar}
       </button>
@@ -73,23 +68,31 @@ export function AccountMenu() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
             role="menu"
-            className="absolute top-11 right-0 z-50 w-64 border border-[#1f1f1f] bg-[#0a0a0a] py-1 shadow-[0_24px_70px_rgba(0,0,0,0.6)]"
+            className="border-app-border bg-app-canvas absolute top-11 right-0 z-50 w-64 border py-1 shadow-[0_24px_70px_rgba(0,0,0,0.35)]"
           >
-            <Link
-              href="/settings"
+            <button
+              type="button"
               role="menuitem"
-              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#161616]"
+              onClick={() => {
+                setOpen(false);
+                openSettings("profile");
+              }}
+              className="hover:bg-app-hover flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#2a2a2a] bg-[#161616] text-xs font-semibold text-[#dddddd]">
+              <span className="border-app-border bg-app-surface text-app-fg flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border text-xs font-semibold">
                 {avatar}
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-sm font-medium text-[#ffffff]">{displayName}</span>
-                {handle ? <span className="block truncate text-xs text-[#8a8a8a]">{handle}</span> : null}
+                <span className="text-app-fg block truncate text-sm font-medium">
+                  {displayName}
+                </span>
+                {handle ? (
+                  <span className="text-app-muted-2 block truncate text-xs">{handle}</span>
+                ) : null}
               </span>
-            </Link>
+            </button>
 
-            <div className="my-1 h-px bg-[#1a1a1a]" />
+            <div className="bg-app-border my-1 h-px" />
 
             {menuLinks.map((item) => {
               const Icon = item.icon;
@@ -98,7 +101,8 @@ export function AccountMenu() {
                   key={item.href}
                   href={item.href}
                   role="menuitem"
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-[#bdbdbd] transition-colors hover:bg-[#161616] hover:text-[#ffffff]"
+                  onClick={() => setOpen(false)}
+                  className="text-app-muted hover:bg-app-hover hover:text-app-fg flex items-center gap-3 px-4 py-2 text-sm transition-colors"
                 >
                   <Icon size={16} strokeWidth={1.75} />
                   {item.label}
@@ -106,24 +110,28 @@ export function AccountMenu() {
               );
             })}
 
-            <div className="my-1 h-px bg-[#1a1a1a]" />
+            <div className="bg-app-border my-1 h-px" />
 
-            <Link
-              href="/settings"
+            <button
+              type="button"
               role="menuitem"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-[#bdbdbd] transition-colors hover:bg-[#161616] hover:text-[#ffffff]"
+              onClick={() => {
+                setOpen(false);
+                openSettings();
+              }}
+              className="text-app-muted hover:bg-app-hover hover:text-app-fg flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors"
             >
               <Settings size={16} strokeWidth={1.75} />
               Settings
-            </Link>
+            </button>
 
-            <div className="my-1 h-px bg-[#1a1a1a]" />
+            <div className="bg-app-border my-1 h-px" />
 
             <button
               type="button"
               role="menuitem"
               onClick={() => signOut({ redirectUrl: "/" })}
-              className="flex w-full items-center gap-3 px-4 py-2 text-sm text-[#bdbdbd] transition-colors hover:bg-[#161616] hover:text-[#ffffff]"
+              className="text-app-muted hover:bg-app-hover hover:text-app-fg flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors"
             >
               <LogOut size={16} strokeWidth={1.75} />
               Sign out
