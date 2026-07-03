@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { KineticLine } from "@/components/home/kinetic-line";
+import { LongStemArrow } from "@/components/ui/long-stem-arrow";
 
 const navItems = [
   { label: "The Network", href: "#network" },
@@ -94,7 +95,7 @@ export function HomeHero() {
               >
                 <span>Request early access</span>
                 <span className="flex h-13 w-13 items-center justify-center rounded-full border border-[#ffffff] text-xl leading-none transition-colors group-hover:bg-[#ffffff] group-hover:text-[#000000]">
-                  &rarr;
+                  <LongStemArrow />
                 </span>
               </Link>
             </KineticLine>

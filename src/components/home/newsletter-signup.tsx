@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { KineticLine } from "@/components/home/kinetic-line";
+import { LongStemArrow } from "@/components/ui/long-stem-arrow";
 
 export function NewsletterSignup() {
   return (
     <section className="bg-[#ffffff] text-[#000000]">
       <div className="mx-auto grid w-full max-w-[88rem] gap-16 px-6 py-28 lg:grid-cols-[0.85fr_1.15fr] lg:px-12 lg:py-40">
         <div>
-          <KineticLine className="flex items-center gap-7 text-[12px] font-semibold tracking-[0.3em] text-[#303030] uppercase">
+          <KineticLine className="flex items-end gap-7 text-[14px] font-semibold tracking-[0.3em] text-[#303030] uppercase leading-none">
             <span>Stay up to date</span>
-            <span className="h-px w-14 bg-[#000000]" />
+            <span className="h-0.5 w-14 bg-[#000000]" />
           </KineticLine>
           <KineticLine
             as="p"
@@ -39,7 +40,7 @@ export function NewsletterSignup() {
             >
               <span>Join the early cohort</span>
               <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#000000] text-xl leading-none transition-colors group-hover:bg-[#000000] group-hover:text-[#ffffff]">
-                &rarr;
+                <LongStemArrow />
               </span>
             </Link>
           </div>

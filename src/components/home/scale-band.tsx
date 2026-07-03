@@ -23,7 +23,7 @@ export function ScaleBand() {
     <section id="network" className="bg-[#ffffff] text-[#000000]">
       <div className="mx-auto w-full max-w-[88rem] px-6 py-28 lg:px-12 lg:py-40">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mx-auto h-px w-16 bg-[#000000]" />
+          <div className="mx-auto h-0.5 w-16 bg-[#000000]" />
           <KineticLine
             delay={40}
             className="mt-8 text-[12px] font-semibold tracking-[0.3em] text-[#303030] uppercase"

@@ -28,9 +28,9 @@ export function OperatingSystem() {
     <section id="operating-system" className="bg-[#ffffff] text-[#000000]">
       <div className="mx-auto w-full max-w-[88rem] px-6 py-28 lg:px-12 lg:py-40">
         <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:items-end">
-          <KineticLine className="flex items-center gap-7 text-[12px] font-semibold tracking-[0.3em] text-[#303030] uppercase">
+          <KineticLine className="flex items-end gap-7 text-[12px] font-semibold tracking-[0.3em] text-[#303030] uppercase leading-none">
             <span>The operating system</span>
-            <span className="h-px w-14 bg-[#000000]" />
+            <span className="h-0.5 w-14 bg-[#000000]" />
           </KineticLine>
           <KineticLine
             as="p"

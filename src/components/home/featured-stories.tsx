@@ -1,4 +1,5 @@
 import { KineticLine } from "@/components/home/kinetic-line";
+import { LongStemArrow } from "@/components/ui/long-stem-arrow";
 import { FEATURED_STORIES } from "@/lib/stories";
 
 export function FeaturedStories() {
@@ -54,7 +55,7 @@ export function FeaturedStories() {
                     <span>{story.date}</span>
                   </div>
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#ffffff] text-xl leading-none text-[#ffffff] transition-colors group-hover:bg-[#ffffff] group-hover:text-[#000000]">
-                    &rarr;
+                    <LongStemArrow />
                   </span>
                 </div>
               </div>
