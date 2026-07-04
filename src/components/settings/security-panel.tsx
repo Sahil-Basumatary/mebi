@@ -6,6 +6,9 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { deleteAccount } from "./actions";
 import { EmailRow } from "./email-manager";
+import { PasskeysControl } from "./passkeys";
+import { ChangePasswordControl } from "./password-modal";
+import { TwoFactorControl } from "./two-factor";
 
 const outlineButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors";
@@ -296,7 +299,7 @@ export function SecurityPanel({
   confirmHandle: string;
   onManageEmails: () => void;
 }) {
-  const { openUserProfile, signOut } = useClerk();
+  const { signOut } = useClerk();
   const [copied, setCopied] = useState(false);
 
   async function copyId() {
@@ -315,22 +318,16 @@ export function SecurityPanel({
         <SectionHeading>Account security</SectionHeading>
         <EmailRow onManage={onManageEmails} />
         <Row label="Password" description="Change the password you use to log in">
-          <button type="button" onClick={() => openUserProfile()} className={outlineButton}>
-            Change password
-          </button>
+          <ChangePasswordControl />
         </Row>
         <Row
           label="Two-step verification"
           description="Add another layer of security to your account"
         >
-          <button type="button" onClick={() => openUserProfile()} className={outlineButton}>
-            Add verification method
-          </button>
+          <TwoFactorControl />
         </Row>
         <Row label="Passkeys" description="Sign in with on-device biometric authentication">
-          <button type="button" onClick={() => openUserProfile()} className={outlineButton}>
-            Manage passkeys
-          </button>
+          <PasskeysControl />
         </Row>
       </section>
 
