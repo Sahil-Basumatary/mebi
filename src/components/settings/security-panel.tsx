@@ -5,6 +5,7 @@ import { Check, CircleAlert, Copy, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { deleteAccount } from "./actions";
+import { EmailRow } from "./email-manager";
 
 const outlineButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors";
@@ -287,13 +288,13 @@ function DeleteAccount({ confirmHandle }: { confirmHandle: string }) {
 }
 
 export function SecurityPanel({
-  email,
   userId,
   confirmHandle,
+  onManageEmails,
 }: {
-  email: string;
   userId: string;
   confirmHandle: string;
+  onManageEmails: () => void;
 }) {
   const { openUserProfile, signOut } = useClerk();
   const [copied, setCopied] = useState(false);
@@ -312,11 +313,7 @@ export function SecurityPanel({
     <div className="space-y-10">
       <section className="space-y-5">
         <SectionHeading>Account security</SectionHeading>
-        <Row label="Email" description={email || "Managed through your sign-in provider"}>
-          <button type="button" onClick={() => openUserProfile()} className={outlineButton}>
-            Manage emails
-          </button>
-        </Row>
+        <EmailRow onManage={onManageEmails} />
         <Row label="Password" description="Change the password you use to log in">
           <button type="button" onClick={() => openUserProfile()} className={outlineButton}>
             Change password

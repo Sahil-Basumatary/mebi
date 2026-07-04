@@ -5,11 +5,13 @@ import { ShieldCheck, SlidersHorizontal, X } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getSettingsData, type SettingsData } from "./actions";
+import { EmailsPane } from "./email-manager";
 import { ProfileForm } from "./profile-form";
 import { SecurityPanel } from "./security-panel";
 import { ThemeControl } from "./theme-control";
 
 type SectionId = "profile" | "preferences" | "security";
+type SubviewId = "emails";
 
 const SECTIONS = [
   {
@@ -20,7 +22,7 @@ const SECTIONS = [
   {
     id: "preferences",
     title: "Preferences",
-    description: "Choose how mebi looks and behaves for you.",
+    description: "Choose how you want mebi to look and behave",
   },
   {
     id: "security",
@@ -63,15 +65,24 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [section, setSection] = useState<SectionId>("profile");
+  const [subview, setSubview] = useState<SubviewId | null>(null);
   const [data, setData] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(false);
 
   const close = useCallback(() => setIsOpen(false), []);
 
+  // Switching sidebar sections always drops any open sub-pane (e.g. Manage
+  // emails) so we never leave the user stranded in a detail view.
+  const selectSection = useCallback((next: SectionId) => {
+    setSection(next);
+    setSubview(null);
+  }, []);
+
   // Fetch fresh data on each open (event-driven, not in an effect) so profile
   // edits and avatar uploads made earlier are always reflected.
   const open = useCallback((next?: SectionId) => {
     setSection(next ?? "profile");
+    setSubview(null);
     setIsOpen(true);
     setLoading(true);
     void getSettingsData().then((result) => {
@@ -127,7 +138,7 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
 
               <button
                 type="button"
-                onClick={() => setSection("profile")}
+                onClick={() => selectSection("profile")}
                 className={cn(
                   "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
                   section === "profile"
@@ -153,7 +164,7 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setSection(item.id)}
+                    onClick={() => selectSection(item.id)}
                     className={cn(
                       "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
                       active
@@ -170,24 +181,38 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
 
             <div className="min-w-0 flex-1 overflow-y-auto">
               <div className="mx-auto max-w-2xl px-4 py-8 sm:px-2">
-                <div className="mb-8">
-                  <h2 className="text-app-fg text-[26px] leading-8 font-semibold tracking-[-0.01em]">
-                    {activeSection.title}
-                  </h2>
-                  <p className="text-app-muted mt-1.5 text-base">{activeSection.description}</p>
-                </div>
-
-                {loading || !data ? (
-                  <div className="text-app-muted-2 py-16 text-center text-sm">Loading…</div>
+                {subview === "emails" ? (
+                  <EmailsPane sectionLabel="Security" onBack={() => setSubview(null)} />
                 ) : (
                   <>
-                    {section === "profile" ? (
-                      <ProfileForm email={data.email} initialValues={data.profile} />
-                    ) : null}
-                    {section === "preferences" ? (
-                      <ThemeControl initial={data.themePreference} />
-                    ) : null}
-                    {section === "security" ? <SecurityPanel /> : null}
+                    <div className="mb-8">
+                      <h2 className="text-app-fg text-[26px] leading-8 font-semibold tracking-[-0.01em]">
+                        {activeSection.title}
+                      </h2>
+                      <p className="text-app-muted mt-1.5 text-base">
+                        {activeSection.description}
+                      </p>
+                    </div>
+
+                    {loading || !data ? (
+                      <div className="text-app-muted-2 py-16 text-center text-sm">Loading…</div>
+                    ) : (
+                      <>
+                        {section === "profile" ? (
+                          <ProfileForm email={data.email} initialValues={data.profile} />
+                        ) : null}
+                        {section === "preferences" ? (
+                          <ThemeControl initial={data.themePreference} />
+                        ) : null}
+                        {section === "security" ? (
+                          <SecurityPanel
+                            userId={user?.id ?? ""}
+                            confirmHandle={data.profile.username || data.email}
+                            onManageEmails={() => setSubview("emails")}
+                          />
+                        ) : null}
+                      </>
+                    )}
                   </>
                 )}
               </div>
