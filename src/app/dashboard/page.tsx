@@ -1,7 +1,8 @@
 import type { UserRole } from "@prisma/client";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
-import { LongStemArrow } from "@/components/ui/long-stem-arrow";
+import { ArrowCircle } from "@/components/ui/arrow-circle";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { prisma } from "@/lib/prisma";
@@ -288,31 +289,49 @@ export default async function DashboardPage() {
     { label: "Proof", value: completedCount ? 60 : 15 },
   ];
 
-  const identityFacts = [
+  const identityFacts: { label: string; value: ReactNode }[] = [
     { label: "Role", value: user.role || "Not set" },
     { label: "Skills", value: listPreview(user.skills, "None captured") },
     { label: "Interests", value: listPreview(user.interests, "None captured") },
   ];
+
+  // This is the owner's own dashboard, so we always surface their handle here;
+  // the showGithub toggle only governs what other builders see on partner cards.
+  if (user.githubUsername) {
+    identityFacts.push({
+      label: "GitHub",
+      value: (
+        <a
+          href={`https://github.com/${user.githubUsername}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[#111111] underline decoration-[#cccccc] underline-offset-2 transition-colors hover:decoration-[#111111]"
+        >
+          @{user.githubUsername}
+        </a>
+      ),
+    });
+  }
 
   const rightRail = (
     <div className="flex h-full flex-col">
       <div>
         <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">Today</p>
         <h2 className="mt-4 font-serif text-3xl leading-tight font-light">Make one thing buildable.</h2>
-        <p className="mt-4 text-sm leading-6 text-[#333333]">
+        <p className="mt-4 text-[17px] leading-6 text-[#333333]">
           The best next move is not browsing. It is turning intent into a short project brief with one
           clear missing role.
         </p>
       </div>
       <div className="mt-8 border-t border-[#d8d8d8] pt-5">
         <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">Calm rule</p>
-        <p className="mt-3 text-sm leading-6 text-[#333333]">
+        <p className="mt-3 text-[17px] leading-6 text-[#333333]">
           One visible next action beats ten dashboard widgets.
         </p>
       </div>
       <div className="mt-auto border-t border-[#d8d8d8] pt-5">
         <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">Coming online</p>
-        <p className="mt-3 text-sm leading-6 text-[#333333]">
+        <p className="mt-3 text-[17px] leading-6 text-[#333333]">
           Teammate requests, proof artifacts, and community signal arrive once your first project is live.
         </p>
       </div>
@@ -331,7 +350,7 @@ export default async function DashboardPage() {
               <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.6rem,5.5vw,5rem)] leading-[0.98] font-light tracking-[-0.04em]">
                 Get your first serious project live.
               </h1>
-              <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
+              <p className="mt-6 max-w-2xl text-[17px] leading-7 text-[#333333]">
                 Brief the project, find the missing partner, then capture proof. One path, one next move.
               </p>
             </div>
@@ -344,16 +363,14 @@ export default async function DashboardPage() {
               <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
                 Recommended next
               </p>
-              <p className="mt-3 max-w-md text-sm leading-6 text-[#333333]">{nextAction.detail}</p>
+              <p className="mt-3 max-w-md text-[17px] leading-6 text-[#333333]">{nextAction.detail}</p>
             </div>
             <Link
               href={nextAction.href}
               className="group inline-flex shrink-0 items-center gap-4 text-[15px] font-medium text-[#000000]"
             >
               <span>{nextAction.label}</span>
-              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#000000] text-xl leading-none transition-colors group-hover:bg-[#000000] group-hover:text-[#ffffff]">
-                <LongStemArrow />
-              </span>
+              <ArrowCircle tone="onLight" className="h-12 w-12" />
             </Link>
           </div>
         </section>
@@ -412,7 +429,7 @@ export default async function DashboardPage() {
                       <div className="flex flex-wrap items-center gap-3">
                         <p className="font-semibold">{builderName(candidate.fullName, candidate.username)}</p>
                         {candidate.role ? (
-                          <span className="border border-[#d8d8d8] bg-[#f4f4f4] px-2 py-0.5 text-[10px] font-semibold tracking-[0.16em] text-[#555555] uppercase">
+                          <span className="border border-[#d8d8d8] bg-[#f4f4f4] px-2 py-0.5 text-[17px] font-semibold tracking-[0.16em] text-[#555555] uppercase">
                             {ROLE_LABEL[candidate.role]}
                           </span>
                         ) : null}
@@ -422,7 +439,7 @@ export default async function DashboardPage() {
                           {shared.map((tag) => (
                             <span
                               key={tag}
-                              className="border border-[#000000] bg-[#000000] px-2 py-0.5 text-[11px] text-[#ffffff]"
+                              className="border border-[#000000] bg-[#000000] px-2 py-0.5 text-[17px] text-[#ffffff]"
                             >
                               {tag}
                             </span>
@@ -439,7 +456,7 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="mt-6 border border-[#d8d8d8] bg-[#f7f7f7] p-5">
-              <p className="text-sm leading-6 text-[#333333]">
+              <p className="text-[17px] leading-6 text-[#333333]">
                 No overlapping builders yet. As more KCL students onboard, the people who share your skills and
                 interests show up here.{" "}
                 <Link href="/partners" className="border-b border-[#000000] font-medium text-[#000000]">
@@ -534,10 +551,10 @@ export default async function DashboardPage() {
                         {project.status.toLowerCase()}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-1 text-sm text-[#333333]">{project.description}</p>
+                    <p className="mt-2 line-clamp-1 text-[17px] text-[#333333]">{project.description}</p>
                   </div>
                   <div>
-                    <div className="mb-2 flex items-center justify-between text-xs text-[#555555]">
+                    <div className="mb-2 flex items-center justify-between text-[17px] text-[#555555]">
                       <span>Progress</span>
                       <span>{project.progress}%</span>
                     </div>
@@ -550,7 +567,7 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="mt-6 border border-[#d8d8d8] bg-[#f7f7f7] p-5">
-              <p className="text-sm leading-6 text-[#333333]">
+              <p className="text-[17px] leading-6 text-[#333333]">
                 No project records yet. Create the first brief in Project Pipeline so partner matching has
                 something concrete to reason about.
               </p>
@@ -578,7 +595,7 @@ export default async function DashboardPage() {
                 </div>
               ))}
             </dl>
-            <p className="mt-auto pt-6 text-sm leading-6 text-[#333333]">
+            <p className="mt-auto pt-6 text-[17px] leading-6 text-[#333333]">
               The shape sharpens when your project brief names a specific missing role. Skills and
               interests widen the base; proof lifts the top edge.
             </p>

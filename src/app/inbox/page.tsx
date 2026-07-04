@@ -137,7 +137,7 @@ export default async function InboxPage({
           </h1>
           <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
             Accept to form a partnership, decline to keep
-            your focus, and track what you've sent.
+            your focus, and track what you&apos;ve sent.
           </p>
         </header>
 

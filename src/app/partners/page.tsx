@@ -27,6 +27,8 @@ type PartnerProfile = {
   username: string | null;
   bio: string | null;
   imageUrl: string | null;
+  githubUsername: string | null;
+  showGithub: boolean;
   skills: string[];
   interests: string[];
   role: UserRole | null;
@@ -63,6 +65,14 @@ function initials(user: PartnerProfile): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+function GithubMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+    </svg>
+  );
 }
 
 function joinList(parts: string[]): string {
@@ -181,14 +191,25 @@ function PartnerRow({
           <div className="flex flex-wrap items-center gap-3">
             <p className="font-semibold">{displayName(user)}</p>
             {user.username ? <span className="text-sm text-[#999999]">@{user.username}</span> : null}
+            {user.githubUsername && user.showGithub ? (
+              <a
+                href={`https://github.com/${user.githubUsername}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-[#555555] transition-colors hover:text-[#111111]"
+              >
+                <GithubMark className="h-3.5 w-3.5" />
+                {user.githubUsername}
+              </a>
+            ) : null}
             {user.role ? (
               <span className="border border-[#d8d8d8] bg-[#f4f4f4] px-2 py-0.5 text-[10px] font-semibold tracking-[0.16em] text-[#555555] uppercase">
                 {ROLE_LABEL[user.role]}
               </span>
             ) : null}
           </div>
-          {user.bio ? <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-[#333333]">{user.bio}</p> : null}
-          {featured ? <p className="mt-2 text-sm text-[#111111]">{matchReason(breakdown)}</p> : null}
+          {user.bio ? <p className="mt-2 line-clamp-2 max-w-2xl text-[17px] leading-6 text-[#333333]">{user.bio}</p> : null}
+          {featured ? <p className="mt-2 text-[17px] text-[#111111]">{matchReason(breakdown)}</p> : null}
           {skillTags.length || interestTags.length ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {skillTags.map((skill) => (
@@ -242,6 +263,8 @@ export default async function PartnersPage({
       username: true,
       bio: true,
       imageUrl: true,
+      githubUsername: true,
+      showGithub: true,
       skills: true,
       interests: true,
       role: true,
@@ -332,7 +355,7 @@ export default async function PartnersPage({
             <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.5rem,5vw,4.8rem)] leading-[0.98] font-light tracking-[-0.04em]">
               Find serious builders for the missing role.
             </h1>
-            <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
+            <p className="mt-6 max-w-2xl text-[17px] leading-7 text-[#333333]">
               Discovery starts from overlap, not noise. Skills and interests you share are highlighted,
               and complementary roles are nudged up the list.
             </p>
@@ -361,7 +384,7 @@ export default async function PartnersPage({
         {pool.length === 0 ? (
           <section className="border border-[#d8d8d8] bg-[#f7f7f7] p-8">
             <h2 className="font-serif text-2xl font-light">No other builders yet</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-[#333333]">
+            <p className="mt-3 max-w-xl text-[15px] leading-6 text-[#333333]">
               You are early. As more KCL students onboard, this surface fills with people whose skills and
               interests overlap with yours.
             </p>
@@ -381,7 +404,7 @@ export default async function PartnersPage({
                   </div>
                 </div>
                 {!hasExactRecommendations ? (
-                  <p className="border-b border-[#d8d8d8] bg-[#f7f7f7] px-6 py-4 text-sm leading-6 text-[#333333]">
+                  <p className="border-b border-[#d8d8d8] bg-[#f7f7f7] px-6 py-4 text-[17px] leading-6 text-[#333333]">
                     Nothing overlaps your tags directly, so here {recommended.length === 1 ? "is" : "are"}{" "}
                     {recommended.length} close starting point{recommended.length > 1 ? "s" : ""} to reach out to.
                   </p>
@@ -423,7 +446,7 @@ export default async function PartnersPage({
                   ))}
                 </div>
               ) : (
-                <p className="bg-[#f7f7f7] px-6 py-8 text-sm leading-6 text-[#333333]">
+                <p className="bg-[#f7f7f7] px-6 py-8 text-[17px] leading-6 text-[#333333]">
                   No builders match these filters. Try widening the role or clearing a tag.
                 </p>
               )}
