@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
+import { ReverificationProvider } from "@/components/settings/reverification";
 
 export function Providers({
   children,
@@ -17,7 +18,7 @@ export function Providers({
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <ReverificationProvider>{children}</ReverificationProvider>
     </ThemeProvider>
   );
 }

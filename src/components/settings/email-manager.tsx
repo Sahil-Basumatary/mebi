@@ -3,6 +3,7 @@
 import { useReverification, useUser } from "@clerk/nextjs";
 import { ChevronRight, Info, Loader2 } from "lucide-react";
 import { useReducer, useState } from "react";
+import { useReverificationHandler } from "./reverification";
 
 // Clerk's email resource type, inferred from the user resource so we stay typed
 // without importing @clerk/types directly.
@@ -64,9 +65,17 @@ export function EmailsPane({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createEmail = useReverification((email: string) => user!.createEmailAddress({ email }));
-  const setPrimary = useReverification((id: string) => user!.update({ primaryEmailAddressId: id }));
-  const removeEmail = useReverification((resource: EmailResource) => resource.destroy());
+  const { onNeedsReverification } = useReverificationHandler();
+  const createEmail = useReverification((email: string) => user!.createEmailAddress({ email }), {
+    onNeedsReverification,
+  });
+  const setPrimary = useReverification(
+    (id: string) => user!.update({ primaryEmailAddressId: id }),
+    { onNeedsReverification },
+  );
+  const removeEmail = useReverification((resource: EmailResource) => resource.destroy(), {
+    onNeedsReverification,
+  });
 
   function resetAdd() {
     setMode("idle");

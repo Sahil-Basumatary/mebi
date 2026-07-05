@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import type { ThemePreference } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -197,6 +197,33 @@ export async function setAvatar(imageUrl: string): Promise<{ error: string | nul
 
   revalidatePath("/dashboard");
   revalidatePath("/partners");
+
+  return { error: null };
+}
+
+export async function deleteAccount(): Promise<{ error: string | null }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first." };
+  }
+
+  // Clear our data first — every relation cascades off User, so this removes the
+  // profile, projects, requests, partnerships, and notifications in one delete.
+  // Ignore a missing row so a half-provisioned account can still be torn down.
+  try {
+    await prisma.user.delete({ where: { clerkId: userId } });
+  } catch {
+    // No DB row to remove; fall through to deleting the identity itself.
+  }
+
+  // Deleting the Clerk identity is the source-of-truth step: once it's gone the
+  // session is invalid and the account can never sign in again.
+  try {
+    const client = await clerkClient();
+    await client.users.deleteUser(userId);
+  } catch {
+    return { error: "We couldn't delete your account. Please try again." };
+  }
 
   return { error: null };
 }

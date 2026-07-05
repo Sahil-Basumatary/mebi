@@ -89,18 +89,20 @@ function ToggleRow({
   return (
     <label className="flex cursor-pointer items-center justify-between gap-6">
       <span className="min-w-0">
-        <span className="text-app-fg block text-sm">{label}</span>
-        {hint ? <span className="text-app-muted-2 mt-0.5 block text-xs">{hint}</span> : null}
+        <span className="text-app-fg block text-sm font-medium">{label}</span>
+        {hint ? (
+          <span className="text-app-muted mt-0.5 block text-[13px] leading-[18px]">{hint}</span>
+        ) : null}
       </span>
-      <span className="relative inline-flex h-5 w-9 shrink-0 items-center">
+      <span className="relative inline-flex h-[18px] w-[30px] shrink-0 items-center">
         <input
           type="checkbox"
           name={name}
           defaultChecked={defaultChecked}
-          className="peer sr-only"
+          className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />
-        <span className="bg-app-border-strong peer-checked:bg-app-accent h-5 w-9 rounded-full transition-colors" />
-        <span className="pointer-events-none absolute left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-4" />
+        <span className="bg-app-border-strong peer-checked:bg-app-accent h-[18px] w-[30px] rounded-full transition-colors" />
+        <span className="pointer-events-none absolute left-0.5 h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-3" />
       </span>
     </label>
   );
