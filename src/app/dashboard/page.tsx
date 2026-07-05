@@ -7,7 +7,8 @@ import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
-import { HeroConstellation } from "./hero-constellation";
+import { CubeField } from "@/components/three/cube-field";
+import { IdentityArtifact, type ArtifactSignal } from "@/components/three/identity-artifact";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   BUILDER: "Builder",
@@ -30,93 +31,6 @@ function builderInitials(fullName: string | null, username: string | null): stri
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-type RadarPoint = {
-  label: string;
-  value: number;
-};
-
-function radarCoordinate(index: number, total: number, radius: number) {
-  const angle = -Math.PI / 2 + (2 * Math.PI * index) / total;
-  return {
-    x: 50 + Math.cos(angle) * radius,
-    y: 50 + Math.sin(angle) * radius,
-  };
-}
-
-function pointList(points: RadarPoint[], radiusScale = 0.38): string {
-  return points
-    .map((point, index) => {
-      const coordinate = radarCoordinate(index, points.length, radiusScale * point.value);
-      return `${coordinate.x},${coordinate.y}`;
-    })
-    .join(" ");
-}
-
-function MatchingRadar({ points }: { points: RadarPoint[] }) {
-  return (
-    <div className="relative mx-auto aspect-square w-full max-w-[31rem]">
-      <svg viewBox="-24 -22 148 146" role="img" aria-label="Matching radar profile" className="h-full w-full overflow-visible">
-        {[14, 24, 34, 44].map((radius) => (
-          <polygon
-            key={radius}
-            points={points
-              .map((_, index) => {
-                const coordinate = radarCoordinate(index, points.length, radius);
-                return `${coordinate.x},${coordinate.y}`;
-              })
-              .join(" ")}
-            fill="none"
-            stroke="#d8d8d8"
-            strokeWidth="0.5"
-          />
-        ))}
-        {points.map((_, index) => {
-          const outer = radarCoordinate(index, points.length, 44);
-          return (
-            <line key={index} x1="50" y1="50" x2={outer.x} y2={outer.y} stroke="#e6e6e6" strokeWidth="0.5" />
-          );
-        })}
-        <polygon points={pointList(points)} fill="rgba(0,0,0,0.12)" stroke="#000000" strokeWidth="0.9" />
-        {points.map((point, index) => {
-          const dot = radarCoordinate(index, points.length, 0.38 * point.value);
-          return <circle key={point.label} cx={dot.x} cy={dot.y} r="1.15" fill="#000000" />;
-        })}
-        {points.map((point, index) => {
-          const label = radarCoordinate(index, points.length, 52);
-          const textAnchor = label.x < 40 ? "end" : label.x > 60 ? "start" : "middle";
-          const yOffset = label.y < 42 ? -2 : label.y > 58 ? 5 : 0;
-
-          return (
-            <text
-              key={point.label}
-              x={label.x}
-              y={label.y + yOffset}
-              textAnchor={textAnchor}
-              fill="#111111"
-              fontSize="3"
-              fontWeight="600"
-              letterSpacing="0.1em"
-            >
-              <tspan x={label.x}>{point.label.toUpperCase()}</tspan>
-              <tspan x={label.x} dy="4.4" fill="#555555" fontFamily="monospace" fontSize="3">
-                {point.value}%
-              </tspan>
-            </text>
-          );
-        })}
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="flex h-16 w-16 flex-col items-center justify-center rounded-full border border-[#d8d8d8] bg-[#ffffff]/90">
-          <span className="font-serif text-2xl font-light">
-            {Math.round(points.reduce((total, point) => total + point.value, 0) / points.length)}
-          </span>
-          <span className="text-[9px] font-semibold tracking-[0.16em] text-[#555555] uppercase">Score</span>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 const STAGE_ICONS = [
@@ -210,11 +124,10 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const overlapBuilders = partnerPool
+  const scoredPool = partnerPool
     .map((candidate) => ({ candidate, breakdown: scoreMatch(user, candidate) }))
-    .filter((entry) => entry.breakdown.score > 0)
-    .sort((a, b) => b.breakdown.score - a.breakdown.score)
-    .slice(0, 3);
+    .sort((a, b) => b.breakdown.score - a.breakdown.score);
+  const overlapBuilders = scoredPool.filter((entry) => entry.breakdown.score > 0).slice(0, 3);
   const activeProject = projects.find((project) => project.status === "ACTIVE") ?? projects[0];
   const hasProfileSignal = Boolean(user.bio && user.skills.length && user.interests.length);
 
@@ -281,13 +194,12 @@ export default async function DashboardPage() {
     { label: "Requests", value: 0 },
   ];
 
-  const radarPoints: RadarPoint[] = [
-    { label: "Skills", value: user.skills.length ? 80 : 20 },
-    { label: "Interests", value: user.interests.length ? 65 : 20 },
-    { label: "Role", value: user.role ? 70 : 20 },
-    { label: "Brief", value: activeProject ? 75 : user.bio ? 45 : 10 },
-    { label: "Proof", value: completedCount ? 60 : 15 },
-  ];
+  const artifactSignal: ArtifactSignal = {
+    skills: user.skills.length,
+    interests: user.interests.length,
+    activeProjects: activeCount,
+    completedProjects: completedCount,
+  };
 
   const identityFacts: { label: string; value: ReactNode }[] = [
     { label: "Role", value: user.role || "Not set" },
@@ -342,7 +254,7 @@ export default async function DashboardPage() {
     <AppShell rightRail={rightRail}>
       <div className="flex flex-col gap-10">
         <section className="border border-[#d8d8d8] bg-[#ffffff] p-8 lg:p-10">
-          <div className="grid items-center gap-10 lg:grid-cols-[1fr_auto]">
+          <div className="grid items-start gap-10 lg:grid-cols-[1fr_auto]">
             <div className="min-w-0">
               <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
                 Command Center
@@ -354,8 +266,19 @@ export default async function DashboardPage() {
                 Brief the project, find the missing partner, then capture proof. One path, one next move.
               </p>
             </div>
-            <div className="relative hidden h-44 w-44 shrink-0 justify-self-end lg:block xl:h-52 xl:w-52">
-              <HeroConstellation />
+            <div className="relative hidden h-72 w-[24rem] shrink-0 justify-self-end lg:block xl:h-80 xl:w-[28rem]">
+              <CubeField className="absolute inset-0" />
+              <div aria-hidden className="pointer-events-none absolute top-0 left-0">
+                <span className="inline-block bg-[#000000] px-3 py-1.5 font-mono text-[11px] tracking-[0.08em] text-[#ffffff]">
+                  $ git init
+                </span>
+                <svg viewBox="0 0 120 70" fill="none" className="ml-3 h-[70px] w-[120px]">
+                  <path className="line-draw" pathLength="100" d="M1 0 v46 h96" stroke="#111111" strokeWidth="1.5" />
+                </svg>
+              </div>
+              <span className="pointer-events-none absolute right-0 bottom-1 font-mono text-[11px] tracking-[0.08em] text-[#8f8f8f]">
+                # tap a cube to commit it
+              </span>
             </div>
           </div>
           <div className="mt-8 flex flex-col gap-4 border-t border-[#d8d8d8] pt-6 sm:flex-row sm:items-end sm:justify-between">
@@ -576,15 +499,23 @@ export default async function DashboardPage() {
         </section>
 
         <section className="grid gap-px border border-[#d8d8d8] bg-[#d8d8d8] lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="bg-[#ffffff] p-8">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Matching radar</p>
-            <div className="mt-8 flex justify-center">
-              <MatchingRadar points={radarPoints} />
+          <div className="relative flex min-h-[26rem] flex-col bg-[#000000]">
+            <div className="flex items-center justify-between px-5 py-3">
+              <span className="font-mono text-[11px] tracking-[0.08em] text-[#8f8f8f]">
+                $ mebi render --signal
+              </span>
+              <span className="font-mono text-[11px] tracking-[0.08em] text-[#555555]">ascii · live</span>
+            </div>
+            <IdentityArtifact signal={artifactSignal} className="min-h-0 flex-1" />
+            <div className="px-5 py-3">
+              <span className="font-mono text-[11px] tracking-[0.08em] text-[#555555]">
+                # unique to your profile · redrawn as it grows
+              </span>
             </div>
           </div>
           <div className="flex flex-col bg-[#ffffff] p-8">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Your abilities</p>
-            <h2 className="mt-2 font-serif text-3xl font-light">What the radar means</h2>
+            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">Identity artifact</p>
+            <h2 className="mt-2 font-serif text-3xl font-light">Your signal, rendered</h2>
             <dl className="mt-8 divide-y divide-[#d8d8d8] border-y border-[#d8d8d8]">
               {identityFacts.map((fact) => (
                 <div key={fact.label} className="grid gap-1 py-4 sm:grid-cols-[7rem_1fr] sm:gap-4">
@@ -596,8 +527,9 @@ export default async function DashboardPage() {
               ))}
             </dl>
             <p className="mt-auto pt-6 text-[17px] leading-6 text-[#333333]">
-              The shape sharpens when your project brief names a specific missing role. Skills and
-              interests widen the base; proof lifts the top edge.
+              This form is computed from your live profile. Skills and interests set the knot&apos;s turns,
+              finished projects thicken it, and an active build spins it faster. Grow the signal and the
+              artifact redraws itself.
             </p>
           </div>
         </section>
