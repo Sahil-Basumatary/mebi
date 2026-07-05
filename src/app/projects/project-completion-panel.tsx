@@ -78,7 +78,7 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
         Finish line
       </p>
       <h2 className="mt-3 font-serif text-3xl font-light">Ready to close the loop?</h2>
-      <p className="mt-3 text-sm leading-6 text-[#333333]">
+      <p className="mt-3 text-[16px] leading-6 text-[#333333]">
         Completion locks the project at 100% and turns it into future proof for profile, partners,
         and CV generation.
       </p>
@@ -99,7 +99,7 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
             <h3 id="project-complete-title" className="mt-4 font-serif text-4xl leading-tight font-light">
               Project finished!
             </h3>
-            <p className="mt-4 text-sm leading-6 text-[#333333]">
+            <p className="mt-4 text-[16px] leading-6 text-[#333333]">
               Nice. This is now a completed build record. Next milestone can turn this into proof and
               partner-facing signal.
             </p>

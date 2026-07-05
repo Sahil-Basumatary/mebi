@@ -26,7 +26,7 @@ export function ProgressForm({ projectId, progress, disabled }: ProgressFormProp
           <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
             Progress
           </p>
-          <p className="mt-2 text-sm leading-6 text-[#333333]">Move the project only when real work has shipped.</p>
+          <p className="mt-2 text-[16px] leading-6 text-[#333333]">Move the project only when real work has shipped.</p>
         </div>
         <span className="font-serif text-4xl font-light">{value}%</span>
       </div>

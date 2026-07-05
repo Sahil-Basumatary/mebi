@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { ProjectTimeline, type TimelineProject } from "@/components/three/project-timeline";
 import { Button } from "@/components/ui/button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
+import { BriefChecklist, BriefSignalProvider } from "./brief-signal";
 import { ProjectForm } from "./project-form";
 
 function formatDate(date: Date): string {
@@ -19,19 +21,41 @@ export default async function ProjectsPage() {
     where: { ownerId: user.id },
     orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
   });
+  const timelineProjects: TimelineProject[] = [...projects]
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    .map((project) => ({
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      progress: project.progress,
+    }));
 
   return (
     <AppShell>
       <div className="flex flex-col gap-8">
         <header className="grid gap-px border border-[#d8d8d8] bg-[#d8d8d8] xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="bg-[#ffffff] p-8 lg:p-10">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-              Project Pipeline
-            </p>
-            <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.5rem,5vw,4.8rem)] leading-[0.98] font-light tracking-[-0.04em]">
-              Turn a rough idea into something extraordinary.
-            </h1>
-            <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
+          <div className="flex flex-col justify-between bg-[#ffffff] p-8 lg:p-10">
+            <div>
+              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
+                Project Pipeline
+              </p>
+              <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.5rem,5vw,4.8rem)] leading-[0.98] font-light tracking-[-0.04em]">
+                Turn a rough idea into something extraordinary.
+              </h1>
+            </div>
+            <div aria-hidden className="flex items-center gap-4 py-8">
+              <span className="flex items-center gap-1.5">
+                <span className="square-step h-2.5 w-2.5 border border-[#c4c4c4]" style={{ animationDelay: "150ms" }} />
+                <span className="square-step h-2.5 w-2.5 bg-[#d8d8d8]" style={{ animationDelay: "300ms" }} />
+                <span className="square-step h-2.5 w-2.5 bg-[#8f8f8f]" style={{ animationDelay: "450ms" }} />
+                <span className="square-step h-2.5 w-2.5 bg-[#000000]" style={{ animationDelay: "600ms" }} />
+              </span>
+              <span className="h-px flex-1 bg-[#d8d8d8]" />
+              <span className="font-mono text-[10px] tracking-[0.2em] text-[#8f8f8f] uppercase">
+                Idea → Proof
+              </span>
+            </div>
+            <p className="mt-6 max-w-2xl text-[16px] leading-7 text-[#333333]">
               Create the project brief here, then use it as the source of truth for partner matching,
               sprint planning, and future proof capture.
             </p>
@@ -41,9 +65,12 @@ export default async function ProjectsPage() {
               <p className="text-[11px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
                 Primary action
               </p>
-              <p className="mt-4 text-sm leading-6 text-[#333333]">
+              <p className="mt-4 text-[16px] leading-6 text-[#333333]">
                 A project should start with one clear problem, one missing role, and one next step.
               </p>
+            </div>
+            <div className="relative my-4 min-h-[13rem] flex-1">
+              <ProjectTimeline projects={timelineProjects} className="absolute inset-0" />
             </div>
             <Button asChild className="mt-8 rounded-full bg-[#000000] px-6 text-[#ffffff] hover:bg-[#333333]">
               <Link href="#new-project">
@@ -54,17 +81,19 @@ export default async function ProjectsPage() {
         </header>
 
         <section id="new-project" className="grid gap-6 xl:grid-cols-[0.65fr_1.35fr]">
-          <div className="border border-[#d8d8d8] bg-[#ffffff] p-6">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
-              New brief
-            </p>
-            <h2 className="mt-3 font-serif text-3xl font-light">Create from intent, not noise.</h2>
-            <p className="mt-4 text-sm leading-6 text-[#333333]">
-              Keep the first version tight. A good project record should tell a serious builder what
-              the problem is, what stack is likely, and what progress is expected.
-            </p>
-          </div>
-          <ProjectForm />
+          <BriefSignalProvider>
+            <div className="self-start border border-[#d8d8d8] bg-[#ffffff] p-6">
+              <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
+                New brief
+              </p>
+              <h2 className="mt-3 font-serif text-3xl font-light">Time to Cook</h2>
+              <p className="mt-4 text-[16px] leading-6 text-[#333333]">Keep the first version tight.</p>
+              <div className="mt-6 border-t border-[#d8d8d8] pt-6">
+                <BriefChecklist />
+              </div>
+            </div>
+            <ProjectForm />
+          </BriefSignalProvider>
         </section>
 
         <section>
@@ -74,7 +103,7 @@ export default async function ProjectsPage() {
                 Workspace
               </p>
               <h2 className="font-serif text-3xl font-light">Your project workspace</h2>
-              <p className="max-w-2xl text-sm leading-6 text-[#333333]">
+              <p className="max-w-2xl text-[16px] leading-6 text-[#333333]">
                 Public projects is visible to everyone, while Private projects is only visible to you.
               </p>
             </div>
@@ -95,7 +124,7 @@ export default async function ProjectsPage() {
                         {project.status.toLowerCase()}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 max-w-3xl text-sm leading-6 text-[#333333]">
+                    <p className="mt-2 line-clamp-2 max-w-3xl text-[16px] leading-6 text-[#333333]">
                       {project.description}
                     </p>
                     <p className="mt-3 text-xs text-[#555555]">Updated {formatDate(project.updatedAt)}</p>
@@ -119,7 +148,7 @@ export default async function ProjectsPage() {
                 No projects yet
               </p>
               <h3 className="mt-3 font-serif text-3xl font-light">Your first project is important for matching.</h3>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-[#333333]">
+              <p className="mt-4 max-w-2xl text-[16px] leading-6 text-[#333333]">
                 Create one clear project brief first so we can match you with the right partners.
               </p>
             </div>

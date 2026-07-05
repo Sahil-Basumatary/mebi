@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { createProject, type ProjectFormState } from "./actions";
+import { useBriefReport } from "./brief-signal";
 
 const initialState: ProjectFormState = {
   error: null,
@@ -10,6 +11,7 @@ const initialState: ProjectFormState = {
 
 export function ProjectForm() {
   const [state, formAction, isPending] = useActionState(createProject, initialState);
+  const report = useBriefReport();
 
   return (
     <form action={formAction} className="grid gap-5 border border-[#d8d8d8] bg-[#ffffff] p-6">
@@ -22,6 +24,7 @@ export function ProjectForm() {
           name="name"
           maxLength={120}
           required
+          onChange={(event) => report("name", event.target.value)}
           placeholder="KCL founder matching graph"
           className="border border-[#d8d8d8] bg-[#f7f7f7] px-3 py-3 text-sm text-[#000000] outline-none transition-colors placeholder:text-[#777777] focus:border-[#000000]"
         />
@@ -37,6 +40,7 @@ export function ProjectForm() {
           rows={6}
           maxLength={1200}
           required
+          onChange={(event) => report("description", event.target.value)}
           placeholder="What problem are you solving, who is it for, and what kind of partner would make it real?"
           className="resize-none border border-[#d8d8d8] bg-[#f7f7f7] px-3 py-3 text-sm leading-6 text-[#000000] outline-none transition-colors placeholder:text-[#777777] focus:border-[#000000]"
         />
@@ -50,6 +54,7 @@ export function ProjectForm() {
           <input
             id="techStack"
             name="techStack"
+            onChange={(event) => report("techStack", event.target.value)}
             placeholder="Next.js, Prisma, Postgres"
             className="border border-[#d8d8d8] bg-[#f7f7f7] px-3 py-3 text-sm text-[#000000] outline-none transition-colors placeholder:text-[#777777] focus:border-[#000000]"
           />
@@ -63,6 +68,7 @@ export function ProjectForm() {
             id="estimatedTime"
             name="estimatedTime"
             maxLength={80}
+            onChange={(event) => report("estimatedTime", event.target.value)}
             placeholder="4 weeks"
             className="border border-[#d8d8d8] bg-[#f7f7f7] px-3 py-3 text-sm text-[#000000] outline-none transition-colors placeholder:text-[#777777] focus:border-[#000000]"
           />

@@ -62,7 +62,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             <h1 className="mt-5 max-w-4xl font-serif text-[clamp(2.7rem,6vw,5.4rem)] leading-[0.98] font-light tracking-[-0.04em]">
               {project.name}
             </h1>
-            <p className="mt-6 max-w-3xl text-sm leading-7 text-[#333333]">{project.description}</p>
+            <p className="mt-6 max-w-3xl text-[16px] leading-7 text-[#333333]">{project.description}</p>
           </div>
           <div className="flex flex-col justify-between bg-[#f4f4f4] p-8 lg:p-10">
             <div>
@@ -92,7 +92,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="border border-[#d8d8d8] bg-[#ffffff] p-6">
+          <div className="self-start border border-[#d8d8d8] bg-[#ffffff] p-6">
             <p className="text-[12px] font-semibold tracking-[0.3em] text-[#555555] uppercase">
               Build signal
             </p>
