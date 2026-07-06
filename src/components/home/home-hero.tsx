@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { KineticLine } from "@/components/home/kinetic-line";
-import { LongStemArrow } from "@/components/ui/long-stem-arrow";
+import { ArrowCircle } from "@/components/ui/arrow-circle";
 
 const navItems = [
   { label: "The Network", href: "#network" },
@@ -38,7 +38,7 @@ export function HomeHero() {
             Hackollab
           </Link>
           <div className="flex items-center gap-10 xl:gap-12">
-            <nav className="hidden items-center gap-7 text-[15px] font-medium tracking-[-0.01em] text-[#ffffff] sm:flex lg:text-[16px] xl:gap-9">
+            <nav className="hidden items-center gap-7 text-[16px] font-medium tracking-[-0.01em] text-[#ffffff] sm:flex lg:text-[16px] xl:gap-9">
               {navItems.map((item) => (
                 <Link
                   key={item.label}
@@ -83,7 +83,7 @@ export function HomeHero() {
             <KineticLine
               delay={120}
               as="p"
-              className="max-w-sm text-[18px] leading-8 text-[#f2f2f2] [text-shadow:0_1px_16px_rgba(0,0,0,0.65)]"
+              className="max-w-sm text-[21px] leading-8 text-[#f2f2f2] [text-shadow:0_1px_16px_rgba(0,0,0,0.65)]"
             >
               Hackollab is the <span className="text-[#ffffff]">#1</span> place to build an exceptional portfolio
               for UK university students.
@@ -94,9 +94,7 @@ export function HomeHero() {
                 className="group inline-flex items-center gap-4 text-[17px] font-medium text-[#ffffff]"
               >
                 <span>Request early access</span>
-                <span className="flex h-13 w-13 items-center justify-center rounded-full border border-[#ffffff] text-xl leading-none transition-colors group-hover:bg-[#ffffff] group-hover:text-[#000000]">
-                  <LongStemArrow />
-                </span>
+                <ArrowCircle tone="onDark" className="h-13 w-13" />
               </Link>
             </KineticLine>
           </div>

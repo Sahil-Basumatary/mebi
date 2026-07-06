@@ -13,7 +13,7 @@ const tiles = [
   },
   {
     value: "0",
-    unit: "Noise",
+    unit: "Ghosting",
     body: "Structured requests replace the endless scroll of unanswered group-chat messages.",
   },
 ];
@@ -26,7 +26,7 @@ export function ScaleBand() {
           <div className="mx-auto h-0.5 w-16 bg-[#000000]" />
           <KineticLine
             delay={40}
-            className="mt-8 text-[12px] font-semibold tracking-[0.3em] text-[#303030] uppercase"
+            className="mt-8 text-[14px] font-semibold tracking-[0.3em] text-[#303030] uppercase"
           >
             About the network
           </KineticLine>
@@ -35,7 +35,7 @@ export function ScaleBand() {
             variant="headline"
             className="mt-12 font-[family-name:var(--font-newsreader)] text-[clamp(2.25rem,4vw,4rem)] leading-[1.08] font-light tracking-[-0.02em]"
           >
-            mebi gives student builders the structure that serious work quietly depends on.
+            Hackollab gives students a clear path to building their own software products like no other.
           </KineticLine>
         </div>
         <div className="mt-24 grid gap-px overflow-hidden border border-[#d8d8d8] bg-[#d8d8d8] md:grid-cols-3">
@@ -48,10 +48,10 @@ export function ScaleBand() {
               <p className="font-[family-name:var(--font-newsreader)] text-[5.5rem] leading-none font-light text-[#000000]">
                 {tile.value}
               </p>
-              <p className="mt-4 text-[12px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
+              <p className="mt-4 text-[14px] font-semibold tracking-[0.24em] text-[#555555] uppercase">
                 {tile.unit}
               </p>
-              <p className="mt-5 max-w-xs text-[14px] leading-6 text-[#333333]">{tile.body}</p>
+              <p className="mt-7 max-w-xs text-[18px] leading-6 text-[#000000]">{tile.body}</p>
             </KineticLine>
           ))}
         </div>

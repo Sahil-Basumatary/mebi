@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { KineticLine } from "@/components/home/kinetic-line";
-import { LongStemArrow } from "@/components/ui/long-stem-arrow";
+import { ArrowCircle } from "@/components/ui/arrow-circle";
 
 export function NewsletterSignup() {
   return (
@@ -26,22 +26,20 @@ export function NewsletterSignup() {
               <input
                 type="text"
                 placeholder="First name"
-                className="border-b border-[#000000] bg-transparent py-3 text-[15px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
+                className="border-b border-[#000000] bg-transparent py-3 text-[18px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
               />
               <input
                 type="email"
                 placeholder="KCL email address"
-                className="border-b border-[#000000] bg-transparent py-3 text-[15px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
+                className="border-b border-[#000000] bg-transparent py-3 text-[18px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
               />
             </div>
             <Link
               href="/sign-up?redirect_url=/onboarding"
-              className="group inline-flex w-fit items-center gap-4 text-[15px] font-medium text-[#000000]"
+              className="group inline-flex w-fit items-center gap-4 text-[18px] font-medium text-[#000000]"
             >
               <span>Join the early cohort</span>
-              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#000000] text-xl leading-none transition-colors group-hover:bg-[#000000] group-hover:text-[#ffffff]">
-                <LongStemArrow />
-              </span>
+              <ArrowCircle tone="onLight" className="h-12 w-12" />
             </Link>
           </div>
         </KineticLine>

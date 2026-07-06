@@ -25,7 +25,7 @@ export default function SignUpPage() {
           <h1 className="font-serif text-4xl leading-tight font-light tracking-[-0.04em] sm:text-5xl">
             Create your mebi account
           </h1>
-          <p className="mt-3 text-sm text-[#a8a8a8]">
+          <p className="mt-3 text-[17px] text-[#a8a8a8]">
             Already have an account?{" "}
             <Link href="/sign-in" className="font-medium text-[#ffffff] underline-offset-4 hover:underline">
               Log in.

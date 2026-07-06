@@ -1,5 +1,5 @@
 import { KineticLine } from "@/components/home/kinetic-line";
-import { LongStemArrow } from "@/components/ui/long-stem-arrow";
+import { ArrowCircle } from "@/components/ui/arrow-circle";
 import { FEATURED_STORIES } from "@/lib/stories";
 
 export function FeaturedStories() {
@@ -15,7 +15,7 @@ export function FeaturedStories() {
           </KineticLine>
           <KineticLine
             delay={40}
-            className="text-[12px] font-semibold tracking-[0.22em] text-[#8f8f8f] uppercase"
+            className="text-[14px] font-semibold tracking-[0.22em] text-[#8f8f8f] uppercase"
           >
             News & Insights
           </KineticLine>
@@ -49,14 +49,12 @@ export function FeaturedStories() {
                   {story.title}
                 </KineticLine>
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 text-[11px] font-semibold tracking-[0.2em] text-[#8f8f8f] uppercase">
+                  <div className="flex items-center gap-3 text-[12px] font-semibold tracking-[0.2em] text-[#8f8f8f] uppercase">
                     <span>{story.category}</span>
                     <span className="h-1 w-1 rounded-full bg-[#333333]" />
                     <span>{story.date}</span>
                   </div>
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#ffffff] text-xl leading-none text-[#ffffff] transition-colors group-hover:bg-[#ffffff] group-hover:text-[#000000]">
-                    <LongStemArrow />
-                  </span>
+                  <ArrowCircle tone="onDark" className="h-11 w-11" />
                 </div>
               </div>
             </KineticLine>

@@ -65,7 +65,7 @@ export default async function OnboardingPage() {
             <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.8rem,6vw,5rem)] leading-[1.02] font-light tracking-[-0.04em]">
               Create the profile your future teammates can trust.
             </h1>
-            <p className="mt-6 max-w-2xl text-sm leading-7 text-[#d8d8d8]">
+            <p className="mt-6 max-w-2xl text-[17px] leading-7 text-[#d8d8d8]">
               Tell us your role, skills, and interests so mebi can make project discovery feel like
               a focused workspace, not another noisy feed.
             </p>

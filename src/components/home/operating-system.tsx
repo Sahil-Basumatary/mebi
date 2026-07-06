@@ -4,7 +4,7 @@ const steps = [
   {
     index: "01",
     title: "Profile",
-    body: "Skills, intent, and ambition level are captured as structured signal, not a freeform bio nobody reads.",
+    body: "Skills, goals, and commitment level are captured in a structured profile that allows for meaningful matches.",
   },
   {
     index: "02",
@@ -14,12 +14,12 @@ const steps = [
   {
     index: "03",
     title: "Build",
-    body: "Ownership, progress, and blockers stay visible, so teams keep shipping between lectures and deadlines.",
+    body: "Ownership, progress, and blockers is visible to eliminate confusion and keep teams aligned.",
   },
   {
     index: "04",
     title: "Prove",
-    body: "Each project leaves behind a record you can defend in a spring week, internship, or graduate interview.",
+    body: "Each project leaves behind a record you can pitch in a spring week, internship, or graduate interview.",
   },
 ];
 
@@ -28,7 +28,7 @@ export function OperatingSystem() {
     <section id="operating-system" className="bg-[#ffffff] text-[#000000]">
       <div className="mx-auto w-full max-w-[88rem] px-6 py-28 lg:px-12 lg:py-40">
         <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:items-end">
-          <KineticLine className="flex items-end gap-7 text-[12px] font-semibold tracking-[0.3em] text-[#303030] uppercase leading-none">
+          <KineticLine className="flex items-end gap-7 text-[14px] font-semibold tracking-[0.3em] text-[#303030] uppercase leading-none">
             <span>The operating system</span>
             <span className="h-0.5 w-14 bg-[#000000]" />
           </KineticLine>
@@ -55,7 +55,7 @@ export function OperatingSystem() {
                 <h3 className="font-[family-name:var(--font-newsreader)] text-[2.2rem] font-light tracking-[-0.015em] text-[#000000]">
                   {step.title}
                 </h3>
-                <p className="mt-5 max-w-md text-[15px] leading-7 text-[#333333]">{step.body}</p>
+                <p className="mt-5 max-w-md font-normal text-[17px] leading-7 text-[#333333]">{step.body}</p>
               </div>
             </KineticLine>
           ))}

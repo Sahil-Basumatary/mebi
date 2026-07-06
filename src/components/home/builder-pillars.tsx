@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BuildMarquee } from "@/components/home/build-marquee";
 import { KineticLine } from "@/components/home/kinetic-line";
-import { LongStemArrow } from "@/components/ui/long-stem-arrow";
+import { ArrowCircle } from "@/components/ui/arrow-circle";
 
 const pillars = [
   {
@@ -45,9 +45,7 @@ export function BuilderPillars() {
                 className="group inline-flex items-center gap-4 text-[18px] font-medium text-[#ffffff]"
               >
                 <span>Learn More</span>
-                <span className="flex h-[2.5rem] w-[2.5rem] items-center justify-center rounded-full border-2 border-[#d8d8d8] text-[#ffffff] transition-colors group-hover:bg-[#ffffff] group-hover:text-[#000000]">
-                  <LongStemArrow />
-                </span>
+                <ArrowCircle tone="onDark" />
               </Link>
             </KineticLine>
           </div>
@@ -63,9 +61,7 @@ export function BuilderPillars() {
                     <p className="max-w-[15rem] text-[22px] leading-[1.32] font-normal tracking-[-0.01em] text-[#f2f2f2] lg:text-[25px]">
                       {pillar.title}
                     </p>
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[#ffffff] text-[#ffffff] transition-colors group-hover:bg-[#ffffff] group-hover:text-[#000000]">
-                      <LongStemArrow />
-                    </span>
+                    <ArrowCircle tone="onDark" />
                   </button>
                   {index < pillars.length - 1 ? <div className="h-0.5 w-full bg-[#d8d8d8]" /> : null}
                 </div>

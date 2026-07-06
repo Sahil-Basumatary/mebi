@@ -135,7 +135,7 @@ export default async function InboxPage({
           <h1 className="mt-5 font-serif text-[clamp(2.5rem,5vw,4.4rem)] leading-[0.98] font-light tracking-[-0.04em]">
             Partnership requests.
           </h1>
-          <p className="mt-6 max-w-2xl text-sm leading-7 text-[#333333]">
+          <p className="mt-6 max-w-2xl text-[17px] leading-7 text-[#333333]">
             Accept to form a partnership, decline to keep
             your focus, and track what you&apos;ve sent.
           </p>
@@ -191,16 +191,16 @@ export default async function InboxPage({
                         ) : null}
                         <span className="text-xs text-[#999999]">{timeAgo(request.createdAt)}</span>
                       </div>
-                      <p className="mt-3 max-w-2xl border-l-2 border-[#000000] pl-4 text-sm leading-6 text-[#333333]">
+                      <p className="mt-3 max-w-2xl border-l-2 border-[#000000] pl-4 text-[17px] leading-6 text-[#333333]">
                         {request.message}
                       </p>
                       {request.projectInterest ? (
-                        <p className="mt-3 text-sm text-[#111111]">
+                        <p className="mt-3 text-[17px] text-[#111111]">
                           <span className="font-semibold">Wants to build:</span> {request.projectInterest}
                         </p>
                       ) : null}
                       {request.relatedProject ? (
-                        <p className="mt-2 text-sm text-[#111111]">
+                        <p className="mt-2 text-[17px] text-[#111111]">
                           <span className="font-semibold">Related project:</span>{" "}
                           <Link href={`/projects/${request.relatedProject.id}`} className="underline underline-offset-2">
                             {request.relatedProject.name}
@@ -223,7 +223,7 @@ export default async function InboxPage({
           ) : (
             <section className="border border-[#d8d8d8] bg-[#f7f7f7] p-8">
               <h2 className="font-serif text-2xl font-light">No requests yet</h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-[#333333]">
+              <p className="mt-3 max-w-xl text-[15px] leading-6 text-[#333333]">
                 When a builder asks to partner with you, it lands here. Keep your profile sharp and your
                 projects public so the right people reach out.
               </p>
@@ -249,11 +249,11 @@ export default async function InboxPage({
                       ) : null}
                       <span className="text-xs text-[#999999]">{timeAgo(request.createdAt)}</span>
                     </div>
-                    <p className="mt-3 max-w-2xl border-l-2 border-[#d8d8d8] pl-4 text-sm leading-6 text-[#333333]">
+                    <p className="mt-3 max-w-2xl border-l-2 border-[#d8d8d8] pl-4 text-[17px] leading-6 text-[#333333]">
                       {request.message}
                     </p>
                     {request.relatedProject ? (
-                      <p className="mt-3 text-sm text-[#111111]">
+                      <p className="mt-3 text-[17px] text-[#111111]">
                         <span className="font-semibold">Related project:</span>{" "}
                         <Link href={`/projects/${request.relatedProject.id}`} className="underline underline-offset-2">
                           {request.relatedProject.name}
@@ -272,7 +272,7 @@ export default async function InboxPage({
         ) : (
           <section className="border border-[#d8d8d8] bg-[#f7f7f7] p-8">
             <h2 className="font-serif text-2xl font-light">Nothing sent yet</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-[#333333]">
+            <p className="mt-3 max-w-xl text-[17px] leading-6 text-[#333333]">
               Find a builder whose skills fill your gap. Attach a note to make it personal.
             </p>
             <Link

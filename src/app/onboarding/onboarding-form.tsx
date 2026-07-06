@@ -41,7 +41,7 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
             <p className="text-[12px] font-semibold tracking-[0.24em] text-[#8f8f8f] uppercase">
               Identity
             </p>
-            <p className="mt-1 text-sm text-[#d8d8d8]">The public face of your project profile.</p>
+            <p className="mt-1 text-[17px] text-[#d8d8d8]">The public face of your project profile.</p>
           </div>
           <span className="hidden rounded-full border border-[#262626] px-3 py-1 text-xs text-[#d8d8d8] sm:inline-flex">
             Required
@@ -107,7 +107,7 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
           <p className="text-[12px] font-semibold tracking-[0.24em] text-[#8f8f8f] uppercase">
             Skills and interests
           </p>
-          <p className="mt-1 text-sm text-[#d8d8d8]">Tags make matching precise and browsable.</p>
+          <p className="mt-1 text-[17px] text-[#d8d8d8]">Tags make matching precise and browsable.</p>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm">
@@ -140,7 +140,7 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
           <p className="text-[12px] font-semibold tracking-[0.24em] text-[#8f8f8f] uppercase">
             Your role
           </p>
-          <p className="mt-1 text-sm text-[#d8d8d8]">Choose the default lens for your workspace.</p>
+          <p className="mt-1 text-[17px] text-[#d8d8d8]">Choose the default lens for your workspace.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {(["BUILDER", "SPECIALIST", "LEARNER"] as const).map((role) => (
@@ -154,7 +154,7 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
               />
               <div className="h-full border border-[#262626] bg-[#000000] p-4 transition-colors hover:bg-[#050505] peer-checked:border-[#ffffff] peer-checked:bg-[#050505]">
                 <p className="text-sm font-semibold">{roleCardLabel(role)}</p>
-                <p className="mt-2 text-sm leading-relaxed text-[#d8d8d8]">
+                <p className="mt-2 text-[17px] leading-relaxed text-[#d8d8d8]">
                   {roleCardDescription(role)}
                 </p>
               </div>

@@ -166,3 +166,64 @@ body {
     animation: none;
   }
 }
+
+@keyframes line-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.line-draw {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: line-draw 0.7s ease-out 0.5s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes square-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.square-step {
+  animation: square-step-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .square-step {
+    animation: none;
+  }
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-fade {
+  animation: panel-fade-in 0.3s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-fade {
+    animation: none;
+  }
+}
