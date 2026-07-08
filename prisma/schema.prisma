@@ -53,9 +53,11 @@ model User {
   fullName         String?
   username         String?
   bio              String?
+  pronouns         String?
   imageUrl         String?
   githubUsername   String?
   showGithub       Boolean              @default(true)
+  socialLinks      String[]             @default([])
   themePreference  ThemePreference      @default(LIGHT)
   skills           String[]             @default([])
   interests        String[]             @default([])
