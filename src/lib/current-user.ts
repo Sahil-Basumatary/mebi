@@ -39,3 +39,27 @@ export async function getInitialTheme(): Promise<"light" | "dark" | "system"> {
 
   return user.themePreference.toLowerCase() as "light" | "dark" | "system";
 }
+
+export async function getInitialLocalePrefs(): Promise<{
+  spellcheckerLanguage: string;
+  timezone: string;
+}> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { spellcheckerLanguage: "en-GB", timezone: "auto" };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    select: { spellcheckerLanguage: true, timezone: true },
+  });
+
+  if (!user) {
+    return { spellcheckerLanguage: "en-GB", timezone: "auto" };
+  }
+
+  return {
+    spellcheckerLanguage: user.spellcheckerLanguage,
+    timezone: user.timezone,
+  };
+}

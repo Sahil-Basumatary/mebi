@@ -3,7 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Newsreader } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import { getInitialTheme } from "@/lib/current-user";
+import { getInitialLocalePrefs, getInitialTheme } from "@/lib/current-user";
 import { Providers } from "./providers";
 
 const guardianSans = localFont({
@@ -38,9 +38,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const initialTheme = await getInitialTheme();
+  const initialLocale = await getInitialLocalePrefs();
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${guardianSans.variable} ${newsreader.variable} h-full`}>
+    <html
+      lang={initialLocale.spellcheckerLanguage}
+      suppressHydrationWarning
+      className={`${guardianSans.variable} ${newsreader.variable} h-full`}
+    >
       <body className="bg-canvas text-foreground min-h-full font-sans antialiased">
         <ClerkProvider
           appearance={{
@@ -64,7 +69,13 @@ export default async function RootLayout({
             },
           }}
         >
-          <Providers defaultTheme={initialTheme}>{children}</Providers>
+          <Providers
+            defaultTheme={initialTheme}
+            spellcheckerLanguage={initialLocale.spellcheckerLanguage}
+            timezone={initialLocale.timezone}
+          >
+            {children}
+          </Providers>
         </ClerkProvider>
       </body>
     </html>
