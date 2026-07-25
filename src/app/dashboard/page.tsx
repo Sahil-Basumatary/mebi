@@ -2,6 +2,7 @@ import type { UserRole } from "@prisma/client";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
+import { SocialIcon } from "@/components/social-icon";
 import { ArrowCircle } from "@/components/ui/arrow-circle";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
@@ -108,20 +109,23 @@ export default async function DashboardPage() {
     }),
     prisma.project.count({ where: { ownerId: user.id, status: "ACTIVE" } }),
     prisma.project.count({ where: { ownerId: user.id, status: "COMPLETED" } }),
-    prisma.user.findMany({
-      where: { onboarded: true, id: { not: user.id } },
-      orderBy: { updatedAt: "desc" },
-      take: 40,
-      select: {
-        id: true,
-        fullName: true,
-        username: true,
-        imageUrl: true,
-        skills: true,
-        interests: true,
-        role: true,
-      },
-    }),
+    // Private profiles stay out of discovery and don't pull teammate suggestions.
+    user.profilePrivate
+      ? Promise.resolve([])
+      : prisma.user.findMany({
+          where: { onboarded: true, profilePrivate: false, id: { not: user.id } },
+          orderBy: { updatedAt: "desc" },
+          take: 40,
+          select: {
+            id: true,
+            fullName: true,
+            username: true,
+            imageUrl: true,
+            skills: true,
+            interests: true,
+            role: true,
+          },
+        }),
   ]);
 
   const scoredPool = partnerPool
@@ -203,6 +207,7 @@ export default async function DashboardPage() {
 
   const identityFacts: { label: string; value: ReactNode }[] = [
     { label: "Role", value: user.role || "Not set" },
+    ...(user.pronouns ? [{ label: "Pronouns", value: user.pronouns }] : []),
     { label: "Skills", value: listPreview(user.skills, "None captured") },
     { label: "Interests", value: listPreview(user.interests, "None captured") },
   ];
@@ -221,6 +226,27 @@ export default async function DashboardPage() {
         >
           @{user.githubUsername}
         </a>
+      ),
+    });
+  }
+
+  if (user.socialLinks.length) {
+    identityFacts.push({
+      label: "Links",
+      value: (
+        <span className="flex flex-wrap items-center gap-3">
+          {user.socialLinks.map((link) => (
+            <a
+              key={link}
+              href={link}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#555555] transition-colors hover:text-[#111111]"
+            >
+              <SocialIcon url={link} className="h-4 w-4" />
+            </a>
+          ))}
+        </span>
       ),
     });
   }

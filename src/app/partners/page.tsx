@@ -2,6 +2,7 @@ import type { UserRole } from "@prisma/client";
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { SocialIcon } from "@/components/social-icon";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch, type MatchBreakdown } from "@/lib/match";
 import { prisma } from "@/lib/prisma";
@@ -26,9 +27,11 @@ type PartnerProfile = {
   fullName: string | null;
   username: string | null;
   bio: string | null;
+  pronouns: string | null;
   imageUrl: string | null;
   githubUsername: string | null;
   showGithub: boolean;
+  socialLinks: string[];
   skills: string[];
   interests: string[];
   role: UserRole | null;
@@ -191,6 +194,9 @@ function PartnerRow({
           <div className="flex flex-wrap items-center gap-3">
             <p className="font-semibold">{displayName(user)}</p>
             {user.username ? <span className="text-sm text-[#999999]">@{user.username}</span> : null}
+            {user.pronouns ? (
+              <span className="text-sm text-[#999999]">{user.pronouns}</span>
+            ) : null}
             {user.githubUsername && user.showGithub ? (
               <a
                 href={`https://github.com/${user.githubUsername}`}
@@ -201,6 +207,21 @@ function PartnerRow({
                 <GithubMark className="h-3.5 w-3.5" />
                 {user.githubUsername}
               </a>
+            ) : null}
+            {user.socialLinks.length ? (
+              <span className="flex items-center gap-2">
+                {user.socialLinks.map((link) => (
+                  <a
+                    key={link}
+                    href={link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#555555] transition-colors hover:text-[#111111]"
+                  >
+                    <SocialIcon url={link} className="h-4 w-4" />
+                  </a>
+                ))}
+              </span>
             ) : null}
             {user.role ? (
               <span className="border border-[#d8d8d8] bg-[#f4f4f4] px-2 py-0.5 text-[10px] font-semibold tracking-[0.16em] text-[#555555] uppercase">
@@ -254,7 +275,7 @@ export default async function PartnersPage({
   // Early-stage scale: pull the candidate pool once and rank in memory. When the
   // directory grows we move structured filters and pagination into the query.
   const pool: PartnerProfile[] = await prisma.user.findMany({
-    where: { onboarded: true, id: { not: viewer.id } },
+    where: { onboarded: true, profilePrivate: false, id: { not: viewer.id } },
     orderBy: { updatedAt: "desc" },
     take: 200,
     select: {
@@ -262,9 +283,11 @@ export default async function PartnersPage({
       fullName: true,
       username: true,
       bio: true,
+      pronouns: true,
       imageUrl: true,
       githubUsername: true,
       showGithub: true,
+      socialLinks: true,
       skills: true,
       interests: true,
       role: true,
