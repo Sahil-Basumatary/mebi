@@ -63,6 +63,7 @@ model User {
   interests        String[]             @default([])
   role             UserRole?
   prefersSolo      Boolean              @default(false)
+  profilePrivate   Boolean              @default(false)
   onboarded        Boolean              @default(false)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
