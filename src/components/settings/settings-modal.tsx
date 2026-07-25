@@ -2,13 +2,21 @@
 
 import { useUser } from "@clerk/nextjs";
 import { Check, ShieldCheck, SlidersHorizontal, X } from "lucide-react";
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
 import { getSettingsData, type SettingsData } from "./actions";
 import { EmailsPane } from "./email-manager";
+import { PreferencesPanel } from "./preferences-panel";
 import { ProfileForm } from "./profile-form";
 import { SecurityPanel } from "./security-panel";
-import { ThemeControl } from "./theme-control";
 
 type SectionId = "profile" | "preferences" | "security";
 type SubviewId = "emails";
@@ -51,7 +59,23 @@ type SettingsModalContextValue = {
   open: (section?: SectionId) => void;
 };
 
+type SettingsModalStore = {
+  isOpen: boolean;
+  section: SectionId;
+  subview: SubviewId | null;
+  data: SettingsData | null;
+  loading: boolean;
+  dataStamp: number;
+  showSaved: boolean;
+  close: () => void;
+  open: (section?: SectionId) => void;
+  selectSection: (next: SectionId) => void;
+  setSubview: (next: SubviewId | null) => void;
+  refreshData: () => void;
+};
+
 const SettingsModalContext = createContext<SettingsModalContextValue | null>(null);
+const SettingsModalStoreContext = createContext<SettingsModalStore | null>(null);
 
 export function useSettingsModal() {
   const context = useContext(SettingsModalContext);
@@ -61,8 +85,15 @@ export function useSettingsModal() {
   return context;
 }
 
+function useSettingsModalStore() {
+  const store = useContext(SettingsModalStoreContext);
+  if (!store) {
+    throw new Error("SettingsModalHost must be used within a SettingsModalProvider");
+  }
+  return store;
+}
+
 export function SettingsModalProvider({ children }: { children: ReactNode }) {
-  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [section, setSection] = useState<SectionId>("profile");
   const [subview, setSubview] = useState<SubviewId | null>(null);
@@ -87,9 +118,9 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
       setData(result);
       setDataStamp((stamp) => stamp + 1);
       setShowSaved(true);
-      if (savedTimer.current) clearTimeout(savedTimer.current);
-      savedTimer.current = setTimeout(() => setShowSaved(false), 2000);
     });
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setShowSaved(false), 2000);
   }, []);
 
   // Switching sidebar sections always drops any open sub-pane (e.g. Manage
@@ -113,9 +144,56 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+    };
+  }, []);
+
+  const store: SettingsModalStore = {
+    isOpen,
+    section,
+    subview,
+    data,
+    loading,
+    dataStamp,
+    showSaved,
+    close,
+    open,
+    selectSection,
+    setSubview,
+    refreshData,
+  };
+
+  return (
+    <SettingsModalStoreContext.Provider value={store}>
+      <SettingsModalContext.Provider value={{ open }}>
+        {children}
+      </SettingsModalContext.Provider>
+    </SettingsModalStoreContext.Provider>
+  );
+}
+
+// Rendered inside KeyboardShortcutsProvider so Preferences can call openCustomize.
+export function SettingsModalHost() {
+  const { user } = useUser();
+  const {
+    isOpen,
+    section,
+    subview,
+    data,
+    loading,
+    dataStamp,
+    showSaved,
+    close,
+    selectSection,
+    setSubview,
+    refreshData,
+  } = useSettingsModalStore();
+
+  useEffect(() => {
     if (!isOpen) return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") close();
     }
     document.addEventListener("keydown", onKey);
     const previousOverflow = document.body.style.overflow;
@@ -124,13 +202,9 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen]);
+  }, [isOpen, close]);
 
-  useEffect(() => {
-    return () => {
-      if (savedTimer.current) clearTimeout(savedTimer.current);
-    };
-  }, []);
+  if (!isOpen) return null;
 
   const activeSection = SECTIONS.find((item) => item.id === section)!;
   const displayName = user?.fullName || user?.username || "Your account";
@@ -138,131 +212,131 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const initials = initialsFrom(displayName);
 
   return (
-    <SettingsModalContext.Provider value={{ open }}>
-      {children}
-      {isOpen ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-[#0f0f0f]/50 backdrop-blur-[2px]" onClick={close} />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Settings"
-            className="border-app-border bg-app-canvas relative z-10 flex h-[min(720px,88vh)] w-[min(1040px,94vw)] flex-col overflow-hidden rounded-xl border shadow-[0_24px_48px_rgba(0,0,0,0.28),0_4px_12px_rgba(0,0,0,0.16)] sm:flex-row"
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      <div className="absolute inset-0 bg-[#0f0f0f]/50 backdrop-blur-[2px]" onClick={close} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Settings"
+        className="border-app-border bg-app-canvas relative z-10 flex h-[min(720px,88vh)] w-[min(1040px,94vw)] flex-col overflow-hidden rounded-xl border shadow-[0_24px_48px_rgba(0,0,0,0.28),0_4px_12px_rgba(0,0,0,0.16)] sm:flex-row"
+      >
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Close settings"
+          className="text-app-muted hover:bg-app-hover hover:text-app-fg absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+        >
+          <X size={18} strokeWidth={1.75} />
+        </button>
+
+        <aside className="border-app-border bg-app-surface flex shrink-0 gap-1 overflow-x-auto border-b p-3 sm:w-60 sm:flex-col sm:overflow-x-visible sm:overflow-y-auto sm:border-r sm:border-b-0 sm:p-3">
+          <p className="text-app-muted-2 mb-1 hidden px-2 text-xs font-medium sm:block">
+            Account
+          </p>
+
+          <button
+            type="button"
+            onClick={() => selectSection("profile")}
+            className={cn(
+              "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
+              section === "profile"
+                ? "bg-app-surface-2 text-app-fg font-medium"
+                : "text-app-muted hover:bg-app-hover hover:text-app-fg",
+            )}
           >
-            <button
-              type="button"
-              onClick={close}
-              aria-label="Close settings"
-              className="text-app-muted hover:bg-app-hover hover:text-app-fg absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-            >
-              <X size={18} strokeWidth={1.75} />
-            </button>
+            <span className="border-app-border bg-app-canvas text-app-fg flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border text-[10px] font-semibold">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
+            </span>
+            <span className="truncate">{displayName}</span>
+          </button>
 
-            <aside className="border-app-border bg-app-surface flex shrink-0 gap-1 overflow-x-auto border-b p-3 sm:w-60 sm:flex-col sm:overflow-x-visible sm:overflow-y-auto sm:border-r sm:border-b-0 sm:p-3">
-              <p className="text-app-muted-2 mb-1 hidden px-2 text-xs font-medium sm:block">
-                Account
-              </p>
-
+          {SECONDARY_SECTIONS.map((item) => {
+            const Icon = item.icon;
+            const active = item.id === section;
+            return (
               <button
+                key={item.id}
                 type="button"
-                onClick={() => selectSection("profile")}
+                onClick={() => selectSection(item.id)}
                 className={cn(
                   "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  section === "profile"
+                  active
                     ? "bg-app-surface-2 text-app-fg font-medium"
                     : "text-app-muted hover:bg-app-hover hover:text-app-fg",
                 )}
               >
-                <span className="border-app-border bg-app-canvas text-app-fg flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border text-[10px] font-semibold">
-                  {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    initials
-                  )}
-                </span>
-                <span className="truncate">{displayName}</span>
+                <Icon size={16} strokeWidth={1.75} />
+                {item.label}
               </button>
+            );
+          })}
+        </aside>
 
-              {SECONDARY_SECTIONS.map((item) => {
-                const Icon = item.icon;
-                const active = item.id === section;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => selectSection(item.id)}
-                    className={cn(
-                      "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-                      active
-                        ? "bg-app-surface-2 text-app-fg font-medium"
-                        : "text-app-muted hover:bg-app-hover hover:text-app-fg",
-                    )}
-                  >
-                    <Icon size={16} strokeWidth={1.75} />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </aside>
+        <div className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-2xl px-4 py-8 sm:px-2">
+            {subview === "emails" ? (
+              <EmailsPane sectionLabel="Security" onBack={() => setSubview(null)} />
+            ) : (
+              <>
+                <div className="mb-8">
+                  <h2 className="text-app-fg text-[26px] leading-8 font-semibold tracking-[-0.01em]">
+                    {activeSection.title}
+                  </h2>
+                  <p className="text-app-muted mt-1.5 text-base">
+                    {activeSection.description}
+                  </p>
+                </div>
 
-            <div className="min-w-0 flex-1 overflow-y-auto">
-              <div className="mx-auto max-w-2xl px-4 py-8 sm:px-2">
-                {subview === "emails" ? (
-                  <EmailsPane sectionLabel="Security" onBack={() => setSubview(null)} />
+                {loading || !data ? (
+                  <div className="text-app-muted-2 py-16 text-center text-sm">Loading…</div>
                 ) : (
                   <>
-                    <div className="mb-8">
-                      <h2 className="text-app-fg text-[26px] leading-8 font-semibold tracking-[-0.01em]">
-                        {activeSection.title}
-                      </h2>
-                      <p className="text-app-muted mt-1.5 text-base">
-                        {activeSection.description}
-                      </p>
-                    </div>
-
-                    {loading || !data ? (
-                      <div className="text-app-muted-2 py-16 text-center text-sm">Loading…</div>
-                    ) : (
+                    {section === "profile" ? (
                       <>
-                        {section === "profile" ? (
-                          <>
-                            <ProfileForm
-                              key={dataStamp}
-                              email={data.email}
-                              initialValues={data.profile}
-                              onSaved={refreshData}
-                            />
-                            {showSaved ? (
-                              <div
-                                role="status"
-                                className="pointer-events-none fixed bottom-8 left-1/2 z-[130] flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#1a7f4b]/25 bg-[#1a7f4b] px-3.5 py-2 text-sm font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
-                              >
-                                <Check size={14} strokeWidth={2.5} />
-                                Saved
-                              </div>
-                            ) : null}
-                          </>
-                        ) : null}
-                        {section === "preferences" ? (
-                          <ThemeControl initial={data.themePreference} />
-                        ) : null}
-                        {section === "security" ? (
-                          <SecurityPanel
-                            userId={user?.id ?? ""}
-                            confirmHandle={data.profile.username || data.email}
-                            onManageEmails={() => setSubview("emails")}
-                          />
+                        <ProfileForm
+                          key={dataStamp}
+                          email={data.email}
+                          initialValues={data.profile}
+                          onSaved={refreshData}
+                        />
+                        {showSaved ? (
+                          <div
+                            role="status"
+                            className="pointer-events-none fixed bottom-8 left-1/2 z-[130] flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#1a7f4b]/25 bg-[#1a7f4b] px-3.5 py-2 text-sm font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
+                          >
+                            <Check size={14} strokeWidth={2.5} />
+                            Saved
+                          </div>
                         ) : null}
                       </>
-                    )}
+                    ) : null}
+                    {section === "preferences" ? (
+                      <PreferencesPanel
+                        theme={data.themePreference}
+                        spellcheckerLanguage={data.spellcheckerLanguage}
+                        timezone={data.timezone}
+                        startupPreference={data.startupPreference}
+                      />
+                    ) : null}
+                    {section === "security" ? (
+                      <SecurityPanel
+                        userId={user?.id ?? ""}
+                        confirmHandle={data.profile.username || data.email}
+                        onManageEmails={() => setSubview("emails")}
+                      />
+                    ) : null}
                   </>
                 )}
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
-      ) : null}
-    </SettingsModalContext.Provider>
+      </div>
+    </div>
   );
 }

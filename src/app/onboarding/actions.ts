@@ -93,5 +93,5 @@ export async function completeOnboarding(
     },
   });
 
-  redirect("/dashboard");
+  redirect("/start");
 }

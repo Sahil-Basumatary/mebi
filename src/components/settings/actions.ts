@@ -1,10 +1,19 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import type { ThemePreference } from "@prisma/client";
+import type { StartupPreference, ThemePreference } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import {
+  DEFAULT_SHORTCUT_BINDINGS,
+  mergeShortcutBindings,
+  normalizeCombo,
+  type ShortcutBindingMap,
+  type ShortcutId,
+} from "@/lib/keyboard-shortcuts";
+import { SPELLCHECKER_CODES } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
 import { MAX_SOCIAL_LINKS, normalizeSocialUrl } from "@/lib/social-links";
+import { isAllowedAppPath, type StartupPreferenceValue } from "@/lib/startup";
 
 export type ProfileState = {
   error: string | null;
@@ -14,6 +23,10 @@ export type ProfileState = {
 export type SettingsData = {
   email: string;
   themePreference: ThemePreference;
+  spellcheckerLanguage: string;
+  timezone: string;
+  startupPreference: StartupPreferenceValue;
+  shortcutBindings: ShortcutBindingMap;
   profile: {
     fullName: string;
     username: string;
@@ -31,7 +44,6 @@ export type SettingsData = {
   };
 };
 
-// GitHub-style pronoun presets; anything else the user types is stored verbatim.
 const PRONOUN_PRESETS = ["they/them", "she/her", "he/him"];
 
 function parseTags(rawValue: FormDataEntryValue | null): string[] {
@@ -132,9 +144,15 @@ export async function getSettingsData(): Promise<SettingsData | null> {
     return null;
   }
 
+  const shortcutBindings = await loadShortcutBindingsForUser(userId);
+
   return {
     email: user.email,
     themePreference: user.themePreference,
+    spellcheckerLanguage: user.spellcheckerLanguage,
+    timezone: user.timezone,
+    startupPreference: user.startupPreference,
+    shortcutBindings,
     profile: {
       fullName: user.fullName ?? "",
       username: user.username ?? "",
@@ -287,4 +305,143 @@ export async function updateThemePreference(preference: ThemePreference): Promis
     where: { clerkId: userId },
     data: { themePreference: preference },
   });
+}
+
+export async function updateSpellcheckerLanguage(code: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) return;
+  if (!SPELLCHECKER_CODES.has(code)) return;
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { spellcheckerLanguage: code },
+  });
+}
+
+export async function updateTimezone(timezone: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) return;
+
+  const trimmed = timezone.trim();
+  if (trimmed !== "auto") {
+    try {
+      // Throws RangeError for unknown IANA ids.
+      Intl.DateTimeFormat(undefined, { timeZone: trimmed });
+    } catch {
+      return;
+    }
+  }
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { timezone: trimmed },
+  });
+}
+
+const STARTUP_VALUES: StartupPreference[] = ["HOME", "LAST_VISITED"];
+
+async function getUserIdByClerk(clerkId: string): Promise<string | null> {
+  const user = await prisma.user.findUnique({
+    where: { clerkId },
+    select: { id: true },
+  });
+  return user?.id ?? null;
+}
+
+async function loadShortcutBindingsForUser(
+  clerkId: string,
+): Promise<ShortcutBindingMap> {
+  const user = await prisma.user.findUnique({
+    where: { clerkId },
+    select: {
+      shortcutBindings: {
+        select: { actionId: true, combo: true },
+      },
+    },
+  });
+  const raw = Object.fromEntries(
+    (user?.shortcutBindings ?? []).map((row) => [row.actionId, row.combo]),
+  );
+  return mergeShortcutBindings(raw);
+}
+
+export async function getShortcutBindings(): Promise<ShortcutBindingMap> {
+  const { userId } = await auth();
+  if (!userId) return DEFAULT_SHORTCUT_BINDINGS;
+  return loadShortcutBindingsForUser(userId);
+}
+
+export async function updateStartupPreference(
+  preference: StartupPreferenceValue,
+): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) return;
+  if (!STARTUP_VALUES.includes(preference)) return;
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { startupPreference: preference },
+  });
+}
+
+export async function updateLastVisitedPath(path: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) return;
+  if (!isAllowedAppPath(path)) return;
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { lastVisitedPath: path },
+  });
+}
+
+export async function updateShortcutBindings(
+  bindings: Partial<Record<ShortcutId, string>>,
+): Promise<{ error: string | null; bindings: ShortcutBindingMap }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", bindings: DEFAULT_SHORTCUT_BINDINGS };
+  }
+
+  const dbUserId = await getUserIdByClerk(userId);
+  if (!dbUserId) {
+    return { error: "Account not found.", bindings: DEFAULT_SHORTCUT_BINDINGS };
+  }
+
+  const next = await loadShortcutBindingsForUser(userId);
+  for (const [id, combo] of Object.entries(bindings)) {
+    if (typeof combo !== "string") continue;
+    const actionId = id as ShortcutId;
+    const normalized = normalizeCombo(combo);
+    if (!normalized) {
+      return { error: `Invalid shortcut for ${id}.`, bindings: next };
+    }
+    next[actionId] = normalized;
+    if (normalized === DEFAULT_SHORTCUT_BINDINGS[actionId]) {
+      await prisma.userShortcutBinding.deleteMany({
+        where: { userId: dbUserId, actionId },
+      });
+    } else {
+      await prisma.userShortcutBinding.upsert({
+        where: {
+          userId_actionId: { userId: dbUserId, actionId },
+        },
+        create: { userId: dbUserId, actionId, combo: normalized },
+        update: { combo: normalized },
+      });
+    }
+  }
+
+  return { error: null, bindings: next };
+}
+
+export async function resetShortcutBindings(): Promise<ShortcutBindingMap> {
+  const { userId } = await auth();
+  if (!userId) return DEFAULT_SHORTCUT_BINDINGS;
+
+  const dbUserId = await getUserIdByClerk(userId);
+  if (!dbUserId) return DEFAULT_SHORTCUT_BINDINGS;
+
+  await prisma.userShortcutBinding.deleteMany({ where: { userId: dbUserId } });
+  return DEFAULT_SHORTCUT_BINDINGS;
 }

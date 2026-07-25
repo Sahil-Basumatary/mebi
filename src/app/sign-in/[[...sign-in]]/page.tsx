@@ -36,8 +36,8 @@ export default function SignInPage() {
         <div className="mt-8 w-full">
           <SignIn
             appearance={authAppearance}
-            fallbackRedirectUrl="/dashboard"
-            forceRedirectUrl="/dashboard"
+            fallbackRedirectUrl="/start"
+            forceRedirectUrl="/start"
           />
         </div>
 

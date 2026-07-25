@@ -46,6 +46,11 @@ enum ThemePreference {
   SYSTEM
 }
 
+enum StartupPreference {
+  HOME
+  LAST_VISITED
+}
+
 model User {
   id               String               @id @default(cuid())
   clerkId          String               @unique
@@ -59,6 +64,10 @@ model User {
   showGithub       Boolean              @default(true)
   socialLinks      String[]             @default([])
   themePreference  ThemePreference      @default(LIGHT)
+  spellcheckerLanguage String            @default("en-GB")
+  timezone         String               @default("auto")
+  startupPreference StartupPreference   @default(HOME)
+  lastVisitedPath  String?
   skills           String[]             @default([])
   interests        String[]             @default([])
   role             UserRole?
@@ -73,6 +82,21 @@ model User {
   partnershipsA    Partnership[]        @relation("PartnershipUserA")
   partnershipsB    Partnership[]        @relation("PartnershipUserB")
   notifications    Notification[]
+  shortcutBindings UserShortcutBinding[]
+}
+
+// One row per remapped action. Missing rows mean "use the product default".
+model UserShortcutBinding {
+  id        String   @id @default(cuid())
+  userId    String
+  actionId  String
+  combo     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, actionId])
+  @@index([userId])
 }
 
 model Project {
