@@ -4,6 +4,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import type { ThemePreference } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { MAX_SOCIAL_LINKS, normalizeSocialUrl } from "@/lib/social-links";
 
 export type ProfileState = {
   error: string | null;
@@ -17,15 +18,21 @@ export type SettingsData = {
     fullName: string;
     username: string;
     bio: string;
+    pronouns: string;
     imageUrl: string;
     githubUsername: string;
     showGithub: boolean;
+    socialLinks: string[];
     skills: string;
     interests: string;
     role: "BUILDER" | "SPECIALIST" | "LEARNER" | "";
     prefersSolo: boolean;
+    profilePrivate: boolean;
   };
 };
+
+// GitHub-style pronoun presets; anything else the user types is stored verbatim.
+const PRONOUN_PRESETS = ["they/them", "she/her", "he/him"];
 
 function parseTags(rawValue: FormDataEntryValue | null): string[] {
   if (typeof rawValue !== "string") {
@@ -88,6 +95,32 @@ function normalizeGithubUsername(rawValue: FormDataEntryValue | null): {
   return { value: handle, error: null };
 }
 
+// The form sends the dropdown choice plus a free-text field that only matters
+// when "custom" is picked. Resolve both into the single value we persist.
+function resolvePronouns(formData: FormData): string | null {
+  const choice = getField(formData.get("pronounsSelect"), 40);
+  if (choice === "custom") {
+    return getField(formData.get("pronounsCustom"), 40);
+  }
+  if (choice && PRONOUN_PRESETS.includes(choice)) {
+    return choice;
+  }
+  return null;
+}
+
+function collectSocialLinks(formData: FormData): string[] {
+  const links: string[] = [];
+  for (let index = 0; index < MAX_SOCIAL_LINKS; index += 1) {
+    const raw = formData.get(`socialLink${index}`);
+    if (typeof raw !== "string") continue;
+    const normalized = normalizeSocialUrl(raw);
+    if (normalized && !links.includes(normalized)) {
+      links.push(normalized);
+    }
+  }
+  return links.slice(0, MAX_SOCIAL_LINKS);
+}
+
 export async function getSettingsData(): Promise<SettingsData | null> {
   const { userId } = await auth();
   if (!userId) {
@@ -106,13 +139,16 @@ export async function getSettingsData(): Promise<SettingsData | null> {
       fullName: user.fullName ?? "",
       username: user.username ?? "",
       bio: user.bio ?? "",
+      pronouns: user.pronouns ?? "",
       imageUrl: user.imageUrl ?? "",
       githubUsername: user.githubUsername ?? "",
       showGithub: user.showGithub,
+      socialLinks: user.socialLinks,
       skills: user.skills.join(", "),
       interests: user.interests.join(", "),
       role: (user.role ?? "") as "BUILDER" | "SPECIALIST" | "LEARNER" | "",
       prefersSolo: user.prefersSolo,
+      profilePrivate: user.profilePrivate,
     },
   };
 }
@@ -129,10 +165,14 @@ export async function updateProfile(
   const fullName = getField(formData.get("fullName"), 120);
   const username = getField(formData.get("username"), 40);
   const bio = getField(formData.get("bio"), 400);
+  const pronouns = resolvePronouns(formData);
   const imageUrl = getField(formData.get("imageUrl"), 500);
+  const socialLinks = collectSocialLinks(formData);
   const skills = parseTags(formData.get("skills"));
   const interests = parseTags(formData.get("interests"));
   const prefersSolo = formData.get("prefersSolo") === "on";
+  // Private mode is solo-gated: turning solo off always clears privacy.
+  const profilePrivate = prefersSolo && formData.get("profilePrivate") === "on";
   const showGithub = formData.get("showGithub") === "on";
   const roleValue = formData.get("role");
   const github = normalizeGithubUsername(formData.get("githubUsername"));
@@ -155,13 +195,16 @@ export async function updateProfile(
       fullName,
       username,
       bio,
+      pronouns,
       imageUrl,
       githubUsername: github.value,
       showGithub,
+      socialLinks,
       skills,
       interests,
       role: roleValue,
       prefersSolo,
+      profilePrivate,
     },
   });
 

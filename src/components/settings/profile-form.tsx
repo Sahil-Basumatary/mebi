@@ -1,11 +1,14 @@
 "use client";
 
 import { upload } from "@vercel/blob/client";
-import { Check } from "lucide-react";
-import { useActionState, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { SocialIcon } from "@/components/social-icon";
+import { MAX_SOCIAL_LINKS } from "@/lib/social-links";
 import { setAvatar, updateProfile, type ProfileState } from "./actions";
 
 const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
+
+const PRONOUN_PRESETS = ["they/them", "she/her", "he/him"];
 
 function initialsFrom(name: string): string {
   const trimmed = name.trim();
@@ -19,19 +22,39 @@ function initialsFrom(name: string): string {
 
 type ProfileFormProps = {
   email: string;
+  onSaved?: () => void;
   initialValues: {
     fullName: string;
     username: string;
     bio: string;
+    pronouns: string;
     imageUrl: string;
     githubUsername: string;
     showGithub: boolean;
+    socialLinks: string[];
     skills: string;
     interests: string;
     role: "BUILDER" | "SPECIALIST" | "LEARNER" | "";
     prefersSolo: boolean;
+    profilePrivate: boolean;
   };
 };
+
+const PRONOUN_OPTIONS = [
+  { value: "", label: "Don't specify" },
+  { value: "they/them", label: "they/them" },
+  { value: "she/her", label: "she/her" },
+  { value: "he/him", label: "he/him" },
+  { value: "custom", label: "Custom" },
+] as const;
+
+// Prepend a scheme so the icon can be detected while the user is still typing a
+// bare domain like "linkedin.com/in/…".
+function iconPreview(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
 
 const ROLES = [
   { value: "BUILDER", label: "Builder" },
@@ -78,16 +101,25 @@ function Field({
 function ToggleRow({
   name,
   defaultChecked,
+  checked,
+  onChange,
   label,
   hint,
+  disabled,
 }: {
   name: string;
-  defaultChecked: boolean;
+  defaultChecked?: boolean;
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
   label: string;
   hint?: string;
+  disabled?: boolean;
 }) {
+  const isControlled = typeof checked === "boolean";
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-6">
+    <label
+      className={`flex items-center justify-between gap-6 ${disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer"}`}
+    >
       <span className="min-w-0">
         <span className="text-app-fg block text-sm font-medium">{label}</span>
         {hint ? (
@@ -98,8 +130,14 @@ function ToggleRow({
         <input
           type="checkbox"
           name={name}
-          defaultChecked={defaultChecked}
-          className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          disabled={disabled}
+          {...(isControlled
+            ? {
+                checked,
+                onChange: (event: ChangeEvent<HTMLInputElement>) => onChange?.(event.target.checked),
+              }
+            : { defaultChecked })}
+          className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
         />
         <span className="bg-app-border-strong peer-checked:bg-app-accent h-[18px] w-[30px] rounded-full transition-colors" />
         <span className="pointer-events-none absolute left-0.5 h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-3" />
@@ -108,7 +146,7 @@ function ToggleRow({
   );
 }
 
-export function ProfileForm({ email, initialValues }: ProfileFormProps) {
+export function ProfileForm({ email, onSaved, initialValues }: ProfileFormProps) {
   const initialState: ProfileState = { error: null, success: false };
   const [state, formAction, isPending] = useActionState(updateProfile, initialState);
   const [imageUrl, setImageUrl] = useState(initialValues.imageUrl);
@@ -116,7 +154,34 @@ export function ProfileForm({ email, initialValues }: ProfileFormProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const storedPronouns = initialValues.pronouns;
+  const isPresetPronoun = PRONOUN_PRESETS.includes(storedPronouns);
+  const [pronounChoice, setPronounChoice] = useState(
+    storedPronouns === "" ? "" : isPresetPronoun ? storedPronouns : "custom",
+  );
+  const [customPronoun, setCustomPronoun] = useState(isPresetPronoun ? "" : storedPronouns);
+
+  const [socialLinks, setSocialLinks] = useState<string[]>(() =>
+    Array.from({ length: MAX_SOCIAL_LINKS }, (_, index) => initialValues.socialLinks[index] ?? ""),
+  );
+  const [prefersSolo, setPrefersSolo] = useState(initialValues.prefersSolo);
+  const [profilePrivate, setProfilePrivate] = useState(
+    initialValues.prefersSolo && initialValues.profilePrivate,
+  );
+
+  function updateSocialLink(index: number, value: string) {
+    setSocialLinks((current) => current.map((link, position) => (position === index ? value : link)));
+  }
+
+  function onSoloChange(next: boolean) {
+    setPrefersSolo(next);
+    if (!next) setProfilePrivate(false);
+  }
+
   const initials = initialsFrom(initialValues.fullName || initialValues.username);
+  useEffect(() => {
+    if (state.success) onSaved?.();
+  }, [state.success, onSaved]);
 
   async function onFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -208,7 +273,7 @@ export function ProfileForm({ email, initialValues }: ProfileFormProps) {
                 placeholder="sahil"
               />
             </Field>
-            <Field label="Email" hint="Managed through your sign-in provider.">
+            <Field label="Email">
               <input
                 value={email}
                 disabled
@@ -216,6 +281,34 @@ export function ProfileForm({ email, initialValues }: ProfileFormProps) {
               />
             </Field>
           </div>
+
+          <Field label="Pronouns" htmlFor="pronounsSelect">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <select
+                id="pronounsSelect"
+                name="pronounsSelect"
+                value={pronounChoice}
+                onChange={(event) => setPronounChoice(event.target.value)}
+                className={`${inputClass} sm:max-w-[200px]`}
+              >
+                {PRONOUN_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {pronounChoice === "custom" ? (
+                <input
+                  name="pronounsCustom"
+                  value={customPronoun}
+                  onChange={(event) => setCustomPronoun(event.target.value)}
+                  maxLength={40}
+                  className={inputClass}
+                  placeholder="Add your pronouns"
+                />
+              ) : null}
+            </div>
+          </Field>
 
           <Field label="Bio" htmlFor="bio">
             <textarea
@@ -254,6 +347,29 @@ export function ProfileForm({ email, initialValues }: ProfileFormProps) {
             label="Show GitHub on your public profile"
             hint="Appears on your partner card and dashboard."
           />
+
+          <Field
+            label="Social accounts"
+          >
+            <div className="space-y-2">
+              {socialLinks.map((value, index) => (
+                // eslint-disable-next-line react/no-array-index-key
+                <div key={index} className="flex items-center gap-2">
+                  <span className="border-app-border text-app-muted-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border">
+                    <SocialIcon url={iconPreview(value)} className="h-4 w-4" />
+                  </span>
+                  <input
+                    name={`socialLink${index}`}
+                    value={value}
+                    onChange={(event) => updateSocialLink(index, event.target.value)}
+                    maxLength={200}
+                    className={inputClass}
+                    placeholder="Link to social profile"
+                  />
+                </div>
+              ))}
+            </div>
+          </Field>
         </div>
       </section>
 
@@ -301,9 +417,22 @@ export function ProfileForm({ email, initialValues }: ProfileFormProps) {
           </Field>
           <ToggleRow
             name="prefersSolo"
-            defaultChecked={initialValues.prefersSolo}
+            checked={prefersSolo}
+            onChange={onSoloChange}
             label="Focus on solo projects for now"
             hint="We'll tone down teammate suggestions."
+          />
+          <ToggleRow
+            name="profilePrivate"
+            checked={profilePrivate}
+            onChange={setProfilePrivate}
+            disabled={!prefersSolo}
+            label="Make profile private and hide activity"
+            hint={
+              prefersSolo
+                ? "You won't appear in partner discovery. Existing inbox threads stay visible to people you've already contacted."
+                : "Turn on solo mode first to enable private profile."
+            }
           />
         </div>
       </section>
@@ -317,12 +446,6 @@ export function ProfileForm({ email, initialValues }: ProfileFormProps) {
           {isPending ? "Saving…" : "Save changes"}
         </button>
         {state.error ? <span className="text-sm text-[#b94a48]">{state.error}</span> : null}
-        {state.success && !isPending ? (
-          <span className="flex items-center gap-1.5 text-sm text-[#1a7f4b]">
-            <Check size={16} strokeWidth={2.25} />
-            Saved
-          </span>
-        ) : null}
       </div>
     </form>
   );
