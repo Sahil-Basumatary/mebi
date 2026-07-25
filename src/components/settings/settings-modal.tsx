@@ -1,8 +1,8 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { ShieldCheck, SlidersHorizontal, X } from "lucide-react";
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { Check, ShieldCheck, SlidersHorizontal, X } from "lucide-react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getSettingsData, type SettingsData } from "./actions";
 import { EmailsPane } from "./email-manager";
@@ -68,8 +68,29 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const [subview, setSubview] = useState<SubviewId | null>(null);
   const [data, setData] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(false);
+  // Bumped after a save so the profile form remounts with the freshly persisted
+  // values as its baseline — React 19 resets the form on action completion, so
+  // without this the on-screen fields would snap back to their pre-save state.
+  const [dataStamp, setDataStamp] = useState(0);
+  // Lives on the modal (not the form) so the pill survives the post-save remount.
+  const [showSaved, setShowSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const close = useCallback(() => setIsOpen(false), []);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    setShowSaved(false);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+  }, []);
+
+  const refreshData = useCallback(() => {
+    void getSettingsData().then((result) => {
+      setData(result);
+      setDataStamp((stamp) => stamp + 1);
+      setShowSaved(true);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setShowSaved(false), 2000);
+    });
+  }, []);
 
   // Switching sidebar sections always drops any open sub-pane (e.g. Manage
   // emails) so we never leave the user stranded in a detail view.
@@ -104,6 +125,12 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+    };
+  }, []);
 
   const activeSection = SECTIONS.find((item) => item.id === section)!;
   const displayName = user?.fullName || user?.username || "Your account";
@@ -199,7 +226,23 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
                     ) : (
                       <>
                         {section === "profile" ? (
-                          <ProfileForm email={data.email} initialValues={data.profile} />
+                          <>
+                            <ProfileForm
+                              key={dataStamp}
+                              email={data.email}
+                              initialValues={data.profile}
+                              onSaved={refreshData}
+                            />
+                            {showSaved ? (
+                              <div
+                                role="status"
+                                className="pointer-events-none fixed bottom-8 left-1/2 z-[130] flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#1a7f4b]/25 bg-[#1a7f4b] px-3.5 py-2 text-sm font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
+                              >
+                                <Check size={14} strokeWidth={2.5} />
+                                Saved
+                              </div>
+                            ) : null}
+                          </>
                         ) : null}
                         {section === "preferences" ? (
                           <ThemeControl initial={data.themePreference} />
