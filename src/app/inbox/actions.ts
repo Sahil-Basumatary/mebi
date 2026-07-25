@@ -61,10 +61,21 @@ export async function sendPartnershipRequest(
 
   const target = await prisma.user.findFirst({
     where: { id: toUserId, onboarded: true },
-    select: { id: true, skills: true, interests: true },
+    select: { id: true, skills: true, interests: true, profilePrivate: true },
   });
 
   if (!target) {
+    return { sent: false, error: "That builder is no longer available." };
+  }
+
+  if (viewer.profilePrivate) {
+    return {
+      sent: false,
+      error: "Turn off private profile before sending partnership requests.",
+    };
+  }
+
+  if (target.profilePrivate) {
     return { sent: false, error: "That builder is no longer available." };
   }
 
