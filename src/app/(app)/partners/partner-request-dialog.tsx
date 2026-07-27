@@ -2,7 +2,7 @@
 
 import { Check, X } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
-import { sendPartnershipRequest, type SendRequestState } from "@/app/(app)/inbox/actions";
+import { sendProjectRequest, type SendRequestState } from "@/app/(app)/inbox/actions";
 
 type ViewerProject = {
   id: string;
@@ -29,7 +29,7 @@ export function PartnerRequestDialog({
   sharedInterests,
   projects,
 }: PartnerRequestDialogProps) {
-  const [state, formAction, isPending] = useActionState(sendPartnershipRequest, initialState);
+  const [state, formAction, isPending] = useActionState(sendProjectRequest, initialState);
   const [open, setOpen] = useState(false);
   const sharedTags = [...sharedSkills, ...sharedInterests];
 
@@ -42,8 +42,6 @@ export function PartnerRequestDialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Once the request lands, hold the success state and ease the dialog shut so the
-  // tick animation has a beat to read before the surface disappears.
   useEffect(() => {
     if (!state.sent) return;
     const timer = window.setTimeout(() => setOpen(false), 1400);
@@ -54,8 +52,14 @@ export function PartnerRequestDialog({
     return (
       <span className="border-app-ink text-app-ink inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium">
         <Check size={16} strokeWidth={2.5} />
-        Request sent
+        Invite sent
       </span>
+    );
+  }
+
+  if (!projects.length) {
+    return (
+      <span className="text-app-meta text-sm">Create an active project to invite someone</span>
     );
   }
 
@@ -66,7 +70,7 @@ export function PartnerRequestDialog({
         onClick={() => setOpen(true)}
         className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
       >
-        Request to partner
+        Invite to build
       </button>
 
       {open ? (
@@ -80,10 +84,10 @@ export function PartnerRequestDialog({
             <div className="border-app-divider flex items-start justify-between gap-4 border-b p-6">
               <div>
                 <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
-                  Partnership request
+                  Build invite
                 </p>
                 <h3 id="partner-request-title" className="mt-2 font-serif text-3xl leading-tight font-light">
-                  Reach out to {toName}
+                  Invite {toName} onto a project
                 </h3>
               </div>
               <button
@@ -98,6 +102,7 @@ export function PartnerRequestDialog({
 
             <form action={formAction} className="grid gap-5 p-6">
               <input type="hidden" name="toUserId" value={toUserId} />
+              <input type="hidden" name="kind" value="INVITE" />
 
               {sharedTags.length ? (
                 <div>
@@ -118,6 +123,25 @@ export function PartnerRequestDialog({
               ) : null}
 
               <div className="grid gap-2">
+                <label htmlFor="projectId" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                  Project
+                </label>
+                <select
+                  id="projectId"
+                  name="projectId"
+                  required
+                  defaultValue={projects[0]?.id ?? ""}
+                  className="border-app-divider bg-app-wash text-app-ink focus:border-app-ink border px-3 py-3 text-sm outline-none transition-colors"
+                >
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-2">
                 <label htmlFor="message" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
                   Message
                 </label>
@@ -127,41 +151,20 @@ export function PartnerRequestDialog({
                   rows={4}
                   maxLength={1000}
                   required
-                  placeholder={`Hi ${toName}, I'm building something and your skills are exactly the missing piece...`}
+                  placeholder={`Hi ${toName}, I think you'd be the missing piece on this build...`}
                   className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink resize-none border px-3 py-3 text-sm leading-6 outline-none transition-colors"
                 />
               </div>
 
-              {projects.length ? (
-                <div className="grid gap-2">
-                  <label htmlFor="relatedProjectId" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
-                    Attach a project (optional)
-                  </label>
-                  <select
-                    id="relatedProjectId"
-                    name="relatedProjectId"
-                    defaultValue=""
-                    className="border-app-divider bg-app-wash text-app-ink focus:border-app-ink border px-3 py-3 text-sm outline-none transition-colors"
-                  >
-                    <option value="">No specific project</option>
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : null}
-
               <div className="grid gap-2">
-                <label htmlFor="projectInterest" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
-                  What would you build together? (optional)
+                <label htmlFor="note" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                  Role you need (optional)
                 </label>
                 <input
-                  id="projectInterest"
-                  name="projectInterest"
+                  id="note"
+                  name="note"
                   maxLength={200}
-                  placeholder="A KCL hardware hack, a fintech side project..."
+                  placeholder="Frontend, infra, design systems..."
                   className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink border px-3 py-3 text-sm outline-none transition-colors"
                 />
               </div>
@@ -183,7 +186,7 @@ export function PartnerRequestDialog({
                   disabled={isPending}
                   className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-6 text-sm font-medium transition-colors disabled:opacity-50"
                 >
-                  {isPending ? "Sending..." : "Send request"}
+                  {isPending ? "Sending..." : "Send invite"}
                 </button>
               </div>
             </form>

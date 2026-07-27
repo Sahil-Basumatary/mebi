@@ -20,7 +20,7 @@ const loadSpine = cache(async () => {
       orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
       select: { id: true, name: true, status: true, progress: true },
     }),
-    prisma.partnershipRequest.count({
+    prisma.projectRequest.count({
       where: { toUserId: user.id, status: "PENDING" },
     }),
     prisma.project.findMany({

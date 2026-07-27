@@ -237,7 +237,7 @@ export async function updateProfile(
     },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath("/home");
   revalidatePath("/partners");
 
   return { error: null, success: true };
@@ -267,7 +267,7 @@ export async function setAvatar(imageUrl: string): Promise<{ error: string | nul
     data: { imageUrl: parsed.toString() },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath("/home");
   revalidatePath("/partners");
 
   return { error: null };
@@ -280,7 +280,7 @@ export async function deleteAccount(): Promise<{ error: string | null }> {
   }
 
   // Clear our data first — every relation cascades off User, so this removes the
-  // profile, projects, requests, partnerships, and notifications in one delete.
+  // profile, projects, requests, memberships, and notifications in one delete.
   // Ignore a missing row so a half-provisioned account can still be torn down.
   try {
     await prisma.user.delete({ where: { clerkId: userId } });
@@ -472,7 +472,7 @@ export async function updateProfileDiscoverability(
   });
 
   revalidatePath("/partners");
-  revalidatePath("/dashboard");
+  revalidatePath("/home");
   return { error: null, profilePrivate };
 }
 

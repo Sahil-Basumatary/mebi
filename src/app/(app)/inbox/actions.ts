@@ -1,5 +1,6 @@
 "use server";
 
+import { ProjectRequestKind, ProjectRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { intersectTags } from "@/lib/match";
@@ -28,25 +29,25 @@ function getField(rawValue: FormDataEntryValue | null, maxLength: number): strin
   return trimmed.slice(0, maxLength);
 }
 
-// Partnerships are undirected, so we always store the lower id first. That keeps
-// the (userAId, userBId) unique constraint meaningful no matter who accepted.
-function orderedPair(a: string, b: string): [string, string] {
-  return a < b ? [a, b] : [b, a];
-}
-
 function displayName(user: { fullName: string | null; username: string | null }): string {
   return user.fullName || user.username || "A KCL builder";
 }
 
-export async function sendPartnershipRequest(
+function parseKind(raw: FormDataEntryValue | null): ProjectRequestKind | null {
+  if (raw === "INVITE" || raw === "JOIN") return raw;
+  return null;
+}
+
+export async function sendProjectRequest(
   _previousState: SendRequestState,
   formData: FormData,
 ): Promise<SendRequestState> {
   const viewer = await requireOnboardedUser();
   const toUserId = getField(formData.get("toUserId"), 60);
+  const projectId = getField(formData.get("projectId"), 60);
   const message = getField(formData.get("message"), 1000);
-  const projectInterest = getField(formData.get("projectInterest"), 200);
-  const relatedProjectId = getField(formData.get("relatedProjectId"), 60);
+  const note = getField(formData.get("note"), 200);
+  const kind = parseKind(formData.get("kind")) ?? ProjectRequestKind.INVITE;
 
   if (!toUserId) {
     return { sent: false, error: "We couldn't find that builder." };
@@ -56,42 +57,62 @@ export async function sendPartnershipRequest(
     return { sent: false, error: "You can't send a request to yourself." };
   }
 
-  if (!message || message.length < 20) {
-    return { sent: false, error: "Add at least 20 characters so they know why you're reaching out." };
+  if (!projectId) {
+    return { sent: false, error: "Pick the project this request is about." };
   }
 
-  const target = await prisma.user.findFirst({
-    where: { id: toUserId, onboarded: true },
-    select: { id: true, skills: true, interests: true, profilePrivate: true },
-  });
-
-  if (!target) {
-    return { sent: false, error: "That builder is no longer available." };
+  if (!message || message.length < 20) {
+    return { sent: false, error: "Add at least 20 characters so they know why you're reaching out." };
   }
 
   if (viewer.profilePrivate) {
     return {
       sent: false,
-      error: "Turn off private profile before sending partnership requests.",
+      error: "Turn off private profile before sending build requests.",
     };
   }
 
-  if (target.profilePrivate) {
+  const [target, project] = await Promise.all([
+    prisma.user.findFirst({
+      where: { id: toUserId, onboarded: true },
+      select: { id: true, skills: true, interests: true, profilePrivate: true },
+    }),
+    prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, name: true, status: true },
+    }),
+  ]);
+
+  if (!target || target.profilePrivate) {
     return { sent: false, error: "That builder is no longer available." };
   }
 
-  const [userAId, userBId] = orderedPair(viewer.id, target.id);
-  const existingPartnership = await prisma.partnership.findUnique({
-    where: { userAId_userBId: { userAId, userBId } },
-    select: { id: true },
-  });
-
-  if (existingPartnership) {
-    return { sent: false, error: "You're already partnered with this builder." };
+  if (!project || project.status !== "ACTIVE") {
+    return { sent: false, error: "That project is not open for collaboration." };
   }
 
-  const existingPending = await prisma.partnershipRequest.findFirst({
+  const senderMembership = await getProjectMembership(projectId, viewer.id);
+  const targetMembership = await getProjectMembership(projectId, target.id);
+
+  if (kind === ProjectRequestKind.INVITE) {
+    if (!senderMembership) {
+      return { sent: false, error: "You can only invite people onto builds you belong to." };
+    }
+    if (targetMembership) {
+      return { sent: false, error: "They're already on this build." };
+    }
+  } else {
+    if (senderMembership) {
+      return { sent: false, error: "You're already on this build." };
+    }
+    if (!targetMembership) {
+      return { sent: false, error: "Ask someone who is already on the build." };
+    }
+  }
+
+  const existingPending = await prisma.projectRequest.findFirst({
     where: {
+      projectId,
       status: "PENDING",
       OR: [
         { fromUserId: viewer.id, toUserId: target.id },
@@ -106,16 +127,9 @@ export async function sendPartnershipRequest(
       sent: false,
       error:
         existingPending.fromUserId === viewer.id
-          ? "You already have a pending request with this builder."
-          : "This builder already sent you a request — check your inbox.",
+          ? "You already have a pending request on this build."
+          : "This builder already sent you a request on this build — check your inbox.",
     };
-  }
-
-  // Only attach a project the sender belongs to, so the link can't be spoofed.
-  let validProjectId: string | null = null;
-  if (relatedProjectId) {
-    const membership = await getProjectMembership(relatedProjectId, viewer.id);
-    validProjectId = membership ? relatedProjectId : null;
   }
 
   const sharedSkills = intersectTags(viewer.skills, target.skills);
@@ -123,15 +137,16 @@ export async function sendPartnershipRequest(
   const senderName = displayName(viewer);
 
   await prisma.$transaction(async (tx) => {
-    const request = await tx.partnershipRequest.create({
+    const request = await tx.projectRequest.create({
       data: {
         fromUserId: viewer.id,
         toUserId: target.id,
+        projectId,
+        kind,
         message,
+        note,
         sharedSkills,
         sharedInterests,
-        projectInterest,
-        relatedProjectId: validProjectId,
       },
     });
 
@@ -139,7 +154,10 @@ export async function sendPartnershipRequest(
       data: {
         userId: target.id,
         type: "REQUEST_RECEIVED",
-        message: `${senderName} wants to build with you.`,
+        message:
+          kind === ProjectRequestKind.INVITE
+            ? `${senderName} invited you to ${project.name}.`
+            : `${senderName} asked to join ${project.name}.`,
         actorName: senderName,
         requestId: request.id,
       },
@@ -148,6 +166,7 @@ export async function sendPartnershipRequest(
 
   revalidatePath("/partners");
   revalidatePath("/inbox");
+  revalidatePath(`/projects/${projectId}`);
   return { sent: true, error: null };
 }
 
@@ -167,9 +186,15 @@ export async function respondToRequest(
     return { error: "That action isn't valid." };
   }
 
-  const request = await prisma.partnershipRequest.findFirst({
+  const request = await prisma.projectRequest.findFirst({
     where: { id: requestId, toUserId: viewer.id, status: "PENDING" },
-    select: { id: true, fromUserId: true },
+    select: {
+      id: true,
+      fromUserId: true,
+      projectId: true,
+      kind: true,
+      project: { select: { name: true } },
+    },
   });
 
   if (!request) {
@@ -180,7 +205,7 @@ export async function respondToRequest(
 
   if (decision === "decline") {
     await prisma.$transaction(async (tx) => {
-      await tx.partnershipRequest.update({
+      await tx.projectRequest.update({
         where: { id: request.id },
         data: { status: "DECLINED", respondedAt: new Date() },
       });
@@ -189,7 +214,7 @@ export async function respondToRequest(
         data: {
           userId: request.fromUserId,
           type: "REQUEST_DECLINED",
-          message: `${responderName} declined your partnership request.`,
+          message: `${responderName} declined your request on ${request.project.name}.`,
           actorName: responderName,
           requestId: request.id,
         },
@@ -201,25 +226,33 @@ export async function respondToRequest(
     return { error: null };
   }
 
-  const [userAId, userBId] = orderedPair(viewer.id, request.fromUserId);
+  // INVITE: accepter (toUser) joins. JOIN: requester (fromUser) joins.
+  const joiningUserId =
+    request.kind === ProjectRequestKind.INVITE ? viewer.id : request.fromUserId;
 
   await prisma.$transaction(async (tx) => {
-    await tx.partnershipRequest.update({
+    await tx.projectRequest.update({
       where: { id: request.id },
       data: { status: "ACCEPTED", respondedAt: new Date() },
     });
 
-    await tx.partnership.upsert({
-      where: { userAId_userBId: { userAId, userBId } },
+    await tx.projectMember.upsert({
+      where: {
+        projectId_userId: { projectId: request.projectId, userId: joiningUserId },
+      },
       update: {},
-      create: { userAId, userBId, sourceRequestId: request.id },
+      create: {
+        projectId: request.projectId,
+        userId: joiningUserId,
+        role: ProjectRole.MEMBER,
+      },
     });
 
     await tx.notification.create({
       data: {
         userId: request.fromUserId,
         type: "REQUEST_ACCEPTED",
-        message: `${responderName} accepted your request — you're partners now.`,
+        message: `${responderName} accepted — you're on ${request.project.name} together.`,
         actorName: responderName,
         requestId: request.id,
       },
@@ -228,6 +261,9 @@ export async function respondToRequest(
 
   revalidatePath("/inbox");
   revalidatePath("/partners");
+  revalidatePath("/projects");
+  revalidatePath("/home");
+  revalidatePath(`/projects/${request.projectId}`);
   return { error: null };
 }
 
@@ -242,22 +278,23 @@ export async function cancelRequest(
     return { error: "Request not found." };
   }
 
-  const request = await prisma.partnershipRequest.findFirst({
+  const request = await prisma.projectRequest.findFirst({
     where: { id: requestId, fromUserId: viewer.id, status: "PENDING" },
-    select: { id: true },
+    select: { id: true, projectId: true },
   });
 
   if (!request) {
     return { error: "This request can no longer be cancelled." };
   }
 
-  await prisma.partnershipRequest.update({
+  await prisma.projectRequest.update({
     where: { id: request.id },
     data: { status: "CANCELLED", respondedAt: new Date() },
   });
 
   revalidatePath("/inbox");
   revalidatePath("/partners");
+  revalidatePath(`/projects/${request.projectId}`);
   return { error: null };
 }
 

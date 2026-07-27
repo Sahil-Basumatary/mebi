@@ -98,7 +98,7 @@ function PartnerAction({
     return (
       <span className="border-app-ink bg-app-ink text-app-paper inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium">
         <Check size={16} strokeWidth={2.5} />
-        Partnered
+        On a build
       </span>
     );
   }
@@ -272,15 +272,17 @@ export default async function PartnersPage({
     },
   });
 
-  // Pull the viewer's existing connections so each row shows the right action
-  // (request, sent, respond, or partnered) instead of letting people fire
-  // duplicate requests into a void.
-  const [partnerships, pendingRequests, viewerProjects] = await Promise.all([
-    prisma.partnership.findMany({
-      where: { OR: [{ userAId: viewer.id }, { userBId: viewer.id }] },
-      select: { userAId: true, userBId: true },
+  // Co-membership is the new "partnered" signal. Pending project requests still
+  // gate the invite button so people don't spam the same build.
+  const [coMembers, pendingRequests, viewerProjects] = await Promise.all([
+    prisma.projectMember.findMany({
+      where: {
+        userId: { not: viewer.id },
+        project: { members: { some: { userId: viewer.id } } },
+      },
+      select: { userId: true },
     }),
-    prisma.partnershipRequest.findMany({
+    prisma.projectRequest.findMany({
       where: {
         status: "PENDING",
         OR: [{ fromUserId: viewer.id }, { toUserId: viewer.id }],
@@ -294,9 +296,7 @@ export default async function PartnersPage({
     }),
   ]);
 
-  const partneredIds = new Set(
-    partnerships.map((p) => (p.userAId === viewer.id ? p.userBId : p.userAId)),
-  );
+  const partneredIds = new Set(coMembers.map((member) => member.userId));
   const outgoingIds = new Set<string>();
   const incomingIds = new Set<string>();
   for (const request of pendingRequests) {

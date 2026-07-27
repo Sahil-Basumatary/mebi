@@ -213,7 +213,7 @@ function DeleteAccount({ confirmHandle }: { confirmHandle: string }) {
     <>
       <Row
         label="Delete my account"
-        description="Permanently delete your account. You'll lose access to your profile, projects, requests, and partnerships."
+        description="Permanently delete your account. You'll lose access to your profile, projects, requests, and memberships."
       >
         <button type="button" onClick={() => setOpen(true)} className={dangerButton}>
           Delete my account
@@ -240,7 +240,7 @@ function DeleteAccount({ confirmHandle }: { confirmHandle: string }) {
                   </h2>
                   <p className="text-app-muted mt-2 text-[14px] leading-5">
                     This action cannot be undone. Your entire account will be permanently deleted,
-                    including your profile, projects, partnership requests, partnerships, and any
+                    including your profile, projects, build requests, memberships, and any
                     proof you have logged.
                   </p>
                 </div>
