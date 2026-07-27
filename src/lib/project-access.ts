@@ -6,6 +6,14 @@ export type ProjectWithMembership = Project & {
   membership: ProjectMember;
 };
 
+export function memberProjectWhere(userId: string) {
+  return {
+    members: {
+      some: { userId },
+    },
+  } as const;
+}
+
 export async function getProjectMembership(projectId: string, userId: string) {
   return prisma.projectMember.findUnique({
     where: {

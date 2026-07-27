@@ -1,9 +1,10 @@
 "use server";
 
-import { ProjectVisibility } from "@prisma/client";
+import { ProjectRole, ProjectVisibility } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/current-user";
+import { getProjectMembership } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 
 export type ProjectFormState = {
@@ -80,7 +81,7 @@ export async function createProject(
       members: {
         create: {
           userId: user.id,
-          role: "OWNER",
+          role: ProjectRole.OWNER,
         },
       },
     },
@@ -103,19 +104,18 @@ export async function updateProjectProgress(
     return { error: "Project not found." };
   }
 
-  const project = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      ownerId: user.id,
-    },
-    select: {
-      id: true,
-      status: true,
-    },
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership) {
+    return { error: "You can only update projects you belong to." };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, status: true },
   });
 
   if (!project) {
-    return { error: "You can only update your own projects." };
+    return { error: "Project not found." };
   }
 
   if (project.status === "COMPLETED") {
@@ -144,22 +144,13 @@ export async function markProjectComplete(
     return { completed: false, error: "Project not found." };
   }
 
-  const project = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      ownerId: user.id,
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  if (!project) {
-    return { completed: false, error: "You can only complete your own projects." };
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership || membership.role !== ProjectRole.OWNER) {
+    return { completed: false, error: "Only the project owner can mark it complete." };
   }
 
   await prisma.project.update({
-    where: { id: project.id },
+    where: { id: projectId },
     data: {
       progress: 100,
       status: "COMPLETED",
@@ -169,6 +160,6 @@ export async function markProjectComplete(
 
   revalidatePath("/home");
   revalidatePath("/projects");
-  revalidatePath(`/projects/${project.id}`);
+  revalidatePath(`/projects/${projectId}`);
   return { completed: true, error: null };
 }

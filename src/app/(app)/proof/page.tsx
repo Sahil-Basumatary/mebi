@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Chip, EmptyState, HairlineGrid, PageHeader, Section } from "@/components/layout";
 import { requireOnboardedUser } from "@/lib/current-user";
+import { memberProjectWhere } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 
 function formatDate(date: Date): string {
@@ -14,7 +15,7 @@ function formatDate(date: Date): string {
 export default async function ProofPage() {
   const user = await requireOnboardedUser();
   const completed = await prisma.project.findMany({
-    where: { ownerId: user.id, status: "COMPLETED" },
+    where: { ...memberProjectWhere(user.id), status: "COMPLETED" },
     orderBy: { completedAt: "desc" },
   });
 

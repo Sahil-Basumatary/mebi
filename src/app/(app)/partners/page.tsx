@@ -12,6 +12,7 @@ import {
 import { SocialIcon } from "@/components/social-icon";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch, type MatchBreakdown } from "@/lib/match";
+import { memberProjectWhere } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 import { displayName, initials, ROLE_LABEL } from "@/lib/user-display";
 import { partnerFacets } from "./facets";
@@ -287,7 +288,7 @@ export default async function PartnersPage({
       select: { fromUserId: true, toUserId: true },
     }),
     prisma.project.findMany({
-      where: { ownerId: viewer.id, status: "ACTIVE" },
+      where: { ...memberProjectWhere(viewer.id), status: "ACTIVE" },
       orderBy: { updatedAt: "desc" },
       select: { id: true, name: true },
     }),
