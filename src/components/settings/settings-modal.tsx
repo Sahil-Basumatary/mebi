@@ -321,6 +321,8 @@ export function SettingsModalHost() {
                         spellcheckerLanguage={data.spellcheckerLanguage}
                         timezone={data.timezone}
                         startupPreference={data.startupPreference}
+                        profilePrivate={data.profile.profilePrivate}
+                        onDiscoverabilitySaved={refreshData}
                       />
                     ) : null}
                     {section === "security" ? (

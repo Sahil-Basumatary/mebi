@@ -165,17 +165,10 @@ export function ProfileForm({ email, onSaved, initialValues }: ProfileFormProps)
     Array.from({ length: MAX_SOCIAL_LINKS }, (_, index) => initialValues.socialLinks[index] ?? ""),
   );
   const [prefersSolo, setPrefersSolo] = useState(initialValues.prefersSolo);
-  const [profilePrivate, setProfilePrivate] = useState(
-    initialValues.prefersSolo && initialValues.profilePrivate,
-  );
+  const [profilePrivate, setProfilePrivate] = useState(initialValues.profilePrivate);
 
   function updateSocialLink(index: number, value: string) {
     setSocialLinks((current) => current.map((link, position) => (position === index ? value : link)));
-  }
-
-  function onSoloChange(next: boolean) {
-    setPrefersSolo(next);
-    if (!next) setProfilePrivate(false);
   }
 
   const initials = initialsFrom(initialValues.fullName || initialValues.username);
@@ -418,7 +411,7 @@ export function ProfileForm({ email, onSaved, initialValues }: ProfileFormProps)
           <ToggleRow
             name="prefersSolo"
             checked={prefersSolo}
-            onChange={onSoloChange}
+            onChange={setPrefersSolo}
             label="Focus on solo projects for now"
             hint="We'll tone down teammate suggestions."
           />
@@ -426,13 +419,8 @@ export function ProfileForm({ email, onSaved, initialValues }: ProfileFormProps)
             name="profilePrivate"
             checked={profilePrivate}
             onChange={setProfilePrivate}
-            disabled={!prefersSolo}
-            label="Make profile private and hide activity"
-            hint={
-              prefersSolo
-                ? "You won't appear in partner discovery. Existing inbox threads stay visible to people you've already contacted."
-                : "Turn on solo mode first to enable private profile."
-            }
+            label="Hide profile from partner discovery"
+            hint="You won't appear in Partners or teammate suggestions. Existing inbox threads stay visible to people you've already contacted."
           />
         </div>
       </section>

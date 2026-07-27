@@ -68,6 +68,10 @@ model User {
   timezone         String               @default("auto")
   startupPreference StartupPreference   @default(HOME)
   lastVisitedPath  String?
+  cookieConsentAt  DateTime?
+  cookiePreferences Boolean             @default(false)
+  cookieAnalytics  Boolean              @default(false)
+  cookieMarketing  Boolean              @default(false)
   skills           String[]             @default([])
   interests        String[]             @default([])
   role             UserRole?

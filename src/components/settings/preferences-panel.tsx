@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useLocalePrefs } from "@/components/locale-provider";
+import { useCookieConsent } from "@/components/cookie-consent-provider";
 import { useKeyboardShortcuts } from "@/components/keyboard-shortcuts-provider";
 import { AnchoredMenu } from "@/components/ui/anchored-menu";
 import {
@@ -22,7 +23,9 @@ import {
   startupLabel,
   type StartupPreferenceValue,
 } from "@/lib/startup";
+import { cn } from "@/lib/utils";
 import {
+  updateProfileDiscoverability,
   updateSpellcheckerLanguage,
   updateStartupPreference,
   updateTimezone,
@@ -118,19 +121,55 @@ function MenuItem({
   );
 }
 
+function PrefToggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative h-6 w-10 shrink-0 rounded-full transition-colors",
+        checked ? "bg-app-fg" : "bg-app-border",
+      )}
+    >
+      <span
+        className={cn(
+          "bg-app-canvas absolute top-0.5 left-0.5 h-5 w-5 rounded-full transition-transform",
+          checked && "translate-x-4",
+        )}
+      />
+    </button>
+  );
+}
+
 export function PreferencesPanel({
   theme,
   spellcheckerLanguage,
   timezone,
   startupPreference,
+  profilePrivate,
+  onDiscoverabilitySaved,
 }: {
   theme: ThemePreference;
   spellcheckerLanguage: string;
   timezone: string;
   startupPreference: StartupPreferenceValue;
+  profilePrivate: boolean;
+  onDiscoverabilitySaved?: () => void;
 }) {
   const locale = useLocalePrefs();
   const shortcuts = useKeyboardShortcuts();
+  const cookies = useCookieConsent();
   const [, startTransition] = useTransition();
   const [langOpen, setLangOpen] = useState(false);
   const [tzOpen, setTzOpen] = useState(false);
@@ -138,15 +177,17 @@ export function PreferencesPanel({
   const [tzQuery, setTzQuery] = useState("");
   const [deviceZone, setDeviceZone] = useState("UTC");
   const [startup, setStartup] = useState<StartupPreferenceValue>(startupPreference);
+  const [discoverable, setDiscoverable] = useState(!profilePrivate);
 
   useEffect(() => {
     setDeviceZone(detectDeviceTimezone());
     locale.setSpellcheckerLanguage(spellcheckerLanguage);
     locale.setTimezone(timezone);
     setStartup(startupPreference);
+    setDiscoverable(!profilePrivate);
     // Seed once from server payload when the panel mounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spellcheckerLanguage, timezone, startupPreference]);
+  }, [spellcheckerLanguage, timezone, startupPreference, profilePrivate]);
 
   const zones = useMemo(() => listTimezones(), []);
   const filteredZones = useMemo(() => {
@@ -179,9 +220,40 @@ export function PreferencesPanel({
     startTransition(() => updateStartupPreference(next));
   }
 
+  function chooseDiscoverability(next: boolean) {
+    const previous = discoverable;
+    setDiscoverable(next);
+    startTransition(async () => {
+      const result = await updateProfileDiscoverability(next);
+      if (result.error) {
+        setDiscoverable(previous);
+        return;
+      }
+      onDiscoverabilitySaved?.();
+    });
+  }
+
   return (
     <div className="space-y-10">
       <ThemeControl initial={theme} />
+
+      <section>
+        <h3 className="text-app-fg border-app-border mb-4 border-b pb-3 text-base font-medium">
+          Privacy
+        </h3>
+        <div className="space-y-5">
+          <PrefRow
+            label="Show up in partner discovery"
+            hint="When off, you won't appear in Partners or teammate suggestions. Existing inbox threads stay visible to people you've already contacted."
+          >
+            <PrefToggle
+              checked={discoverable}
+              onChange={chooseDiscoverability}
+              label="Show up in partner discovery"
+            />
+          </PrefRow>
+        </div>
+      </section>
 
       <section>
         <h3 className="text-app-fg border-app-border mb-4 border-b pb-3 text-base font-medium">
@@ -298,6 +370,19 @@ export function PreferencesPanel({
             <button
               type="button"
               onClick={shortcuts.openCustomize}
+              className="border-app-border text-app-fg hover:bg-app-hover flex h-7 items-center rounded-md border px-2.5 text-sm font-medium transition-colors"
+            >
+              Customize
+            </button>
+          </PrefRow>
+
+          <PrefRow
+            label="Cookie settings"
+            hint="Control necessary, preferences, analytics, and marketing cookies."
+          >
+            <button
+              type="button"
+              onClick={cookies.openCustomize}
               className="border-app-border text-app-fg hover:bg-app-hover flex h-7 items-center rounded-md border px-2.5 text-sm font-medium transition-colors"
             >
               Customize

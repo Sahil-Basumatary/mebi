@@ -14,6 +14,10 @@ import { SPELLCHECKER_CODES } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
 import { MAX_SOCIAL_LINKS, normalizeSocialUrl } from "@/lib/social-links";
 import { isAllowedAppPath, type StartupPreferenceValue } from "@/lib/startup";
+import {
+  normalizeCookieConsent,
+  type CookieConsentState,
+} from "@/lib/cookie-consent";
 
 export type ProfileState = {
   error: string | null;
@@ -27,6 +31,7 @@ export type SettingsData = {
   timezone: string;
   startupPreference: StartupPreferenceValue;
   shortcutBindings: ShortcutBindingMap;
+  cookieConsent: CookieConsentState;
   profile: {
     fullName: string;
     username: string;
@@ -153,6 +158,12 @@ export async function getSettingsData(): Promise<SettingsData | null> {
     timezone: user.timezone,
     startupPreference: user.startupPreference,
     shortcutBindings,
+    cookieConsent: normalizeCookieConsent({
+      preferences: user.cookiePreferences,
+      analytics: user.cookieAnalytics,
+      marketing: user.cookieMarketing,
+      decidedAt: user.cookieConsentAt?.toISOString() ?? null,
+    }),
     profile: {
       fullName: user.fullName ?? "",
       username: user.username ?? "",
@@ -189,8 +200,8 @@ export async function updateProfile(
   const skills = parseTags(formData.get("skills"));
   const interests = parseTags(formData.get("interests"));
   const prefersSolo = formData.get("prefersSolo") === "on";
-  // Private mode is solo-gated: turning solo off always clears privacy.
-  const profilePrivate = prefersSolo && formData.get("profilePrivate") === "on";
+  // Discoverability is independent of solo focus — private can apply either way.
+  const profilePrivate = formData.get("profilePrivate") === "on";
   const showGithub = formData.get("showGithub") === "on";
   const roleValue = formData.get("role");
   const github = normalizeGithubUsername(formData.get("githubUsername"));
@@ -444,4 +455,75 @@ export async function resetShortcutBindings(): Promise<ShortcutBindingMap> {
 
   await prisma.userShortcutBinding.deleteMany({ where: { userId: dbUserId } });
   return DEFAULT_SHORTCUT_BINDINGS;
+}
+
+export async function updateProfileDiscoverability(
+  discoverable: boolean,
+): Promise<{ error: string | null; profilePrivate: boolean }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", profilePrivate: false };
+  }
+
+  const profilePrivate = !discoverable;
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { profilePrivate },
+  });
+
+  revalidatePath("/partners");
+  revalidatePath("/dashboard");
+  return { error: null, profilePrivate };
+}
+
+export async function getCookieConsent(): Promise<CookieConsentState> {
+  const { userId } = await auth();
+  if (!userId) return normalizeCookieConsent(null);
+
+  const user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    select: {
+      cookieConsentAt: true,
+      cookiePreferences: true,
+      cookieAnalytics: true,
+      cookieMarketing: true,
+    },
+  });
+  if (!user) return normalizeCookieConsent(null);
+
+  return normalizeCookieConsent({
+    preferences: user.cookiePreferences,
+    analytics: user.cookieAnalytics,
+    marketing: user.cookieMarketing,
+    decidedAt: user.cookieConsentAt?.toISOString() ?? null,
+  });
+}
+
+export async function updateCookieConsent(input: {
+  preferences: boolean;
+  analytics: boolean;
+  marketing: boolean;
+}): Promise<CookieConsentState> {
+  const decidedAt = new Date();
+  const next = normalizeCookieConsent({
+    preferences: input.preferences,
+    analytics: input.analytics,
+    marketing: input.marketing,
+    decidedAt: decidedAt.toISOString(),
+  });
+
+  const { userId } = await auth();
+  if (!userId) return next;
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: {
+      cookieConsentAt: decidedAt,
+      cookiePreferences: next.preferences,
+      cookieAnalytics: next.analytics,
+      cookieMarketing: next.marketing,
+    },
+  });
+
+  return next;
 }
