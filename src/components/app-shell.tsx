@@ -2,7 +2,6 @@
 
 import {
   Bell,
-  CalendarDays,
   ChevronDown,
   FileText,
   FolderKanban,
@@ -26,24 +25,29 @@ import { formatCombo } from "@/lib/keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 
 const primaryNav = [
-  { href: "/dashboard", label: "Command Center", short: "Home", icon: Home },
+  { href: "/home", label: "Home", short: "Home", icon: Home },
   { href: "/projects", label: "Projects", short: "Projects", icon: FolderKanban },
   { href: "/partners", label: "Partners", short: "Partners", icon: Users },
   { href: "/inbox", label: "Requests", short: "Requests", icon: Bell },
-  { href: "/community", label: "Proof", short: "Proof", icon: FileText },
-  { href: "/events", label: "Events", short: "Events", icon: CalendarDays },
+  { href: "/proof", label: "Proof", short: "Proof", icon: FileText },
 ];
 
 // Overflow sections move here once the top bar runs out of room. Empty for now
 // so the bar stays flat, but the menu wiring stays ready for scale.
 const secondaryNav: { href: string; label: string; icon: typeof Home }[] = [];
 
+// A parallel-route slot prop is always a truthy element, even when its default
+// renders null, so rail presence cannot be read off the prop. Mirror the routes
+// that actually ship an app/(app)/@rail/<route>/page.tsx instead.
+const railRoutes = new Set(["/projects", "/partners", "/inbox"]);
+
 type AppShellProps = {
   children: ReactNode;
-  rightRail?: ReactNode;
+  rail?: ReactNode;
+  spine?: ReactNode;
 };
 
-export function AppShell({ children, rightRail }: AppShellProps) {
+export function AppShell({ children, rail, spine }: AppShellProps) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const [unreadRequests, setUnreadRequests] = useState(0);
@@ -75,7 +79,9 @@ export function AppShell({ children, rightRail }: AppShellProps) {
           moreOpen={moreOpen}
           setMoreOpen={setMoreOpen}
           isActive={isActive}
-          rightRail={rightRail}
+          hasRail={railRoutes.has(pathname)}
+          rail={rail}
+          spine={spine}
         >
           {children}
         </AppShellChrome>
@@ -87,14 +93,18 @@ export function AppShell({ children, rightRail }: AppShellProps) {
 
 function AppShellChrome({
   children,
-  rightRail,
+  rail,
+  spine,
+  hasRail,
   unreadRequests,
   moreOpen,
   setMoreOpen,
   isActive,
 }: {
   children: ReactNode;
-  rightRail?: ReactNode;
+  rail?: ReactNode;
+  spine?: ReactNode;
+  hasRail: boolean;
   unreadRequests: number;
   moreOpen: boolean;
   setMoreOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
@@ -108,7 +118,7 @@ function AppShellChrome({
         <div className="mx-auto flex h-16 w-full max-w-[88rem] items-center justify-between gap-6 px-6 lg:px-12">
           <div className="flex min-w-0 items-center gap-8">
             <Link
-              href="/dashboard"
+              href="/home"
               className="border-app-chrome-fg hover:bg-app-chrome-fg hover:text-app-chrome flex h-10 items-center border px-3 font-[family-name:var(--font-newsreader)] text-[1.4rem] leading-none font-light tracking-[-0.04em] transition-colors"
             >
               mebi
@@ -130,7 +140,7 @@ function AppShellChrome({
                     {item.label}
                   </span>
                   {item.href === "/inbox" && unreadRequests > 0 ? (
-                    <span className="absolute -top-0.5 -right-2.5 h-1.5 w-1.5 rounded-full bg-[#ff4d4d]" />
+                    <span className="bg-app-signal absolute -top-0.5 -right-2.5 h-1.5 w-1.5 rounded-full" />
                   ) : null}
                   <span
                     className={cn(
@@ -202,22 +212,22 @@ function AppShellChrome({
         </div>
       </header>
 
-      {rightRail ? (
-        <aside className="border-app-border-strong bg-app-canvas text-app-fg fixed top-16 right-0 bottom-0 hidden w-72 border-l px-5 py-5 2xl:block">
-          {rightRail}
-        </aside>
-      ) : null}
+      {spine}
 
-      <div
-        className={cn(
-          "bg-app-canvas text-app-fg min-h-screen pb-20 lg:pb-0",
-          rightRail && "2xl:pr-72",
-        )}
-      >
-        <main className="mx-auto w-full max-w-[88rem] px-6 py-8 lg:px-12">{children}</main>
+      <div className="bg-app-canvas text-app-fg min-h-screen pb-20 lg:pb-0">
+        {/* items-start keeps the rail at its intrinsic height; the flex default
+            would stretch it and leave sticky nothing to travel against. */}
+        <div className="mx-auto flex w-full max-w-[88rem] items-start gap-10 px-6 lg:px-12">
+          <main className="min-w-0 flex-1 py-8">{children}</main>
+          {hasRail ? (
+            <aside className="border-app-border-strong sticky top-16 hidden h-[calc(100vh-4rem)] w-72 shrink-0 overflow-y-auto border-l py-8 pl-8 xl:block">
+              {rail}
+            </aside>
+          ) : null}
+        </div>
       </div>
 
-      <nav className="border-app-chrome-border bg-app-chrome text-app-chrome-muted fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 border-t px-2 py-2 lg:hidden">
+      <nav className="border-app-chrome-border bg-app-chrome text-app-chrome-muted fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t px-2 py-2 lg:hidden">
         {primaryNav.map((item) => {
           const Icon = item.icon;
           return (
@@ -232,7 +242,7 @@ function AppShellChrome({
               <span className="relative">
                 <Icon size={18} strokeWidth={1.75} />
                 {item.href === "/inbox" && unreadRequests > 0 ? (
-                  <span className="absolute -top-1 -right-1.5 h-1.5 w-1.5 rounded-full bg-[#ff4d4d]" />
+                  <span className="bg-app-signal absolute -top-1 -right-1.5 h-1.5 w-1.5 rounded-full" />
                 ) : null}
               </span>
               <span className="max-w-full truncate">{item.short}</span>
