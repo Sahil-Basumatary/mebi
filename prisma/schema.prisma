@@ -27,6 +27,11 @@ enum ProjectStatus {
   COMPLETED
 }
 
+enum ProjectRole {
+  OWNER
+  MEMBER
+}
+
 enum RequestStatus {
   PENDING
   ACCEPTED
@@ -81,6 +86,7 @@ model User {
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   projects         Project[]
+  memberships      ProjectMember[]
   sentRequests     PartnershipRequest[] @relation("SentRequests")
   receivedRequests PartnershipRequest[] @relation("ReceivedRequests")
   partnershipsA    Partnership[]        @relation("PartnershipUserA")
@@ -117,10 +123,26 @@ model Project {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   owner         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members       ProjectMember[]
   requests      PartnershipRequest[]
 
   @@index([ownerId, status])
   @@index([visibility, status])
+}
+
+// ownerId stays on Project as the cascade/accountable owner; the owner also
+// always has a ProjectMember row with role OWNER so "projects I'm in" is one query.
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
 }
 
 model PartnershipRequest {
