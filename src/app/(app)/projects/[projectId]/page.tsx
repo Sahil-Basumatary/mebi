@@ -5,10 +5,16 @@ import { Button } from "@/components/ui/button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { requireProjectMember } from "@/lib/project-access";
+import {
+  attestationCountFor,
+  isProjectVerified,
+  SYSTEM_UPDATE_BODIES,
+} from "@/lib/proof";
 import { prisma } from "@/lib/prisma";
 import { displayName } from "@/lib/user-display";
 import { PartnerRequestDialog } from "../../partners/partner-request-dialog";
 import { ProjectCompletionPanel } from "../project-completion-panel";
+import { SignaturePanel } from "../signature-panel";
 import { UpdateForm } from "../update-form";
 
 type ProjectDetailPageProps = {
@@ -45,7 +51,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const isCompleted = project.status === "COMPLETED";
   const canInvite = !isCompleted && !user.profilePrivate;
 
-  const [members, updates, pendingInvites, candidatePool] = await Promise.all([
+  const [members, updates, signatures, activeAuthors, pendingInvites, candidatePool] =
+    await Promise.all([
     prisma.projectMember.findMany({
       where: { projectId: project.id },
       orderBy: { joinedAt: "asc" },
@@ -82,6 +89,26 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           },
         },
       },
+    }),
+    prisma.proofSignature.findMany({
+      where: { projectId: project.id },
+      select: {
+        id: true,
+        signerId: true,
+        subjectId: true,
+        revokedAt: true,
+        createdAt: true,
+        signer: { select: { fullName: true, username: true } },
+        subject: { select: { fullName: true, username: true } },
+      },
+    }),
+    prisma.projectUpdate.findMany({
+      where: {
+        projectId: project.id,
+        NOT: { body: { in: [...SYSTEM_UPDATE_BODIES] } },
+      },
+      distinct: ["authorId"],
+      select: { authorId: true },
     }),
     prisma.projectRequest.findMany({
       where: {
@@ -125,6 +152,38 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     return a.role === ProjectRole.OWNER ? -1 : 1;
   });
 
+  const memberIdList = members.map((member) => member.user.id);
+  const verified = isProjectVerified(memberIdList, signatures);
+  const attestedMembers = memberIdList.filter(
+    (id) => attestationCountFor(id, signatures) > 0,
+  ).length;
+
+  const activityByAuthor = new Set(activeAuthors.map((row) => row.authorId));
+
+  const teammates = members
+    .filter((member) => member.user.id !== user.id)
+    .map((member) => {
+      const subjectId = member.user.id;
+      const name = displayName(member.user.fullName, member.user.username);
+      const mySignature = signatures.find(
+        (signature) =>
+          signature.signerId === user.id &&
+          signature.subjectId === subjectId &&
+          !signature.revokedAt,
+      );
+      const hasActivity = activityByAuthor.has(subjectId);
+      return {
+        id: subjectId,
+        name,
+        canSign: hasActivity && !mySignature,
+        alreadySigned: Boolean(mySignature),
+        signatureId: mySignature?.id ?? null,
+        reason: hasActivity
+          ? undefined
+          : "Waiting for them to post a real build-log update.",
+      };
+    });
+
   const inviteSuggestions = candidatePool
     .filter((candidate) => !memberIds.has(candidate.id) && !pendingInviteIds.has(candidate.id))
     .map((candidate) => ({
@@ -164,6 +223,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             <div className="mt-8 flex flex-wrap gap-2">
               <Chip>{project.visibility.toLowerCase()}</Chip>
               <Chip tone={isCompleted ? "ink" : "wash"}>{project.status.toLowerCase()}</Chip>
+              {verified ? <Chip tone="ink">verified</Chip> : null}
             </div>
             <dl className="text-app-body mt-8 grid gap-4 text-sm">
               <div>
@@ -245,6 +305,14 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         </div>
 
         <aside className="flex flex-col gap-6">
+          <SignaturePanel
+            projectId={project.id}
+            verified={verified}
+            teammates={teammates}
+            signaturesReceived={attestedMembers}
+            memberCount={memberIdList.length}
+          />
+
           <section className="border-app-divider bg-app-paper border">
             <div className="border-app-divider border-b px-5 py-4">
               <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
@@ -255,7 +323,9 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               </p>
             </div>
             <ul className="divide-app-divider divide-y">
-              {roster.map((member) => (
+              {roster.map((member) => {
+                const attestations = attestationCountFor(member.user.id, signatures);
+                return (
                 <li key={member.id} className="px-5 py-4">
                   <UserRow
                     fullName={member.user.fullName}
@@ -266,11 +336,15 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                       <p className="text-app-meta mt-1 font-mono text-chip tracking-meta uppercase">
                         {member.role === ProjectRole.OWNER ? "Owner" : "Member"} · joined{" "}
                         {formatDate(member.joinedAt)}
+                        {attestations > 0
+                          ? ` · ${attestations} signature${attestations === 1 ? "" : "s"}`
+                          : ""}
                       </p>
                     }
                   />
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </section>
 

@@ -93,6 +93,8 @@ model User {
   projects         Project[]
   memberships      ProjectMember[]
   projectUpdates   ProjectUpdate[]
+  signaturesGiven  ProofSignature[] @relation("SignaturesGiven")
+  signaturesReceived ProofSignature[] @relation("SignaturesReceived")
   sentRequests     ProjectRequest[] @relation("SentProjectRequests")
   receivedRequests ProjectRequest[] @relation("ReceivedProjectRequests")
   notifications    Notification[]
@@ -129,6 +131,7 @@ model Project {
   owner         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   members       ProjectMember[]
   updates       ProjectUpdate[]
+  signatures    ProofSignature[]
   requests      ProjectRequest[]
 
   @@index([ownerId, status])
@@ -185,6 +188,25 @@ model ProjectRequest {
   @@index([toUserId, status])
   @@index([fromUserId, status])
   @@index([projectId, status])
+}
+
+// Signer attests that subject contributed. No self-signing; unlock only after
+// the subject has posted real build-log activity on this project.
+model ProofSignature {
+  id        String    @id @default(cuid())
+  projectId String
+  signerId  String
+  subjectId String
+  statement String
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  signer    User      @relation("SignaturesGiven", fields: [signerId], references: [id], onDelete: Cascade)
+  subject   User      @relation("SignaturesReceived", fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, signerId, subjectId])
+  @@index([projectId])
+  @@index([subjectId])
 }
 
 model Notification {

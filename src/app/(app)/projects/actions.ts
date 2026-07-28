@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { getProjectMembership } from "@/lib/project-access";
+import {
+  DEFAULT_SIGNATURE_STATEMENT,
+  SYSTEM_UPDATE_BODIES,
+} from "@/lib/proof";
 import { prisma } from "@/lib/prisma";
 
 export type ProjectFormState = {
@@ -14,6 +18,11 @@ export type ProjectFormState = {
 export type CompleteProjectState = {
   completed: boolean;
   error: string | null;
+};
+
+export type SignatureState = {
+  error: string | null;
+  success: boolean;
 };
 
 function getField(rawValue: FormDataEntryValue | null, maxLength: number): string | null {
@@ -203,4 +212,121 @@ export async function markProjectComplete(
   revalidatePath("/proof");
   revalidatePath(`/projects/${projectId}`);
   return { completed: true, error: null };
+}
+
+export async function signProofContribution(
+  _previousState: SignatureState,
+  formData: FormData,
+): Promise<SignatureState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+  const subjectId = getField(formData.get("subjectId"), 80);
+  const consented = formData.get("consent") === "on" || formData.get("consent") === "true";
+
+  if (!projectId || !subjectId) {
+    return { error: "Missing project or teammate.", success: false };
+  }
+
+  if (subjectId === user.id) {
+    return { error: "You can't sign your own contribution.", success: false };
+  }
+
+  if (!consented) {
+    return {
+      error: "Confirm the statement — signing is also consent to publish their name on this proof.",
+      success: false,
+    };
+  }
+
+  const [signerMembership, subjectMembership] = await Promise.all([
+    getProjectMembership(projectId, user.id),
+    getProjectMembership(projectId, subjectId),
+  ]);
+
+  if (!signerMembership || !subjectMembership) {
+    return { error: "Both people must be on this build.", success: false };
+  }
+
+  const subjectActivity = await prisma.projectUpdate.findMany({
+    where: { projectId, authorId: subjectId },
+    select: { body: true },
+  });
+  const hasRealActivity = subjectActivity.some(
+    (update) => !SYSTEM_UPDATE_BODIES.has(update.body),
+  );
+
+  if (!hasRealActivity) {
+    return {
+      error: "They need to post a real build-log update before you can sign them.",
+      success: false,
+    };
+  }
+
+  const existing = await prisma.proofSignature.findUnique({
+    where: {
+      projectId_signerId_subjectId: {
+        projectId,
+        signerId: user.id,
+        subjectId,
+      },
+    },
+  });
+
+  if (existing && !existing.revokedAt) {
+    return { error: "You already signed this teammate on this build.", success: false };
+  }
+
+  if (existing?.revokedAt) {
+    await prisma.proofSignature.update({
+      where: { id: existing.id },
+      data: {
+        revokedAt: null,
+        statement: DEFAULT_SIGNATURE_STATEMENT,
+        createdAt: new Date(),
+      },
+    });
+  } else {
+    await prisma.proofSignature.create({
+      data: {
+        projectId,
+        signerId: user.id,
+        subjectId,
+        statement: DEFAULT_SIGNATURE_STATEMENT,
+      },
+    });
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/proof");
+  return { error: null, success: true };
+}
+
+export async function revokeProofSignature(
+  _previousState: SignatureState,
+  formData: FormData,
+): Promise<SignatureState> {
+  const user = await requireOnboardedUser();
+  const signatureId = getField(formData.get("signatureId"), 80);
+
+  if (!signatureId) {
+    return { error: "Signature not found.", success: false };
+  }
+
+  const signature = await prisma.proofSignature.findFirst({
+    where: { id: signatureId, signerId: user.id, revokedAt: null },
+    select: { id: true, projectId: true },
+  });
+
+  if (!signature) {
+    return { error: "You can only revoke your own active signatures.", success: false };
+  }
+
+  await prisma.proofSignature.update({
+    where: { id: signature.id },
+    data: { revokedAt: new Date() },
+  });
+
+  revalidatePath(`/projects/${signature.projectId}`);
+  revalidatePath("/proof");
+  return { error: null, success: true };
 }
