@@ -26,8 +26,6 @@ const blueButton =
   "flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-[#2783de] text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
 const outlineRowButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors";
-const subtleButton =
-  "text-app-muted hover:text-app-fg text-sm font-medium transition-colors disabled:opacity-50";
 
 function errorMessage(error: unknown): string {
   if (error && typeof error === "object" && "errors" in error) {
@@ -59,7 +57,6 @@ function CodeInput({
     <div className="flex justify-center gap-2">
       {chars.map((char, index) => (
         <input
-          // eslint-disable-next-line react/no-array-index-key
           key={index}
           ref={(element) => {
             refs.current[index] = element;

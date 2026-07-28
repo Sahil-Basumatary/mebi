@@ -346,7 +346,6 @@ export function ProfileForm({ email, onSaved, initialValues }: ProfileFormProps)
           >
             <div className="space-y-2">
               {socialLinks.map((value, index) => (
-                // eslint-disable-next-line react/no-array-index-key
                 <div key={index} className="flex items-center gap-2">
                   <span className="border-app-border text-app-muted-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border">
                     <SocialIcon url={iconPreview(value)} className="h-4 w-4" />

@@ -34,9 +34,11 @@ Use Node 20+ and `pnpm` (lockfile is `pnpm-lock.yaml`).
 
 ```bash
 pnpm lint
-pnpm exec tsc --noEmit
-pnpm build
+pnpm typecheck
+pnpm build:ci
 ```
+
+`pnpm build` (migrate + generate + next build) is for production / Vercel. CI uses `pnpm build:ci` so pull requests do not need a live database.
 
 If you touch Prisma schema, include a migration and explain the rollback story in the PR.
 

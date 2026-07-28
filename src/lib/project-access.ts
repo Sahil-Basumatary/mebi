@@ -41,7 +41,8 @@ export async function requireProjectMember(
     notFound();
   }
 
-  const { members: _members, ...rest } = project;
+  const { members, ...rest } = project;
+  void members;
   return { ...rest, membership };
 }
 
