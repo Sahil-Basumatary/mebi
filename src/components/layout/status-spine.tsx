@@ -14,7 +14,7 @@ import { displayName, initials } from "@/lib/user-display";
 
 const loadSpine = cache(async () => {
   const user = await requireOnboardedUser();
-  const [projects, pendingReceived, activityProjects] = await Promise.all([
+  const [projects, pendingReceived, updateEvents] = await Promise.all([
     prisma.project.findMany({
       where: memberProjectWhere(user.id),
       orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
@@ -23,9 +23,11 @@ const loadSpine = cache(async () => {
     prisma.projectRequest.count({
       where: { toUserId: user.id, status: "PENDING" },
     }),
-    prisma.project.findMany({
-      where: memberProjectWhere(user.id),
-      select: { createdAt: true, updatedAt: true, completedAt: true },
+    prisma.projectUpdate.findMany({
+      where: { project: memberProjectWhere(user.id) },
+      select: { createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 500,
     }),
   ]);
 
@@ -39,10 +41,8 @@ const loadSpine = cache(async () => {
     completedCount,
   });
 
-  const events: BuildEvent[] = activityProjects.map((project) => ({
-    createdAt: project.createdAt.toISOString(),
-    updatedAt: project.updatedAt.toISOString(),
-    completedAt: project.completedAt?.toISOString() ?? null,
+  const events: BuildEvent[] = updateEvents.map((update) => ({
+    at: update.createdAt.toISOString(),
   }));
   const timeZone = resolveTimezone(user.timezone);
   const streak = summarizeActivity(buildActivityYear(events, timeZone)).currentStreak;

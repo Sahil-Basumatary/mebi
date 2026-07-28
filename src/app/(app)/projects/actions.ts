@@ -37,14 +37,14 @@ function parseTags(rawValue: FormDataEntryValue | null): string[] {
   return [...new Set(rawValue.split(",").map((item) => item.trim()).filter(Boolean))].slice(0, 12);
 }
 
-function parseProgress(rawValue: FormDataEntryValue | null): number {
-  if (typeof rawValue !== "string") {
-    return 0;
+function parseOptionalProgress(rawValue: FormDataEntryValue | null): number | null {
+  if (typeof rawValue !== "string" || rawValue.trim() === "") {
+    return null;
   }
 
   const value = Number.parseInt(rawValue, 10);
   if (Number.isNaN(value)) {
-    return 0;
+    return null;
   }
 
   return Math.min(Math.max(value, 0), 100);
@@ -84,6 +84,13 @@ export async function createProject(
           role: ProjectRole.OWNER,
         },
       },
+      updates: {
+        create: {
+          authorId: user.id,
+          body: "Opened the project brief.",
+          progress: 0,
+        },
+      },
     },
   });
 
@@ -92,26 +99,31 @@ export async function createProject(
   redirect(`/projects/${project.id}`);
 }
 
-export async function updateProjectProgress(
+export async function postProjectUpdate(
   _previousState: ProjectFormState,
   formData: FormData,
 ): Promise<ProjectFormState> {
   const user = await requireOnboardedUser();
   const projectId = getField(formData.get("projectId"), 80);
-  const progress = parseProgress(formData.get("progress"));
+  const body = getField(formData.get("body"), 2000);
+  const progress = parseOptionalProgress(formData.get("progress"));
 
   if (!projectId) {
     return { error: "Project not found." };
   }
 
+  if (!body || body.length < 12) {
+    return { error: "Write at least 12 characters about what you shipped." };
+  }
+
   const membership = await getProjectMembership(projectId, user.id);
   if (!membership) {
-    return { error: "You can only update projects you belong to." };
+    return { error: "You can only post on builds you belong to." };
   }
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { id: true, status: true },
+    select: { id: true, status: true, progress: true },
   });
 
   if (!project) {
@@ -119,12 +131,29 @@ export async function updateProjectProgress(
   }
 
   if (project.status === "COMPLETED") {
-    return { error: "Completed projects stay locked at 100%." };
+    return { error: "Completed projects are locked — no new updates." };
   }
 
-  await prisma.project.update({
-    where: { id: project.id },
-    data: { progress },
+  if (progress !== null && progress < project.progress) {
+    return { error: "Progress can only move forward." };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.projectUpdate.create({
+      data: {
+        projectId: project.id,
+        authorId: user.id,
+        body,
+        progress,
+      },
+    });
+
+    if (progress !== null) {
+      await tx.project.update({
+        where: { id: project.id },
+        data: { progress },
+      });
+    }
   });
 
   revalidatePath("/home");
@@ -149,17 +178,29 @@ export async function markProjectComplete(
     return { completed: false, error: "Only the project owner can mark it complete." };
   }
 
-  await prisma.project.update({
-    where: { id: projectId },
-    data: {
-      progress: 100,
-      status: "COMPLETED",
-      completedAt: new Date(),
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.project.update({
+      where: { id: projectId },
+      data: {
+        progress: 100,
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+
+    await tx.projectUpdate.create({
+      data: {
+        projectId,
+        authorId: user.id,
+        body: "Marked the project complete.",
+        progress: 100,
+      },
+    });
   });
 
   revalidatePath("/home");
   revalidatePath("/projects");
+  revalidatePath("/proof");
   revalidatePath(`/projects/${projectId}`);
   return { completed: true, error: null };
 }

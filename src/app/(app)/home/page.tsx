@@ -82,7 +82,7 @@ const STAGE_ICONS = [
 
 export default async function HomePage() {
   const user = await requireOnboardedUser();
-  const [projects, completedCount, partnerPool, activityProjects] =
+  const [projects, completedCount, partnerPool, updateEvents] =
     await Promise.all([
       prisma.project.findMany({
         where: memberProjectWhere(user.id),
@@ -108,16 +108,16 @@ export default async function HomePage() {
               role: true,
             },
           }),
-      prisma.project.findMany({
-        where: memberProjectWhere(user.id),
-        select: { createdAt: true, updatedAt: true, completedAt: true },
+      prisma.projectUpdate.findMany({
+        where: { project: memberProjectWhere(user.id) },
+        select: { createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 500,
       }),
     ]);
 
-  const buildEvents: BuildEvent[] = activityProjects.map((project) => ({
-    createdAt: project.createdAt.toISOString(),
-    updatedAt: project.updatedAt.toISOString(),
-    completedAt: project.completedAt?.toISOString() ?? null,
+  const buildEvents: BuildEvent[] = updateEvents.map((update) => ({
+    at: update.createdAt.toISOString(),
   }));
 
   const overlapBuilders = partnerPool
