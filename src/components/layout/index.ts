@@ -6,4 +6,6 @@ export { Stat } from "./stat";
 export { Chip } from "./chip";
 export { ProgressBar } from "./progress-bar";
 export { UserRow } from "./user-row";
-export { StatusSpine } from "./status-spine";
+export { RouteState } from "./route-state";
+export { RouteLoading } from "./route-loading";
+export { SkipLink } from "./skip-link";

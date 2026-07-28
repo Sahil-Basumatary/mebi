@@ -17,6 +17,7 @@ import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
 } from "@/components/keyboard-shortcuts-provider";
+import { SkipLink } from "@/components/layout/skip-link";
 import {
   SettingsModalHost,
   SettingsModalProvider,
@@ -91,6 +92,13 @@ export function AppShell({ children, rail, spine }: AppShellProps) {
   );
 }
 
+function navLabel(item: (typeof primaryNav)[number], unreadRequests: number) {
+  if (item.href === "/inbox" && unreadRequests > 0) {
+    return `${item.label}, ${unreadRequests} unread`;
+  }
+  return item.label;
+}
+
 function AppShellChrome({
   children,
   rail,
@@ -114,6 +122,7 @@ function AppShellChrome({
 
   return (
     <div className="bg-app-canvas text-app-fg min-h-screen">
+      <SkipLink />
       <header className="border-app-chrome-border bg-app-chrome text-app-chrome-fg sticky top-0 z-50 border-b">
         <div className="mx-auto flex h-16 w-full max-w-[88rem] items-center justify-between gap-6 px-6 lg:px-12">
           <div className="flex min-w-0 items-center gap-8">
@@ -123,11 +132,13 @@ function AppShellChrome({
             >
               mebi
             </Link>
-            <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
+            <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex xl:gap-8">
               {primaryNav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  aria-label={navLabel(item, unreadRequests)}
                   className="group relative py-1 text-[14px] font-medium tracking-[-0.01em]"
                 >
                   <span
@@ -140,9 +151,13 @@ function AppShellChrome({
                     {item.label}
                   </span>
                   {item.href === "/inbox" && unreadRequests > 0 ? (
-                    <span className="bg-app-signal absolute -top-0.5 -right-2.5 h-1.5 w-1.5 rounded-full" />
+                    <span
+                      aria-hidden
+                      className="bg-app-signal absolute -top-0.5 -right-2.5 h-1.5 w-1.5 rounded-full"
+                    />
                   ) : null}
                   <span
+                    aria-hidden
                     className={cn(
                       "bg-app-chrome-fg absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 transition-all duration-300 ease-out",
                       isActive(item.href) ? "w-full" : "w-0 group-hover:w-full",
@@ -155,25 +170,32 @@ function AppShellChrome({
                 <button
                   type="button"
                   onClick={() => setMoreOpen((value) => !value)}
+                  aria-expanded={moreOpen}
+                  aria-haspopup="menu"
                   className="text-app-chrome-muted hover:text-app-chrome-fg flex items-center gap-1 py-1 text-[14px] font-medium tracking-[-0.01em] transition-colors"
                 >
                   More
                   <ChevronDown
                     size={14}
                     strokeWidth={1.75}
+                    aria-hidden
                     className={cn("transition-transform", moreOpen && "rotate-180")}
                   />
                 </button>
                 {moreOpen ? (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
-                    <div className="border-app-border bg-app-canvas absolute top-9 left-0 z-50 w-56 border p-1 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+                    <div
+                      role="menu"
+                      className="border-app-border bg-app-canvas absolute top-9 left-0 z-50 w-56 border p-1 shadow-[0_24px_70px_rgba(0,0,0,0.35)]"
+                    >
                       {secondaryNav.map((item) => {
                         const Icon = item.icon;
                         return (
                           <Link
                             key={item.href}
                             href={item.href}
+                            role="menuitem"
                             onClick={() => setMoreOpen(false)}
                             className={cn(
                               "flex items-center gap-3 px-3 py-2 text-sm transition-colors",
@@ -182,7 +204,7 @@ function AppShellChrome({
                                 : "text-app-muted hover:bg-app-hover hover:text-app-fg",
                             )}
                           >
-                            <Icon size={16} strokeWidth={1.75} />
+                            <Icon size={16} strokeWidth={1.75} aria-hidden />
                             {item.label}
                           </Link>
                         );
@@ -198,10 +220,11 @@ function AppShellChrome({
             <button
               type="button"
               onClick={openPalette}
+              aria-label={`Search (${formatCombo(bindings.search)})`}
               title={`Search (${formatCombo(bindings.search)})`}
               className="border-app-chrome-fg/25 bg-app-chrome-fg/5 text-app-chrome-muted hover:border-app-chrome-fg/40 hover:text-app-chrome-fg hidden w-72 items-center gap-2 border px-3 py-2 text-xs transition-colors sm:flex"
             >
-              <Search size={15} strokeWidth={1.75} />
+              <Search size={15} strokeWidth={1.75} aria-hidden />
               <span>Search</span>
               <span className="border-app-chrome-fg/25 text-app-chrome-muted ml-auto border px-1.5 py-0.5 font-mono text-[10px]">
                 {formatCombo(bindings.search)}
@@ -218,34 +241,49 @@ function AppShellChrome({
         {/* items-start keeps the rail at its intrinsic height; the flex default
             would stretch it and leave sticky nothing to travel against. */}
         <div className="mx-auto flex w-full max-w-[88rem] items-start gap-10 px-6 lg:px-12">
-          <main className="min-w-0 flex-1 py-8">{children}</main>
+          <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 py-8 outline-none">
+            {children}
+          </main>
           {hasRail ? (
-            <aside className="border-app-border-strong sticky top-16 hidden h-[calc(100vh-4rem)] w-72 shrink-0 overflow-y-auto border-l py-8 pl-8 xl:block">
+            <aside
+              aria-label="Context rail"
+              className="border-app-border-strong sticky top-16 hidden h-[calc(100vh-4rem)] w-72 shrink-0 overflow-y-auto border-l py-8 pl-8 xl:block"
+            >
               {rail}
             </aside>
           ) : null}
         </div>
       </div>
 
-      <nav className="border-app-chrome-border bg-app-chrome text-app-chrome-muted fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t px-2 py-2 lg:hidden">
+      <nav
+        aria-label="Mobile primary"
+        className="border-app-chrome-border bg-app-chrome text-app-chrome-muted fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t px-2 py-2 lg:hidden"
+      >
         {primaryNav.map((item) => {
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              aria-label={navLabel(item, unreadRequests)}
               className={cn(
                 "relative flex flex-col items-center justify-center gap-1 px-2 py-2 text-[10px] transition-colors",
                 isActive(item.href) ? "text-app-chrome-fg" : "hover:text-app-chrome-fg",
               )}
             >
               <span className="relative">
-                <Icon size={18} strokeWidth={1.75} />
+                <Icon size={18} strokeWidth={1.75} aria-hidden />
                 {item.href === "/inbox" && unreadRequests > 0 ? (
-                  <span className="bg-app-signal absolute -top-1 -right-1.5 h-1.5 w-1.5 rounded-full" />
+                  <span
+                    aria-hidden
+                    className="bg-app-signal absolute -top-1 -right-1.5 h-1.5 w-1.5 rounded-full"
+                  />
                 ) : null}
               </span>
-              <span className="max-w-full truncate">{item.short}</span>
+              <span className="max-w-full truncate" aria-hidden>
+                {item.short}
+              </span>
             </Link>
           );
         })}

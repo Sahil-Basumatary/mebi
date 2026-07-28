@@ -17,6 +17,7 @@ import { EmailsPane } from "./email-manager";
 import { PreferencesPanel } from "./preferences-panel";
 import { ProfileForm } from "./profile-form";
 import { SecurityPanel } from "./security-panel";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 type SectionId = "profile" | "preferences" | "security";
 type SubviewId = "emails";
@@ -189,6 +190,7 @@ export function SettingsModalHost() {
     setSubview,
     refreshData,
   } = useSettingsModalStore();
+  const dialogRef = useFocusTrap(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -215,6 +217,7 @@ export function SettingsModalHost() {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-[#0f0f0f]/50 backdrop-blur-[2px]" onClick={close} />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Settings"

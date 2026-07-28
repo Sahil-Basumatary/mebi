@@ -23,16 +23,26 @@ export function NewsletterSignup() {
         <KineticLine delay={80} className="flex flex-col justify-end">
           <div className="flex flex-col gap-8 border-t border-[#000000] pt-10">
             <div className="grid gap-6 sm:grid-cols-2">
-              <input
-                type="text"
-                placeholder="First name"
-                className="border-b border-[#000000] bg-transparent py-3 text-[18px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
-              />
-              <input
-                type="email"
-                placeholder="KCL email address"
-                className="border-b border-[#000000] bg-transparent py-3 text-[18px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
-              />
+              <label className="block">
+                <span className="sr-only">First name</span>
+                <input
+                  type="text"
+                  name="firstName"
+                  autoComplete="given-name"
+                  placeholder="First name"
+                  className="w-full border-b border-[#000000] bg-transparent py-3 text-[18px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
+                />
+              </label>
+              <label className="block">
+                <span className="sr-only">KCL email address</span>
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  placeholder="KCL email address"
+                  className="w-full border-b border-[#000000] bg-transparent py-3 text-[18px] text-[#000000] placeholder:text-[#777777] focus:border-[#777777] focus:outline-none"
+                />
+              </label>
             </div>
             <Link
               href="/sign-up?redirect_url=/onboarding"

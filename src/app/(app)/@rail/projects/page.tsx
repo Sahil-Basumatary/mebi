@@ -23,13 +23,28 @@ export default async function ProjectsRail() {
     <div className="flex h-full flex-col gap-6">
       <div>
         <p className="text-app-label text-meta font-semibold tracking-rail uppercase">Pipeline</p>
-        <p className="text-app-body mt-3 text-body-sm leading-6">
-          Each node is a project. Origin stays until your first brief lands.
-        </p>
       </div>
       <div className="relative min-h-[18rem] flex-1">
         <ProjectTimeline projects={timelineProjects} className="absolute inset-0" />
       </div>
+      <nav aria-label="Projects in pipeline" className="sr-only">
+        {projects.length ? (
+          <ul>
+            {projects.map((project) => (
+              <li key={project.id}>
+                <Link href={`/projects/${project.id}`}>
+                  {project.name}
+                  {project.status === "COMPLETED"
+                    ? ", completed"
+                    : `, active, ${project.progress}% built`}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No projects yet. Brief your first project to grow the chain.</p>
+        )}
+      </nav>
       <Button asChild className="rounded-full bg-app-ink text-app-paper hover:bg-app-accent-hover px-6">
         <Link href="/projects#new-project">Create project</Link>
       </Button>

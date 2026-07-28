@@ -138,6 +138,7 @@ function CommandPalette({
               onClose();
             }
           }}
+          aria-label="Search pages and actions"
           placeholder="Search pages and actions…"
           className="border-app-border text-app-fg placeholder:text-app-muted-2 h-12 w-full border-b bg-transparent px-4 text-[15px] outline-none"
         />
@@ -309,6 +310,7 @@ function CustomizeShortcutsModal({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            aria-label="Filter shortcuts"
             placeholder="Filter shortcuts…"
             className="bg-app-surface text-app-fg placeholder:text-app-muted-2 border-app-border h-8 w-full rounded-md border px-3 text-sm outline-none focus:border-[#2783de]"
           />

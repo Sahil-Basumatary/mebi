@@ -77,15 +77,18 @@ export function PartnerFilters({
         )}
       >
         <label className="bg-app-paper relative flex items-center">
+          <span className="sr-only">Search partners</span>
           <Search
             size={16}
             strokeWidth={1.75}
+            aria-hidden
             className="text-app-meta pointer-events-none absolute left-3"
           />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search name, skill, or interest"
+            aria-label="Search partners"
             className="text-app-ink placeholder:text-app-meta h-10 w-full bg-transparent pr-3 pl-9 text-sm focus:outline-none"
           />
         </label>

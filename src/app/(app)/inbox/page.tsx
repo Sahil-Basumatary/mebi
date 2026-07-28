@@ -89,17 +89,19 @@ export default async function InboxPage({
       <div className="flex flex-col gap-8">
         <PageHeader
           eyebrow="Requests"
-          title="Build requests."
-          description="Accept to join a roster, decline to keep your focus, and track what you've sent."
+          title="Inbox"
         />
 
-        <div className="border-app-divider bg-app-divider flex items-center gap-px self-start border">
+        <div className="border-app-divider bg-app-divider flex items-center gap-px self-start border" role="tablist" aria-label="Inbox folders">
           {tabs.map((item) => {
             const active = tab === item.id;
             return (
               <Link
                 key={item.id}
                 href={`/inbox?tab=${item.id}`}
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? "page" : undefined}
                 className={
                   active
                     ? "bg-app-ink text-app-paper flex items-center gap-2 px-5 py-2.5 text-sm font-medium"
@@ -177,7 +179,6 @@ export default async function InboxPage({
             <EmptyState
               eyebrow="Inbox empty"
               title="No requests yet"
-              description="When someone invites you onto a build — or asks to join yours — it lands here."
               action={
                 <Link
                   href="/partners"
@@ -232,7 +233,6 @@ export default async function InboxPage({
           <EmptyState
             eyebrow="Nothing out"
             title="Nothing sent yet"
-            description="Invite someone onto an active project. The request always names the build."
             action={
               <Link
                 href="/partners"

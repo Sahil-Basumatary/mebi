@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { KineticLine } from "@/components/home/kinetic-line";
 import { ArrowCircle } from "@/components/ui/arrow-circle";
 
@@ -38,7 +37,10 @@ export function HomeHero() {
             Hackollab
           </Link>
           <div className="flex items-center gap-10 xl:gap-12">
-            <nav className="hidden items-center gap-7 text-[16px] font-medium tracking-[-0.01em] text-[#ffffff] sm:flex lg:text-[16px] xl:gap-9">
+            <nav
+              aria-label="Marketing"
+              className="hidden items-center gap-7 text-[16px] font-medium tracking-[-0.01em] text-[#ffffff] sm:flex lg:text-[16px] xl:gap-9"
+            >
               {navItems.map((item) => (
                 <Link
                   key={item.label}
@@ -57,13 +59,6 @@ export function HomeHero() {
               >
                 Request access
               </Link>
-              <button
-                type="button"
-                aria-label="Search"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-transparent text-[#ffffff] transition-colors hover:border-[#ffffff]"
-              >
-                <Search size={22} strokeWidth={1.7} />
-              </button>
             </div>
           </div>
         </div>

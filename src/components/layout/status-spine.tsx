@@ -137,7 +137,7 @@ export async function StatusSpine() {
   const spine = await loadSpine();
 
   return (
-    <div className="border-app-divider bg-app-paper border-b">
+    <aside aria-label="Status" className="border-app-divider bg-app-paper border-b">
       <div className="mx-auto flex w-full max-w-[88rem] flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-12">
         <div className="flex min-w-0 items-center gap-3">
           {spine.imageUrl ? (
@@ -177,6 +177,6 @@ export async function StatusSpine() {
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

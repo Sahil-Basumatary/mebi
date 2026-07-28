@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { markProjectComplete, type CompleteProjectState } from "./actions";
 
 type ProjectCompletionPanelProps = {
@@ -60,6 +61,7 @@ function fireConfetti() {
 export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletionPanelProps) {
   const [state, formAction, isPending] = useActionState(markProjectComplete, initialState);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const dialogRef = useFocusTrap(dialogOpen);
 
   useEffect(() => {
     if (state.completed) {
@@ -72,15 +74,23 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
     }
   }, [state.completed]);
 
+  useEffect(() => {
+    if (!dialogOpen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setDialogOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dialogOpen]);
+
   return (
     <div className="border-app-divider bg-app-chip border p-6">
       <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
         Finish line
       </p>
-      <h2 className="mt-3 font-serif text-3xl font-light">Ready to close the loop?</h2>
+      <h2 className="mt-3 font-serif text-3xl font-light">Mark this build finished?</h2>
       <p className="text-app-body mt-3 text-[16px] leading-6">
-        Completion locks the project at 100% and turns it into future proof for profile, partners,
-        and CV generation.
+        This locks progress at 100% and unlocks publishing.
       </p>
       <form action={formAction} className="mt-6">
         <input type="hidden" name="projectId" value={projectId} />
@@ -88,11 +98,21 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
           {disabled ? "Project completed" : isPending ? "Completing..." : "Mark as complete"}
         </Button>
       </form>
-      {state.error ? <p className="text-app-ink mt-4 text-sm">{state.error}</p> : null}
+      {state.error ? (
+        <p role="alert" className="text-app-ink mt-4 text-sm">
+          {state.error}
+        </p>
+      ) : null}
 
       {dialogOpen ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 px-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="project-complete-title" className="border-app-divider bg-app-paper text-app-ink max-w-md border p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="project-complete-title"
+            className="border-app-divider bg-app-paper text-app-ink max-w-md border p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)]"
+          >
             <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
               Project finished
             </p>
@@ -100,8 +120,7 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
               Project finished!
             </h3>
             <p className="text-app-body mt-4 text-[16px] leading-6">
-              Nice. This is now a completed build record. Next milestone can turn this into proof and
-              partner-facing signal.
+              You can publish it from the project page.
             </p>
             <div className="mt-6 flex justify-end">
               <button

@@ -306,6 +306,7 @@ export function ProjectTimeline({ projects, className }: ProjectTimelineProps) {
     <div
       ref={hostRef}
       className={className}
+      aria-hidden
       style={{ touchAction: glide ? "pan-x" : undefined, cursor: glide ? "grab" : undefined }}
       onPointerDown={(event) => {
         if (!glide) return;

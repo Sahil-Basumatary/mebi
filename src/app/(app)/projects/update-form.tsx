@@ -23,14 +23,18 @@ export function UpdateForm({ projectId, progress, disabled }: UpdateFormProps) {
     <form action={formAction} className="border-app-divider bg-app-paper border p-6">
       <input type="hidden" name="projectId" value={projectId} />
       <div>
-        <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+        <label
+          htmlFor="build-log-body"
+          className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase"
+        >
           Build log
-        </p>
+        </label>
         <p className="text-app-body mt-2 text-[16px] leading-6">
           Post what you shipped. Progress only moves when you say it does.
         </p>
       </div>
       <textarea
+        id="build-log-body"
         name="body"
         rows={4}
         maxLength={2000}
@@ -53,12 +57,18 @@ export function UpdateForm({ projectId, progress, disabled }: UpdateFormProps) {
         <>
           <input type="hidden" name="progress" value={value} />
           <div className="mt-4 flex items-center justify-between gap-4">
-            <p className="text-app-label text-xs font-semibold tracking-[0.2em] uppercase">
+            <label
+              htmlFor="build-log-progress"
+              className="text-app-label text-xs font-semibold tracking-[0.2em] uppercase"
+            >
               Progress
-            </p>
-            <span className="font-serif text-3xl font-light">{value}%</span>
+            </label>
+            <span className="font-serif text-3xl font-light" aria-live="polite">
+              {value}%
+            </span>
           </div>
           <input
+            id="build-log-progress"
             type="range"
             min={progress}
             max="100"
@@ -68,12 +78,16 @@ export function UpdateForm({ projectId, progress, disabled }: UpdateFormProps) {
             onChange={(event) => setValue(Number(event.target.value))}
             className="accent-app-ink mt-3 w-full"
           />
-          <div className="bg-app-divider mt-3 h-2">
+          <div className="bg-app-divider mt-3 h-2" aria-hidden>
             <div className="bg-app-ink h-full" style={{ width: `${value}%` }} />
           </div>
         </>
       ) : null}
-      {state.error ? <p className="text-app-ink mt-4 text-sm">{state.error}</p> : null}
+      {state.error ? (
+        <p role="alert" className="text-app-ink mt-4 text-sm">
+          {state.error}
+        </p>
+      ) : null}
       <div className="mt-5 flex justify-end">
         <Button
           disabled={disabled || isPending}

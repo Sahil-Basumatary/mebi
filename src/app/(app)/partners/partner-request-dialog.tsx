@@ -3,6 +3,7 @@
 import { Check, X } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { sendProjectRequest, type SendRequestState } from "@/app/(app)/inbox/actions";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 type ViewerProject = {
   id: string;
@@ -35,6 +36,7 @@ export function PartnerRequestDialog({
 }: PartnerRequestDialogProps) {
   const [state, formAction, isPending] = useActionState(sendProjectRequest, initialState);
   const [open, setOpen] = useState(false);
+  const dialogRef = useFocusTrap(open);
   const sharedTags = [...sharedSkills, ...sharedInterests];
   const projectOptions = fixedProject ? [fixedProject] : projects;
 
@@ -55,8 +57,12 @@ export function PartnerRequestDialog({
 
   if (state.sent) {
     return (
-      <span className="border-app-ink text-app-ink inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium">
-        <Check size={16} strokeWidth={2.5} />
+      <span
+        role="status"
+        aria-live="polite"
+        className="border-app-ink text-app-ink inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium"
+      >
+        <Check size={16} strokeWidth={2.5} aria-hidden />
         Invite sent
       </span>
     );
@@ -81,6 +87,7 @@ export function PartnerRequestDialog({
       {open ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 px-4">
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="partner-request-title"
@@ -161,7 +168,7 @@ export function PartnerRequestDialog({
                   rows={4}
                   maxLength={1000}
                   required
-                  placeholder={`Hi ${toName}, I think you'd be the missing piece on this build...`}
+                  placeholder={`Hi ${toName}, want to work on this together?`}
                   className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink resize-none border px-3 py-3 text-sm leading-6 outline-none transition-colors"
                 />
               </div>
@@ -180,7 +187,9 @@ export function PartnerRequestDialog({
               </div>
 
               {state.error ? (
-                <p className="border-app-divider bg-app-wash text-app-ink border p-3 text-sm">{state.error}</p>
+                <p role="alert" className="border-app-divider bg-app-wash text-app-ink border p-3 text-sm">
+                  {state.error}
+                </p>
               ) : null}
 
               <div className="flex justify-end gap-3">

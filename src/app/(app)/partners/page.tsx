@@ -14,6 +14,7 @@ import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch, type MatchBreakdown } from "@/lib/match";
 import { memberProjectWhere } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
+import { detectPlatform, platformLabel } from "@/lib/social-links";
 import { displayName, initials, ROLE_LABEL } from "@/lib/user-display";
 import { partnerFacets } from "./facets";
 import { PartnerFilters } from "./partner-filters";
@@ -61,25 +62,6 @@ function GithubMark({ className }: { className?: string }) {
       <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
     </svg>
   );
-}
-
-function joinList(parts: string[]): string {
-  if (parts.length <= 1) return parts.join("");
-  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
-}
-
-function matchReason(breakdown: MatchBreakdown): string {
-  const parts: string[] = [];
-  if (breakdown.sharedSkills.length) {
-    parts.push(`${breakdown.sharedSkills.length} shared skill${breakdown.sharedSkills.length > 1 ? "s" : ""}`);
-  }
-  if (breakdown.sharedInterests.length) {
-    parts.push(
-      `${breakdown.sharedInterests.length} shared interest${breakdown.sharedInterests.length > 1 ? "s" : ""}`,
-    );
-  }
-  if (breakdown.complementaryRole) parts.push("a complementary role");
-  return parts.length ? `Matched on ${joinList(parts)}.` : "A close starting point worth a look.";
 }
 
 function PartnerAction({
@@ -136,12 +118,10 @@ function PartnerAction({
 
 function PartnerRow({
   ranked,
-  featured,
   relationship,
   viewerProjects,
 }: {
   ranked: RankedPartner;
-  featured?: boolean;
   relationship: Relationship;
   viewerProjects: ViewerProject[];
 }) {
@@ -188,6 +168,7 @@ function PartnerRow({
                     href={link}
                     target="_blank"
                     rel="noreferrer"
+                    aria-label={`Open ${platformLabel(detectPlatform(link))} profile`}
                     className="text-app-label hover:text-app-ink transition-colors"
                   >
                     <SocialIcon url={link} className="h-4 w-4" />
@@ -199,9 +180,6 @@ function PartnerRow({
           </div>
           {user.bio ? (
             <p className="text-app-body mt-2 line-clamp-2 max-w-2xl text-body leading-6">{user.bio}</p>
-          ) : null}
-          {featured ? (
-            <p className="text-app-ink mt-2 text-body">{matchReason(breakdown)}</p>
           ) : null}
           {skillTags.length || interestTags.length ? (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -337,26 +315,17 @@ export default async function PartnersPage({
     .sort((a, b) => b.breakdown.score - a.breakdown.score);
 
   const { skills, interests } = partnerFacets(pool);
-  const overlapping = ranked.filter((item) => item.breakdown.score > 0);
-  const featuredIds = new Set(
-    !filtersActive
-      ? (overlapping.length ? overlapping : ranked).slice(0, 3).map((item) => item.user.id)
-      : [],
-  );
-
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Invite to build"
-        title="Find the person who will ship and sign."
-        description="Invite someone into an active build. Co-membership and peer signatures are what turn a directory into proof."
+        title="Find a builder for your project."
       />
 
       {pool.length === 0 ? (
         <EmptyState
           eyebrow="Early network"
           title="No other builders yet"
-          description="You are early. As more KCL students onboard, this surface fills with people whose skills and interests overlap with yours."
         />
       ) : (
         <>
@@ -380,7 +349,6 @@ export default async function PartnersPage({
                   <PartnerRow
                     key={item.user.id}
                     ranked={item}
-                    featured={featuredIds.has(item.user.id)}
                     relationship={relationshipFor(item.user.id)}
                     viewerProjects={viewerProjects}
                   />

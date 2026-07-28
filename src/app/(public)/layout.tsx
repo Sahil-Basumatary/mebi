@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SkipLink } from "@/components/layout/skip-link";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="bg-app-wash text-app-ink min-h-full">
+      <SkipLink />
       <header className="border-app-divider bg-app-paper border-b">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <Link href="/" className="font-serif text-2xl font-light tracking-tight">
@@ -17,7 +19,9 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-6 py-10 outline-none">
+        {children}
+      </main>
     </div>
   );
 }

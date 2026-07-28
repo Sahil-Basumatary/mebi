@@ -41,7 +41,7 @@
   --app-divider: #d8d8d8;
   --app-label: #555555;
   --app-body: #333333;
-  --app-meta: #8f8f8f;
+  --app-meta: #6b6b6b;
   --app-wash: #f7f7f7;
   --app-chip: #f4f4f4;
   --app-signal: #ff4d4d;
@@ -264,4 +264,49 @@ body {
   .panel-fade {
     animation: none;
   }
+}
+
+@keyframes route-bone {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.route-bone {
+  animation: route-bone 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-bone {
+    animation: none;
+  }
+}
+
+.skip-link {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 200;
+  padding: 0.5rem 1rem;
+  background: var(--app-ink);
+  color: var(--app-paper);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transform: translateY(-150%);
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid color-mix(in srgb, var(--app-paper) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.skip-link-marketing {
+  background: #ffffff;
+  color: #000000;
+}
+
+.skip-link-marketing:focus {
+  outline-color: rgba(255, 255, 255, 0.45);
 }
