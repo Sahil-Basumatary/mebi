@@ -36,9 +36,15 @@ type TimelineNode = {
 
 const SPACING = 1.3;
 const FADE_LENGTH = 1.5;
+const FOV = 38;
 // Positive camera offset pushes the chain toward the left edge of the card,
 // leaving the top-right corner free for the pinned detail panel.
 const CHAIN_SHIFT = 1.0;
+// The rail is a fixed-width column whose height is set by the page, so the
+// camera frames by world width. Framing by height instead lets a tall rail
+// squeeze the horizontal span until the chain clips off the left edge.
+const VIEW_WIDTH = 3.2;
+const HALF_FOV_TAN = Math.tan(MathUtils.degToRad(FOV / 2));
 const ORIGIN_BASE = new Color("#c4c4c4");
 const ORIGIN_HOVER = new Color("#8f8f8f");
 const EDGE_BASE = new Color("#c9c9c9");
@@ -162,6 +168,12 @@ function Scene({
     const focus = glide ? MathUtils.clamp(focusRef.current, lastY, 0) : lastY / 2;
     focusRef.current = focus;
     camera.position.y = MathUtils.lerp(camera.position.y, focus, 0.08);
+    camera.position.x = CHAIN_SHIFT;
+    camera.position.z = MathUtils.clamp(
+      VIEW_WIDTH / (2 * HALF_FOV_TAN * (size.width / size.height)),
+      3.5,
+      24,
+    );
     camera.lookAt(CHAIN_SHIFT, camera.position.y, 0);
     // Project the described node into screen space so the HTML panel rides at
     // exactly the same height, staying in sync while the camera glides.
@@ -251,8 +263,11 @@ export function ProjectTimeline({ projects, className }: ProjectTimelineProps) {
   const nodes = useMemo(() => buildNodes(projects), [projects]);
   const [activeDot, setActiveDot] = useState(nodes.length - 1);
   const lastY = nodes[nodes.length - 1].y;
-  // Camera glide only earns its keep once the chain outgrows the card.
-  const glide = -lastY > 2.4;
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const [viewHeight, setViewHeight] = useState(VIEW_WIDTH);
+  // Camera glide only earns its keep once the chain outgrows the card, and how
+  // much of the chain fits depends on a height the page owns, not this file.
+  const glide = -lastY > viewHeight - 0.8;
   const focusRef = useRef(lastY);
   const dragRef = useRef<{ pointerY: number; focus: number; height: number } | null>(null);
   const dragDistanceRef = useRef(0);
@@ -261,6 +276,16 @@ export function ProjectTimeline({ projects, className }: ProjectTimelineProps) {
     // motion preference before the loop starts.
     setReady(true);
     setAnimate(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width > 0) setViewHeight((VIEW_WIDTH * height) / width);
+    });
+    observer.observe(host);
+    return () => observer.disconnect();
   }, []);
   useEffect(() => {
     if (!glide) return;
@@ -279,6 +304,7 @@ export function ProjectTimeline({ projects, className }: ProjectTimelineProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   return (
     <div
+      ref={hostRef}
       className={className}
       style={{ touchAction: glide ? "pan-x" : undefined, cursor: glide ? "grab" : undefined }}
       onPointerDown={(event) => {
@@ -307,7 +333,7 @@ export function ProjectTimeline({ projects, className }: ProjectTimelineProps) {
       {ready ? (
         <Canvas
           dpr={[1, 2]}
-          camera={{ position: [CHAIN_SHIFT, lastY, 4.6], fov: 38, near: 0.1, far: 30 }}
+          camera={{ position: [CHAIN_SHIFT, lastY, 4.6], fov: FOV, near: 0.1, far: 30 }}
           gl={{ antialias: true, alpha: true }}
         >
           <ambientLight intensity={1.1} />
