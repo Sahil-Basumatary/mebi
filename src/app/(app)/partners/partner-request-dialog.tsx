@@ -15,6 +15,8 @@ type PartnerRequestDialogProps = {
   sharedSkills: string[];
   sharedInterests: string[];
   projects: ViewerProject[];
+  fixedProject?: ViewerProject;
+  triggerLabel?: string;
 };
 
 const initialState: SendRequestState = {
@@ -28,10 +30,13 @@ export function PartnerRequestDialog({
   sharedSkills,
   sharedInterests,
   projects,
+  fixedProject,
+  triggerLabel = "Invite to build",
 }: PartnerRequestDialogProps) {
   const [state, formAction, isPending] = useActionState(sendProjectRequest, initialState);
   const [open, setOpen] = useState(false);
   const sharedTags = [...sharedSkills, ...sharedInterests];
+  const projectOptions = fixedProject ? [fixedProject] : projects;
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +62,7 @@ export function PartnerRequestDialog({
     );
   }
 
-  if (!projects.length) {
+  if (!projectOptions.length) {
     return (
       <span className="text-app-meta text-sm">Create an active project to invite someone</span>
     );
@@ -70,7 +75,7 @@ export function PartnerRequestDialog({
         onClick={() => setOpen(true)}
         className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
       >
-        Invite to build
+        {triggerLabel}
       </button>
 
       {open ? (
@@ -87,7 +92,8 @@ export function PartnerRequestDialog({
                   Build invite
                 </p>
                 <h3 id="partner-request-title" className="mt-2 font-serif text-3xl leading-tight font-light">
-                  Invite {toName} onto a project
+                  Invite {toName}
+                  {fixedProject ? ` to ${fixedProject.name}` : " onto a project"}
                 </h3>
               </div>
               <button
@@ -122,24 +128,28 @@ export function PartnerRequestDialog({
                 </div>
               ) : null}
 
-              <div className="grid gap-2">
-                <label htmlFor="projectId" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
-                  Project
-                </label>
-                <select
-                  id="projectId"
-                  name="projectId"
-                  required
-                  defaultValue={projects[0]?.id ?? ""}
-                  className="border-app-divider bg-app-wash text-app-ink focus:border-app-ink border px-3 py-3 text-sm outline-none transition-colors"
-                >
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {fixedProject ? (
+                <input type="hidden" name="projectId" value={fixedProject.id} />
+              ) : (
+                <div className="grid gap-2">
+                  <label htmlFor="projectId" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                    Project
+                  </label>
+                  <select
+                    id="projectId"
+                    name="projectId"
+                    required
+                    defaultValue={projectOptions[0]?.id ?? ""}
+                    className="border-app-divider bg-app-wash text-app-ink focus:border-app-ink border px-3 py-3 text-sm outline-none transition-colors"
+                  >
+                    {projectOptions.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid gap-2">
                 <label htmlFor="message" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">

@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { ProjectRole } from "@prisma/client";
+import { Chip, PageHeader, UserRow } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { requireOnboardedUser } from "@/lib/current-user";
+import { scoreMatch } from "@/lib/match";
 import { requireProjectMember } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 import { displayName } from "@/lib/user-display";
+import { PartnerRequestDialog } from "../../partners/partner-request-dialog";
 import { ProjectCompletionPanel } from "../project-completion-panel";
 import { UpdateForm } from "../update-form";
 
@@ -40,19 +43,98 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const project = await requireProjectMember(projectId, user.id);
   const isOwner = project.membership.role === ProjectRole.OWNER;
   const isCompleted = project.status === "COMPLETED";
+  const canInvite = !isCompleted && !user.profilePrivate;
 
-  const updates = await prisma.projectUpdate.findMany({
-    where: { projectId: project.id },
-    orderBy: { createdAt: "desc" },
-    take: 40,
-    select: {
-      id: true,
-      body: true,
-      progress: true,
-      createdAt: true,
-      author: { select: { fullName: true, username: true } },
-    },
+  const [members, updates, pendingInvites, candidatePool] = await Promise.all([
+    prisma.projectMember.findMany({
+      where: { projectId: project.id },
+      orderBy: { joinedAt: "asc" },
+      select: {
+        id: true,
+        role: true,
+        joinedAt: true,
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            username: true,
+            imageUrl: true,
+            role: true,
+          },
+        },
+      },
+    }),
+    prisma.projectUpdate.findMany({
+      where: { projectId: project.id },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+      select: {
+        id: true,
+        body: true,
+        progress: true,
+        createdAt: true,
+        author: {
+          select: {
+            fullName: true,
+            username: true,
+            imageUrl: true,
+            role: true,
+          },
+        },
+      },
+    }),
+    prisma.projectRequest.findMany({
+      where: {
+        projectId: project.id,
+        status: "PENDING",
+        kind: "INVITE",
+      },
+      select: {
+        id: true,
+        toUser: {
+          select: { id: true, fullName: true, username: true, imageUrl: true, role: true },
+        },
+      },
+    }),
+    canInvite
+      ? prisma.user.findMany({
+          where: {
+            onboarded: true,
+            profilePrivate: false,
+            id: { not: user.id },
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 40,
+          select: {
+            id: true,
+            fullName: true,
+            username: true,
+            imageUrl: true,
+            role: true,
+            skills: true,
+            interests: true,
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const memberIds = new Set(members.map((member) => member.user.id));
+  const pendingInviteIds = new Set(pendingInvites.map((invite) => invite.toUser.id));
+  const roster = [...members].sort((a, b) => {
+    if (a.role === b.role) return a.joinedAt.getTime() - b.joinedAt.getTime();
+    return a.role === ProjectRole.OWNER ? -1 : 1;
   });
+
+  const inviteSuggestions = candidatePool
+    .filter((candidate) => !memberIds.has(candidate.id) && !pendingInviteIds.has(candidate.id))
+    .map((candidate) => ({
+      candidate,
+      breakdown: scoreMatch(user, candidate),
+    }))
+    .sort((a, b) => b.breakdown.score - a.breakdown.score)
+    .slice(0, 3);
+
+  const fixedProject = { id: project.id, name: project.name };
 
   return (
     <div className="flex flex-col gap-8">
@@ -66,102 +148,226 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         </Button>
       </div>
 
-      <section className="border-app-divider bg-app-divider grid gap-px border xl:grid-cols-[1.25fr_0.75fr]">
-        <div className="bg-app-paper p-8 lg:p-10">
-          <div className="flex flex-wrap gap-2">
-            <span className="border-app-divider bg-app-chip text-app-label border px-2 py-1 text-[10px] font-semibold tracking-[0.16em] uppercase">
-              {project.visibility.toLowerCase()}
-            </span>
-            <span className="border-app-divider bg-app-paper text-app-label border px-2 py-1 text-[10px] font-semibold tracking-[0.16em] uppercase">
-              {project.status.toLowerCase()}
-            </span>
-          </div>
-          <h1 className="mt-5 max-w-4xl font-serif text-[clamp(2.7rem,6vw,5.4rem)] leading-[0.98] font-light tracking-[-0.04em]">
-            {project.name}
-          </h1>
-          <p className="text-app-body mt-6 max-w-3xl text-[16px] leading-7">{project.description}</p>
-        </div>
-        <div className="bg-app-chip flex flex-col justify-between p-8 lg:p-10">
-          <div>
-            <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
-              Project status
+      <PageHeader
+        eyebrow="Shared build"
+        title={project.name}
+        description={project.description}
+        aside={
+          <>
+            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+              Status
             </p>
-            <p className="mt-4 font-serif text-5xl font-light">{project.progress}%</p>
+            <p className="text-app-ink mt-4 font-serif text-5xl font-light">{project.progress}%</p>
             <div className="bg-app-divider mt-5 h-2">
               <div className="bg-app-ink h-full" style={{ width: `${project.progress}%` }} />
             </div>
-          </div>
-          <dl className="text-app-body mt-8 grid gap-4 text-sm">
-            <div>
-              <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
-                Estimated time
-              </dt>
-              <dd className="mt-1">{project.estimatedTime || "Not set"}</dd>
+            <div className="mt-8 flex flex-wrap gap-2">
+              <Chip>{project.visibility.toLowerCase()}</Chip>
+              <Chip tone={isCompleted ? "ink" : "wash"}>{project.status.toLowerCase()}</Chip>
             </div>
-            <div>
-              <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
-                Finished
-              </dt>
-              <dd className="mt-1">{formatDate(project.completedAt)}</dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="border-app-divider bg-app-paper self-start border p-6">
-          <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
-            Build signal
-          </p>
-          <h2 className="mt-3 font-serif text-3xl font-light">What this project says so far</h2>
-          <div className="mt-6 grid gap-3">
-            {(project.techStack.length ? project.techStack : ["No stack tags yet"]).map((tag) => (
-              <span
-                key={tag}
-                className="border-app-divider bg-app-wash text-app-body border px-3 py-2 text-sm"
-              >
-                {tag}
-              </span>
+            <dl className="text-app-body mt-8 grid gap-4 text-sm">
+              <div>
+                <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
+                  Estimated time
+                </dt>
+                <dd className="mt-1">{project.estimatedTime || "Not set"}</dd>
+              </div>
+              <div>
+                <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
+                  Finished
+                </dt>
+                <dd className="mt-1">{formatDate(project.completedAt)}</dd>
+              </div>
+              <div>
+                <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
+                  On the roster
+                </dt>
+                <dd className="mt-1">
+                  {members.length} member{members.length === 1 ? "" : "s"}
+                </dd>
+              </div>
+            </dl>
+          </>
+        }
+      >
+        {project.techStack.length ? (
+          <div className="mt-6 flex flex-wrap gap-1.5">
+            {project.techStack.map((tag) => (
+              <Chip key={tag}>{tag}</Chip>
             ))}
           </div>
-        </div>
-        <UpdateForm projectId={project.id} progress={project.progress} disabled={isCompleted} />
-      </section>
+        ) : null}
+      </PageHeader>
 
-      <section className="border-app-divider bg-app-paper border">
-        <div className="border-app-divider border-b px-6 py-5">
-          <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
-            Timeline
-          </p>
-          <h2 className="mt-2 font-serif text-3xl font-light">What the team posted</h2>
-        </div>
-        {updates.length ? (
-          <ul className="divide-app-divider divide-y">
-            {updates.map((update) => (
-              <li key={update.id} className="px-6 py-5">
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <p className="text-app-ink text-sm font-medium">
-                    {displayName(update.author.fullName, update.author.username)}
-                  </p>
-                  <p className="text-app-meta text-xs">{formatStamp(update.createdAt)}</p>
-                </div>
-                <p className="text-app-body mt-3 max-w-3xl text-body leading-6">{update.body}</p>
-                {update.progress !== null ? (
-                  <p className="text-app-label mt-3 font-mono text-chip tracking-meta uppercase">
-                    Progress → {update.progress}%
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-app-body px-6 py-8 text-body-sm leading-6">
-            No updates yet. Post the first one above.
-          </p>
-        )}
-      </section>
+      <section className="grid gap-6 xl:grid-cols-[1fr_20rem]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <UpdateForm projectId={project.id} progress={project.progress} disabled={isCompleted} />
 
-      {isOwner ? <ProjectCompletionPanel projectId={project.id} disabled={isCompleted} /> : null}
+          <section className="border-app-divider bg-app-paper border">
+            <div className="border-app-divider border-b px-6 py-5">
+              <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+                Build log
+              </p>
+              <h2 className="mt-2 font-serif text-3xl font-light">What the team posted</h2>
+            </div>
+            {updates.length ? (
+              <ul className="divide-app-divider divide-y">
+                {updates.map((update) => (
+                  <li key={update.id} className="px-6 py-5">
+                    <UserRow
+                      fullName={update.author.fullName}
+                      username={update.author.username}
+                      imageUrl={update.author.imageUrl}
+                      role={update.author.role}
+                      meta={
+                        <>
+                          <p className="text-app-meta mt-1 text-xs">{formatStamp(update.createdAt)}</p>
+                          <p className="text-app-body mt-3 max-w-3xl text-body leading-6">
+                            {update.body}
+                          </p>
+                          {update.progress !== null ? (
+                            <p className="text-app-label mt-3 font-mono text-chip tracking-meta uppercase">
+                              Progress → {update.progress}%
+                            </p>
+                          ) : null}
+                        </>
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-app-body px-6 py-8 text-body-sm leading-6">
+                No updates yet. Post the first one above.
+              </p>
+            )}
+          </section>
+        </div>
+
+        <aside className="flex flex-col gap-6">
+          <section className="border-app-divider bg-app-paper border">
+            <div className="border-app-divider border-b px-5 py-4">
+              <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+                Roster
+              </p>
+              <p className="text-app-body mt-2 text-body-sm leading-5">
+                Everyone with a seat on this build.
+              </p>
+            </div>
+            <ul className="divide-app-divider divide-y">
+              {roster.map((member) => (
+                <li key={member.id} className="px-5 py-4">
+                  <UserRow
+                    fullName={member.user.fullName}
+                    username={member.user.username}
+                    imageUrl={member.user.imageUrl}
+                    role={member.user.role}
+                    meta={
+                      <p className="text-app-meta mt-1 font-mono text-chip tracking-meta uppercase">
+                        {member.role === ProjectRole.OWNER ? "Owner" : "Member"} · joined{" "}
+                        {formatDate(member.joinedAt)}
+                      </p>
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {pendingInvites.length ? (
+            <section className="border-app-divider bg-app-paper border">
+              <div className="border-app-divider border-b px-5 py-4">
+                <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+                  Pending invites
+                </p>
+              </div>
+              <ul className="divide-app-divider divide-y">
+                {pendingInvites.map((invite) => (
+                  <li key={invite.id} className="px-5 py-4">
+                    <UserRow
+                      fullName={invite.toUser.fullName}
+                      username={invite.toUser.username}
+                      imageUrl={invite.toUser.imageUrl}
+                      role={invite.toUser.role}
+                      meta={
+                        <p className="text-app-meta mt-1 font-mono text-chip tracking-meta uppercase">
+                          Waiting on reply
+                        </p>
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {canInvite ? (
+            <section className="border-app-divider bg-app-paper border">
+              <div className="border-app-divider border-b px-5 py-4">
+                <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+                  Invite
+                </p>
+                <p className="text-app-body mt-2 text-body-sm leading-5">
+                  Pull in the missing role for this build.
+                </p>
+              </div>
+              {inviteSuggestions.length ? (
+                <ul className="divide-app-divider divide-y">
+                  {inviteSuggestions.map(({ candidate, breakdown }) => (
+                    <li key={candidate.id} className="space-y-3 px-5 py-4">
+                      <UserRow
+                        fullName={candidate.fullName}
+                        username={candidate.username}
+                        imageUrl={candidate.imageUrl}
+                        role={candidate.role}
+                        meta={
+                          breakdown.sharedSkills.length || breakdown.sharedInterests.length ? (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {[...breakdown.sharedSkills, ...breakdown.sharedInterests]
+                                .slice(0, 3)
+                                .map((tag) => (
+                                  <Chip key={tag} tone="ink">
+                                    {tag}
+                                  </Chip>
+                                ))}
+                            </div>
+                          ) : null
+                        }
+                      />
+                      <PartnerRequestDialog
+                        toUserId={candidate.id}
+                        toName={displayName(candidate.fullName, candidate.username)}
+                        sharedSkills={breakdown.sharedSkills}
+                        sharedInterests={breakdown.sharedInterests}
+                        projects={[fixedProject]}
+                        fixedProject={fixedProject}
+                        triggerLabel="Invite"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-app-body px-5 py-5 text-body-sm leading-6">
+                  No open builders to invite yet.{" "}
+                  <Link href="/partners" className="border-app-ink border-b pb-0.5">
+                    Browse partners
+                  </Link>
+                </p>
+              )}
+              <div className="border-app-divider border-t px-5 py-4">
+                <Link
+                  href="/partners"
+                  className="text-app-ink text-sm font-medium underline underline-offset-2"
+                >
+                  Open full directory
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
+          {isOwner ? <ProjectCompletionPanel projectId={project.id} disabled={isCompleted} /> : null}
+        </aside>
+      </section>
     </div>
   );
 }
