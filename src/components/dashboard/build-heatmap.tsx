@@ -99,7 +99,6 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
   const summary = useMemo(() => summarizeActivity(days), [days]);
   const gridWidth = weeks.length * STEP - GAP;
   const stats = [
-    { label: "Current streak", value: `${summary.currentStreak}`, unit: summary.currentStreak === 1 ? "day" : "days" },
     { label: "Longest streak", value: `${summary.longestStreak}`, unit: summary.longestStreak === 1 ? "day" : "days" },
     { label: "Active days", value: `${summary.activeDays}`, unit: "of 365" },
     {
@@ -202,10 +201,7 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-app-label text-[12px] leading-5">
-          Creates, updates, and completions across your pipeline.
-        </p>
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-4">
         <div className="flex items-center gap-1.5">
           <span className="text-app-meta text-[9px] font-semibold tracking-[0.12em] uppercase">Less</span>
           {LEVEL_CLASS.map((tone) => (
@@ -220,7 +216,7 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
         </div>
       </div>
 
-      <dl className="border-app-divider mt-auto grid grid-cols-2 gap-x-8 gap-y-6 border-t pt-7 sm:grid-cols-4">
+      <dl className="border-app-divider mt-auto grid grid-cols-2 gap-x-8 gap-y-6 border-t pt-7 sm:grid-cols-3">
         {stats.map((stat) => (
           <div key={stat.label}>
             <dt className="text-app-label text-[10px] font-semibold tracking-[0.18em] uppercase">
