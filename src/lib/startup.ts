@@ -1,12 +1,14 @@
 export type StartupPreferenceValue = "HOME" | "LAST_VISITED";
 
-export const HOME_PATH = "/dashboard";
+export const HOME_PATH = "/home";
 
 const ALLOWED_PREFIXES = [
+  "/home",
   "/dashboard",
   "/projects",
   "/partners",
   "/inbox",
+  "/proof",
   "/community",
   "/events",
 ] as const;
@@ -24,6 +26,17 @@ export function resolveStartupPath(
   lastVisitedPath: string | null | undefined,
 ): string {
   if (preference === "LAST_VISITED" && lastVisitedPath && isAllowedAppPath(lastVisitedPath)) {
+    if (lastVisitedPath === "/dashboard" || lastVisitedPath.startsWith("/dashboard/")) {
+      return HOME_PATH;
+    }
+    if (
+      lastVisitedPath === "/community" ||
+      lastVisitedPath.startsWith("/community/") ||
+      lastVisitedPath === "/events" ||
+      lastVisitedPath.startsWith("/events/")
+    ) {
+      return "/proof";
+    }
     return lastVisitedPath;
   }
   return HOME_PATH;

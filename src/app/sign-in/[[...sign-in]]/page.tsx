@@ -8,9 +8,9 @@ export default function SignInPage() {
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/auth-ribbon.png')" }}
+        style={{ backgroundImage: "url('/auth-ribbon.jpg')" }}
       />
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[#060606]/45" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[#060606]/25" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-6 py-12">
         <Link

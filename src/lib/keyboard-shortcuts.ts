@@ -7,7 +7,6 @@ export type ShortcutId =
   | "goPartners"
   | "goInbox"
   | "goProof"
-  | "goEvents"
   | "toggleTheme";
 
 export type ShortcutBindingMap = Record<ShortcutId, string>;
@@ -57,12 +56,6 @@ export const SHORTCUT_DEFINITIONS: ShortcutDefinition[] = [
     label: "Go to Proof",
     group: "Navigation",
     defaultCombo: "g+o",
-  },
-  {
-    id: "goEvents",
-    label: "Go to Events",
-    group: "Navigation",
-    defaultCombo: "g+e",
   },
   {
     id: "toggleTheme",

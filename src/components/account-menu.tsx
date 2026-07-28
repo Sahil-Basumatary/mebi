@@ -1,13 +1,14 @@
 "use client";
 
 import { useClerk, useUser } from "@clerk/nextjs";
-import { Bell, FolderKanban, Home, LogOut, Settings, Users } from "lucide-react";
+import { Bell, FolderKanban, Home, LogOut, Moon, Settings, Sun, Users } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useSettingsModal } from "@/components/settings/settings-modal";
 
 const menuLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/home", label: "Home", icon: Home },
   { href: "/projects", label: "Your projects", icon: FolderKanban },
   { href: "/partners", label: "Partners", icon: Users },
   { href: "/inbox", label: "Requests", icon: Bell },
@@ -25,7 +26,13 @@ export function AccountMenu() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const { open: openSettings } = useSettingsModal();
+  const { resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -123,6 +130,22 @@ export function AccountMenu() {
             >
               <Settings size={16} strokeWidth={1.75} />
               Settings
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setTheme(resolvedTheme === "dark" ? "light" : "dark");
+              }}
+              className="text-app-muted hover:bg-app-hover hover:text-app-fg flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors"
+            >
+              {mounted && resolvedTheme === "dark" ? (
+                <Sun size={16} strokeWidth={1.75} />
+              ) : (
+                <Moon size={16} strokeWidth={1.75} />
+              )}
+              {mounted && resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
             </button>
 
             <div className="bg-app-border my-1 h-px" />

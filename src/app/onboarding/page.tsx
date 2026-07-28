@@ -30,7 +30,7 @@ export default async function OnboardingPage() {
   });
 
   if (dbUser.onboarded) {
-    redirect("/dashboard");
+    redirect("/home");
   }
 
   return (

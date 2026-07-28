@@ -3,6 +3,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { validateUsername } from "@/lib/username";
 
 export type OnboardingState = {
   error: string | null;
@@ -48,7 +49,7 @@ export async function completeOnboarding(
   }
 
   const fullName = getField(formData.get("fullName"), 120);
-  const username = getField(formData.get("username"), 40);
+  const usernameCheck = validateUsername(getField(formData.get("username"), 40));
   const bio = getField(formData.get("bio"), 400);
   const imageUrl = getField(formData.get("imageUrl"), 500);
   const skills = parseTags(formData.get("skills"));
@@ -60,8 +61,24 @@ export async function completeOnboarding(
     return { error: "Name is required." };
   }
 
+  if (usernameCheck.error || !usernameCheck.value) {
+    return { error: usernameCheck.error ?? "Username is required." };
+  }
+
   if (roleValue !== "BUILDER" && roleValue !== "SPECIALIST" && roleValue !== "LEARNER") {
     return { error: "Choose your role: Builder, Specialist, or Learner." };
+  }
+
+  const taken = await prisma.user.findFirst({
+    where: {
+      username: usernameCheck.value,
+      clerkId: { not: userId },
+    },
+    select: { id: true },
+  });
+
+  if (taken) {
+    return { error: "That username is already taken." };
   }
 
   await prisma.user.upsert({
@@ -69,7 +86,7 @@ export async function completeOnboarding(
     update: {
       email,
       fullName,
-      username,
+      username: usernameCheck.value,
       bio,
       imageUrl,
       skills,
@@ -82,7 +99,7 @@ export async function completeOnboarding(
       clerkId: userId,
       email,
       fullName,
-      username,
+      username: usernameCheck.value,
       bio,
       imageUrl,
       skills,

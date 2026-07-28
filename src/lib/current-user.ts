@@ -1,8 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
-export async function requireOnboardedUser() {
+export const requireOnboardedUser = cache(async () => {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
@@ -17,7 +18,7 @@ export async function requireOnboardedUser() {
   }
 
   return user;
-}
+});
 
 // Resolves the signed-in user's saved theme so the root layout can seed
 // next-themes on the server and avoid a flash on first paint. Logged-out

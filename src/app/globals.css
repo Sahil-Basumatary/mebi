@@ -36,6 +36,15 @@
   --app-chrome-border: #1a1a1a;
   --app-chrome-muted: #9a9a9a;
   --app-chrome-hover: #161616;
+  --app-paper: #ffffff;
+  --app-ink: #000000;
+  --app-divider: #d8d8d8;
+  --app-label: #555555;
+  --app-body: #333333;
+  --app-meta: #8f8f8f;
+  --app-wash: #f7f7f7;
+  --app-chip: #f4f4f4;
+  --app-signal: #ff4d4d;
 }
 
 .dark {
@@ -73,6 +82,15 @@
   --app-chrome-border: #e2e2e2;
   --app-chrome-muted: #6b6b6b;
   --app-chrome-hover: #f0f0f0;
+  --app-paper: #151515;
+  --app-ink: #f2f2f2;
+  --app-divider: #333333;
+  --app-label: #9a9a9a;
+  --app-body: #c4c4c4;
+  --app-meta: #6f6f6f;
+  --app-wash: #1a1a1a;
+  --app-chip: #1b1b1b;
+  --app-signal: #ff4d4d;
 }
 
 @theme inline {
@@ -106,6 +124,15 @@
   --color-app-chrome-border: var(--app-chrome-border);
   --color-app-chrome-muted: var(--app-chrome-muted);
   --color-app-chrome-hover: var(--app-chrome-hover);
+  --color-app-paper: var(--app-paper);
+  --color-app-ink: var(--app-ink);
+  --color-app-divider: var(--app-divider);
+  --color-app-label: var(--app-label);
+  --color-app-body: var(--app-body);
+  --color-app-meta: var(--app-meta);
+  --color-app-wash: var(--app-wash);
+  --color-app-chip: var(--app-chip);
+  --color-app-signal: var(--app-signal);
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -114,6 +141,17 @@
   --shadow-soft: var(--elev-soft);
   --shadow-card: var(--elev-card);
   --shadow-window: var(--elev-window);
+  --text-eyebrow: 12px;
+  --text-meta: 11px;
+  --text-chip: 10px;
+  --text-body: 17px;
+  --text-body-sm: 16px;
+  --text-display: clamp(2.5rem, 5vw, 4.8rem);
+  --tracking-eyebrow: 0.3em;
+  --tracking-rail: 0.24em;
+  --tracking-chip: 0.16em;
+  --tracking-meta: 0.08em;
+  --tracking-display: -0.04em;
 }
 
 body {

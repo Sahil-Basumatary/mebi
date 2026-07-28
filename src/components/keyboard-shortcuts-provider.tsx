@@ -54,12 +54,11 @@ export function useKeyboardShortcuts() {
 }
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Home", keywords: "command center dashboard home" },
+  { href: "/home", label: "Home", keywords: "home build dashboard" },
   { href: "/projects", label: "Projects", keywords: "projects build" },
   { href: "/partners", label: "Partners", keywords: "partners people" },
   { href: "/inbox", label: "Requests", keywords: "inbox requests" },
-  { href: "/community", label: "Proof", keywords: "proof community" },
-  { href: "/events", label: "Events", keywords: "events" },
+  { href: "/proof", label: "Proof", keywords: "proof community evidence" },
 ] as const;
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -454,7 +453,7 @@ export function KeyboardShortcutsProvider({ children }: { children: ReactNode })
           setCustomizeOpen(true);
           return;
         case "goHome":
-          router.push("/dashboard");
+          router.push("/home");
           return;
         case "goProjects":
           router.push("/projects");
@@ -466,10 +465,7 @@ export function KeyboardShortcutsProvider({ children }: { children: ReactNode })
           router.push("/inbox");
           return;
         case "goProof":
-          router.push("/community");
-          return;
-        case "goEvents":
-          router.push("/events");
+          router.push("/proof");
           return;
         case "toggleTheme":
           setTheme(resolvedTheme === "dark" ? "light" : "dark");

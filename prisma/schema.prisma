@@ -66,7 +66,7 @@ model User {
   clerkId          String               @unique
   email            String               @unique
   fullName         String?
-  username         String?
+  username         String?              @unique
   bio              String?
   pronouns         String?
   imageUrl         String?
@@ -126,6 +126,9 @@ model Project {
   status        ProjectStatus     @default(ACTIVE)
   progress      Int               @default(0)
   completedAt   DateTime?
+  slug          String?           @unique
+  summary       String?
+  publishedAt   DateTime?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   owner         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -136,6 +139,7 @@ model Project {
 
   @@index([ownerId, status])
   @@index([visibility, status])
+  @@index([publishedAt])
 }
 
 // Real build activity. Progress is optional and only moves when a member posts.

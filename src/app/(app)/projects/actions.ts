@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { ProjectRole, ProjectVisibility } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -8,8 +9,10 @@ import { getProjectMembership } from "@/lib/project-access";
 import {
   DEFAULT_SIGNATURE_STATEMENT,
   SYSTEM_UPDATE_BODIES,
+  isProjectVerified,
 } from "@/lib/proof";
 import { prisma } from "@/lib/prisma";
+import { slugify, withSlugSuffix } from "@/lib/slug";
 
 export type ProjectFormState = {
   error: string | null;
@@ -44,6 +47,21 @@ function parseTags(rawValue: FormDataEntryValue | null): string[] {
   }
 
   return [...new Set(rawValue.split(",").map((item) => item.trim()).filter(Boolean))].slice(0, 12);
+}
+
+function isSlugConflict(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const candidate = error as { code?: unknown; meta?: { target?: unknown } };
+  if (candidate.code !== "P2002") {
+    return false;
+  }
+
+  const target = candidate.meta?.target;
+  const asText = Array.isArray(target) ? target.join(",") : String(target ?? "");
+  return asText.includes("slug");
 }
 
 function parseOptionalProgress(rawValue: FormDataEntryValue | null): number | null {
@@ -321,12 +339,204 @@ export async function revokeProofSignature(
     return { error: "You can only revoke your own active signatures.", success: false };
   }
 
-  await prisma.proofSignature.update({
-    where: { id: signature.id },
-    data: { revokedAt: new Date() },
+  // A published page asserts the verification bar it was published under, so
+  // pulling a signature has to pull the public proof down with it.
+  const retracted = await prisma.$transaction(async (tx) => {
+    await tx.proofSignature.update({
+      where: { id: signature.id },
+      data: { revokedAt: new Date() },
+    });
+
+    const project = await tx.project.findUnique({
+      where: { id: signature.projectId },
+      select: {
+        slug: true,
+        publishedAt: true,
+        members: { select: { userId: true, user: { select: { username: true } } } },
+        signatures: {
+          where: { revokedAt: null },
+          select: { signerId: true, subjectId: true, revokedAt: true },
+        },
+      },
+    });
+
+    if (!project?.publishedAt) {
+      return null;
+    }
+
+    const memberIds = project.members.map((member) => member.userId);
+    if (memberIds.length === 1 || isProjectVerified(memberIds, project.signatures)) {
+      return null;
+    }
+
+    await tx.project.update({
+      where: { id: signature.projectId },
+      data: { publishedAt: null },
+    });
+
+    return {
+      slug: project.slug,
+      usernames: project.members
+        .map((member) => member.user.username)
+        .filter((username): username is string => Boolean(username)),
+    };
   });
 
   revalidatePath(`/projects/${signature.projectId}`);
   revalidatePath("/proof");
+
+  if (retracted) {
+    if (retracted.slug) {
+      revalidatePath(`/b/${retracted.slug}`);
+    }
+    for (const username of retracted.usernames) {
+      revalidatePath(`/u/${username}`);
+    }
+  }
+
   return { error: null, success: true };
+}
+
+export type PublishState = {
+  error: string | null;
+  status: "idle" | "published" | "unpublished";
+  slug: string | null;
+};
+
+export async function publishProject(
+  _previousState: PublishState,
+  formData: FormData,
+): Promise<PublishState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+  const summary = getField(formData.get("summary"), 280);
+
+  if (!projectId) {
+    return { error: "Project not found.", status: "idle", slug: null };
+  }
+
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership || membership.role !== ProjectRole.OWNER) {
+    return { error: "Only the owner can publish this build.", status: "idle", slug: null };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: {
+      members: { select: { userId: true } },
+      signatures: {
+        where: { revokedAt: null },
+        select: { signerId: true, subjectId: true, revokedAt: true },
+      },
+    },
+  });
+
+  if (!project) {
+    return { error: "Project not found.", status: "idle", slug: null };
+  }
+
+  if (project.status !== "COMPLETED") {
+    return { error: "Finish the project before publishing proof.", status: "idle", slug: null };
+  }
+
+  if (project.visibility !== ProjectVisibility.PUBLIC) {
+    return {
+      error: "Switch the project to public visibility before publishing.",
+      status: "idle",
+      slug: null,
+    };
+  }
+
+  const memberIds = project.members.map((member) => member.userId);
+  const verified = isProjectVerified(memberIds, project.signatures);
+  const soloSelfAttested = memberIds.length === 1 && memberIds[0] === user.id;
+
+  if (!verified && !soloSelfAttested) {
+    return {
+      error: "Get peer signatures from every teammate before publishing, or build solo.",
+      status: "idle",
+      slug: null,
+    };
+  }
+
+  const base = slugify(project.name);
+  const publicSummary = summary ?? project.description.slice(0, 280);
+
+  // The unique index is the arbiter, not a prior availability check: two people
+  // publishing similarly named builds at once would both pass a read.
+  let published: { slug: string | null } | null = null;
+  for (let attempt = 0; attempt < 6 && !published; attempt += 1) {
+    const candidate =
+      project.slug ??
+      (attempt === 0 ? base : withSlugSuffix(base, randomBytes(3).toString("hex")));
+
+    try {
+      published = await prisma.project.update({
+        where: { id: project.id },
+        data: {
+          slug: candidate,
+          summary: publicSummary,
+          publishedAt: new Date(),
+        },
+        select: { slug: true },
+      });
+    } catch (error) {
+      if (project.slug || !isSlugConflict(error)) {
+        throw error;
+      }
+    }
+  }
+
+  if (!published) {
+    return {
+      error: "That build name is heavily contested right now. Rename it and try again.",
+      status: "idle",
+      slug: null,
+    };
+  }
+
+  revalidatePath(`/projects/${project.id}`);
+  revalidatePath("/proof");
+  if (published.slug) {
+    revalidatePath(`/b/${published.slug}`);
+  }
+  if (user.username) {
+    revalidatePath(`/u/${user.username}`);
+  }
+
+  return { error: null, status: "published", slug: published.slug };
+}
+
+export async function unpublishProject(
+  _previousState: PublishState,
+  formData: FormData,
+): Promise<PublishState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+
+  if (!projectId) {
+    return { error: "Project not found.", status: "idle", slug: null };
+  }
+
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership || membership.role !== ProjectRole.OWNER) {
+    return { error: "Only the owner can unpublish this build.", status: "idle", slug: null };
+  }
+
+  const project = await prisma.project.update({
+    where: { id: projectId },
+    data: { publishedAt: null },
+    select: { slug: true },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/proof");
+  if (project.slug) {
+    revalidatePath(`/b/${project.slug}`);
+  }
+  if (user.username) {
+    revalidatePath(`/u/${user.username}`);
+  }
+
+  return { error: null, status: "unpublished", slug: project.slug };
 }

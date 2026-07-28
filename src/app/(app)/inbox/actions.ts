@@ -7,6 +7,12 @@ import { intersectTags } from "@/lib/match";
 import { getProjectMembership } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 
+// ratelimit
+const MAX_REQUESTS_PER_DAY = 30;
+const MAX_REQUESTS_PER_BURST = 10;
+const BURST_WINDOW_MS = 10 * 60 * 1000;
+const DAY_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export type SendRequestState = {
   sent: boolean;
   error: string | null;
@@ -108,6 +114,30 @@ export async function sendProjectRequest(
     if (!targetMembership) {
       return { sent: false, error: "Ask someone who is already on the build." };
     }
+  }
+
+  const now = Date.now();
+  const [sentInDay, sentInBurst] = await Promise.all([
+    prisma.projectRequest.count({
+      where: { fromUserId: viewer.id, createdAt: { gte: new Date(now - DAY_WINDOW_MS) } },
+    }),
+    prisma.projectRequest.count({
+      where: { fromUserId: viewer.id, createdAt: { gte: new Date(now - BURST_WINDOW_MS) } },
+    }),
+  ]);
+
+  if (sentInBurst >= MAX_REQUESTS_PER_BURST) {
+    return {
+      sent: false,
+      error: "You're sending these very fast. Wait a few minutes, then keep going.",
+    };
+  }
+
+  if (sentInDay >= MAX_REQUESTS_PER_DAY) {
+    return {
+      sent: false,
+      error: "You've reached today's request limit. You can send more tomorrow.",
+    };
   }
 
   const existingPending = await prisma.projectRequest.findFirst({

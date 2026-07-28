@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { displayName } from "@/lib/user-display";
 import { PartnerRequestDialog } from "../../partners/partner-request-dialog";
 import { ProjectCompletionPanel } from "../project-completion-panel";
+import { PublishPanel } from "../publish-panel";
 import { SignaturePanel } from "../signature-panel";
 import { UpdateForm } from "../update-form";
 
@@ -194,6 +195,19 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     .slice(0, 3);
 
   const fixedProject = { id: project.id, name: project.name };
+  const soloSelfAttested = memberIdList.length === 1 && memberIdList[0] === user.id;
+  const isPublic = project.visibility === "PUBLIC";
+  const canPublish =
+    isOwner && isCompleted && isPublic && (verified || soloSelfAttested);
+  const publishBlockReason = !isOwner
+    ? null
+    : !isCompleted
+      ? "Mark the project complete before publishing."
+      : !isPublic
+        ? "Switch visibility to public before publishing."
+        : !(verified || soloSelfAttested)
+          ? "Get peer signatures from every teammate, or keep this as a solo build."
+          : null;
 
   return (
     <div className="flex flex-col gap-8">
@@ -224,6 +238,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               <Chip>{project.visibility.toLowerCase()}</Chip>
               <Chip tone={isCompleted ? "ink" : "wash"}>{project.status.toLowerCase()}</Chip>
               {verified ? <Chip tone="ink">verified</Chip> : null}
+              {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
             </div>
             <dl className="text-app-body mt-8 grid gap-4 text-sm">
               <div>
@@ -312,6 +327,17 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             signaturesReceived={attestedMembers}
             memberCount={memberIdList.length}
           />
+
+          {isOwner ? (
+            <PublishPanel
+              projectId={project.id}
+              published={Boolean(project.publishedAt)}
+              slug={project.slug}
+              summary={project.summary}
+              canPublish={canPublish}
+              blockReason={publishBlockReason}
+            />
+          ) : null}
 
           <section className="border-app-divider bg-app-paper border">
             <div className="border-app-divider border-b px-5 py-4">

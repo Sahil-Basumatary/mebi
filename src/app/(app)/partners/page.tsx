@@ -336,7 +336,6 @@ export default async function PartnersPage({
     .map((user) => ({ user, breakdown: scoreMatch(viewer, user) }))
     .sort((a, b) => b.breakdown.score - a.breakdown.score);
 
-  const poolWithOverlap = pool.filter((user) => scoreMatch(viewer, user).score > 0).length;
   const { skills, interests } = partnerFacets(pool);
   const overlapping = ranked.filter((item) => item.breakdown.score > 0);
   const featuredIds = new Set(
@@ -348,30 +347,9 @@ export default async function PartnersPage({
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        eyebrow="Find a Partner"
-        title="Find serious builders for the missing role."
-        description="Discovery starts from overlap, not noise. Skills and interests you share are highlighted, and complementary roles are nudged up the list."
-        aside={
-          <>
-            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
-              In your network
-            </p>
-            <div className="bg-app-divider mt-6 grid grid-cols-2 gap-px">
-              <div className="bg-app-chip pr-4">
-                <p className="text-app-ink font-serif text-4xl font-light">{pool.length}</p>
-                <p className="text-app-label mt-2 text-eyebrow font-semibold tracking-eyebrow uppercase">
-                  Builders
-                </p>
-              </div>
-              <div className="bg-app-chip pl-4">
-                <p className="text-app-ink font-serif text-4xl font-light">{poolWithOverlap}</p>
-                <p className="text-app-label mt-2 text-eyebrow font-semibold tracking-eyebrow uppercase">
-                  Share your tags
-                </p>
-              </div>
-            </div>
-          </>
-        }
+        eyebrow="Invite to build"
+        title="Find the person who will ship and sign."
+        description="Invite someone into an active build. Co-membership and peer signatures are what turn a directory into proof."
       />
 
       {pool.length === 0 ? (
@@ -389,8 +367,12 @@ export default async function PartnersPage({
           </Suspense>
 
           <Section
-            eyebrow={filtersActive ? "Search results" : "Directory"}
-            title={`${ranked.length} ${ranked.length === 1 ? "builder" : "builders"}`}
+            eyebrow={filtersActive ? "Search results" : "Who can join a build"}
+            title={
+              viewerProjects.length
+                ? `Invite into ${viewerProjects[0].name}${viewerProjects.length > 1 ? " or another active build" : ""}`
+                : "Start a build, then invite"
+            }
           >
             {ranked.length ? (
               <HairlineGrid>

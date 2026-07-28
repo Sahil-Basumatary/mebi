@@ -18,6 +18,7 @@ import {
   normalizeCookieConsent,
   type CookieConsentState,
 } from "@/lib/cookie-consent";
+import { validateUsername } from "@/lib/username";
 
 export type ProfileState = {
   error: string | null;
@@ -192,7 +193,7 @@ export async function updateProfile(
   }
 
   const fullName = getField(formData.get("fullName"), 120);
-  const username = getField(formData.get("username"), 40);
+  const usernameCheck = validateUsername(getField(formData.get("username"), 40));
   const bio = getField(formData.get("bio"), 400);
   const pronouns = resolvePronouns(formData);
   const imageUrl = getField(formData.get("imageUrl"), 500);
@@ -210,6 +211,10 @@ export async function updateProfile(
     return { error: "Name is required.", success: false };
   }
 
+  if (usernameCheck.error || !usernameCheck.value) {
+    return { error: usernameCheck.error ?? "Username is required.", success: false };
+  }
+
   if (roleValue !== "BUILDER" && roleValue !== "SPECIALIST" && roleValue !== "LEARNER") {
     return { error: "Choose your role: Builder, Specialist, or Learner.", success: false };
   }
@@ -218,11 +223,23 @@ export async function updateProfile(
     return { error: github.error, success: false };
   }
 
+  const taken = await prisma.user.findFirst({
+    where: {
+      username: usernameCheck.value,
+      clerkId: { not: userId },
+    },
+    select: { id: true },
+  });
+
+  if (taken) {
+    return { error: "That username is already taken.", success: false };
+  }
+
   await prisma.user.update({
     where: { clerkId: userId },
     data: {
       fullName,
-      username,
+      username: usernameCheck.value,
       bio,
       pronouns,
       imageUrl,
@@ -239,6 +256,7 @@ export async function updateProfile(
 
   revalidatePath("/home");
   revalidatePath("/partners");
+  revalidatePath(`/u/${usernameCheck.value}`);
 
   return { error: null, success: true };
 }

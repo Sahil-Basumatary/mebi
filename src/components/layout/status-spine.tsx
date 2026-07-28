@@ -7,18 +7,31 @@ import {
 } from "@/lib/build-activity";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { resolveTimezone } from "@/lib/locale";
-import { resolveNextAction } from "@/lib/next-action";
+import { resolveNextAction, type NextActionProject } from "@/lib/next-action";
+import { isProjectVerified, SYSTEM_UPDATE_BODIES } from "@/lib/proof";
 import { memberProjectWhere } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 import { displayName, initials } from "@/lib/user-display";
 
 const loadSpine = cache(async () => {
   const user = await requireOnboardedUser();
-  const [projects, pendingReceived, updateEvents] = await Promise.all([
+  const [projects, pendingReceived, updateEvents, myUpdates, focusAuthors] = await Promise.all([
     prisma.project.findMany({
       where: memberProjectWhere(user.id),
       orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-      select: { id: true, name: true, status: true, progress: true },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        progress: true,
+        publishedAt: true,
+        visibility: true,
+        members: { select: { userId: true } },
+        signatures: {
+          where: { revokedAt: null },
+          select: { signerId: true, subjectId: true, revokedAt: true },
+        },
+      },
     }),
     prisma.projectRequest.count({
       where: { toUserId: user.id, status: "PENDING" },
@@ -29,16 +42,80 @@ const loadSpine = cache(async () => {
       orderBy: { createdAt: "desc" },
       take: 500,
     }),
+    prisma.projectUpdate.findMany({
+      where: {
+        authorId: user.id,
+        NOT: { body: { in: [...SYSTEM_UPDATE_BODIES] } },
+      },
+      select: { projectId: true },
+      distinct: ["projectId"],
+    }),
+    prisma.projectUpdate.findMany({
+      where: {
+        project: {
+          ...memberProjectWhere(user.id),
+          status: "ACTIVE",
+        },
+        NOT: { body: { in: [...SYSTEM_UPDATE_BODIES] } },
+      },
+      select: { projectId: true, authorId: true },
+    }),
   ]);
 
-  const activeProject =
-    projects.find((project) => project.status === "ACTIVE") ?? projects[0] ?? null;
-  const completedCount = projects.filter((project) => project.status === "COMPLETED").length;
+  const projectsWithMyRealUpdate = new Set(myUpdates.map((row) => row.projectId));
+  const activityByProject = new Map<string, Set<string>>();
+  for (const row of focusAuthors) {
+    const set = activityByProject.get(row.projectId) ?? new Set<string>();
+    set.add(row.authorId);
+    activityByProject.set(row.projectId, set);
+  }
+
+  const focus =
+    projects.find((project) => project.status === "ACTIVE") ??
+    projects.find((project) => project.status === "COMPLETED" && !project.publishedAt) ??
+    projects[0] ??
+    null;
+
+  let activeProject: NextActionProject | null = null;
+  if (focus) {
+    const memberIds = focus.members.map((member) => member.userId);
+    const verified = isProjectVerified(memberIds, focus.signatures);
+    const solo = memberIds.length === 1;
+    const activeAuthors = activityByProject.get(focus.id) ?? new Set<string>();
+    const awaitingMySignature = memberIds.some((subjectId) => {
+      if (subjectId === user.id) return false;
+      if (!activeAuthors.has(subjectId)) return false;
+      return !focus.signatures.some(
+        (signature) =>
+          signature.signerId === user.id &&
+          signature.subjectId === subjectId &&
+          !signature.revokedAt,
+      );
+    });
+
+    activeProject = {
+      id: focus.id,
+      name: focus.name,
+      status: focus.status,
+      progress: focus.progress,
+      memberCount: memberIds.length,
+      publishedAt: focus.publishedAt,
+      needsMyUpdate: !projectsWithMyRealUpdate.has(focus.id),
+      awaitingMySignature: focus.status === "ACTIVE" && memberIds.length > 1 && awaitingMySignature,
+      readyToPublish:
+        focus.status === "COMPLETED" &&
+        !focus.publishedAt &&
+        focus.visibility === "PUBLIC" &&
+        (verified || solo),
+    };
+  }
+
+  const publishedCount = projects.filter((project) => project.publishedAt).length;
   const nextAction = resolveNextAction({
     user,
     activeProject,
     pendingReceived,
-    completedCount,
+    publishedCount,
   });
 
   const events: BuildEvent[] = updateEvents.map((update) => ({
@@ -64,7 +141,6 @@ export async function StatusSpine() {
       <div className="mx-auto flex w-full max-w-[88rem] flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-12">
         <div className="flex min-w-0 items-center gap-3">
           {spine.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={spine.imageUrl}
               alt=""

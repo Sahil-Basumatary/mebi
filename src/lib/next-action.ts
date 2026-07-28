@@ -1,4 +1,4 @@
-import type { Project, User } from "@prisma/client";
+import type { ProjectStatus, User } from "@prisma/client";
 
 export type NextAction = {
   label: string;
@@ -6,18 +6,30 @@ export type NextAction = {
   detail: string;
 };
 
+export type NextActionProject = {
+  id: string;
+  name: string;
+  status: ProjectStatus;
+  progress: number;
+  memberCount: number;
+  publishedAt: Date | null;
+  needsMyUpdate: boolean;
+  awaitingMySignature: boolean;
+  readyToPublish: boolean;
+};
+
 type ActionInput = {
-  user: Pick<User, "bio" | "skills" | "interests">;
-  activeProject: Pick<Project, "id" | "status" | "progress" | "name"> | null;
+  user: Pick<User, "bio" | "skills" | "interests" | "prefersSolo">;
+  activeProject: NextActionProject | null;
   pendingReceived: number;
-  completedCount: number;
+  publishedCount: number;
 };
 
 export function resolveNextAction({
   user,
   activeProject,
   pendingReceived,
-  completedCount,
+  publishedCount,
 }: ActionInput): NextAction {
   if (pendingReceived > 0) {
     return {
@@ -30,57 +42,81 @@ export function resolveNextAction({
     };
   }
 
-  if (!user.bio) {
+  if (!user.bio || user.skills.length === 0) {
     return {
       label: "Tighten profile signal",
       href: "/onboarding",
-      detail: "Your profile needs a clear thesis before partners can trust the match.",
+      detail: "Partners need a clear thesis and skills before they will join a build.",
     };
   }
 
   if (!activeProject) {
     return {
-      label: "Start project brief",
+      label: "Start a build",
       href: "/projects",
-      detail: "Move from profile intent into a project brief before searching for teammates.",
+      detail: "Open a project brief so there is something real to invite people into.",
     };
   }
 
-  if (activeProject.status === "ACTIVE" && activeProject.progress < 100) {
+  if (activeProject.status === "ACTIVE") {
+    if (activeProject.memberCount < 2 && !user.prefersSolo) {
+      return {
+        label: "Invite a builder",
+        href: "/partners",
+        detail: `${activeProject.name} still needs a teammate who will ship and sign.`,
+      };
+    }
+
+    if (activeProject.needsMyUpdate) {
+      return {
+        label: "Post a build update",
+        href: `/projects/${activeProject.id}`,
+        detail: `Leave a real note on ${activeProject.name} so teammates can attest your work.`,
+      };
+    }
+
+    if (activeProject.awaitingMySignature) {
+      return {
+        label: "Sign a teammate",
+        href: `/projects/${activeProject.id}`,
+        detail: "Someone on this build has logged work and is waiting on your signature.",
+      };
+    }
+
+    if (activeProject.progress >= 100) {
+      return {
+        label: "Mark the build complete",
+        href: `/projects/${activeProject.id}`,
+        detail: "Progress is full. Close the loop so publishing unlocks.",
+      };
+    }
+
     return {
-      label: "Advance active project",
+      label: "Keep building",
       href: `/projects/${activeProject.id}`,
-      detail: `${activeProject.name} is at ${activeProject.progress}%. Push the next checkpoint.`,
+      detail: `${activeProject.name} is live. Post the next update in the shared log.`,
     };
   }
 
-  if (activeProject.status === "ACTIVE" && activeProject.progress >= 100) {
+  if (activeProject.readyToPublish) {
     return {
-      label: "Capture project proof",
+      label: "Publish proof",
       href: `/projects/${activeProject.id}`,
-      detail: "Progress is complete. Close the loop and log the proof.",
+      detail: "This build is finished and attested. Put the public proof page live.",
     };
   }
 
-  if (user.skills.length && user.interests.length) {
-    return {
-      label: "Find the missing role",
-      href: "/partners",
-      detail: "Your profile has enough signal to name the partner you still need.",
-    };
-  }
-
-  if (completedCount > 0) {
+  if (publishedCount > 0) {
     return {
       label: "Start the next build",
       href: "/projects",
-      detail: "You have proof on record. Brief the next serious project.",
+      detail: "You have published proof. Brief the next serious project.",
     };
   }
 
   return {
-    label: "Start project brief",
+    label: "Open your builds",
     href: "/projects",
-    detail: "One clear brief beats ten half-open tabs.",
+    detail: "Finish signatures and publishing so proof becomes something you can share.",
   };
 }
