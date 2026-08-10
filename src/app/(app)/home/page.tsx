@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BuildHeatmap } from "@/components/dashboard/build-heatmap";
+import { BuildPath, type BuildStage } from "@/components/dashboard/build-path";
 import {
   Chip,
   EmptyState,
@@ -15,12 +16,25 @@ import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { memberProjectWhere } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
+import { MIN_REAL_UPDATES, SYSTEM_UPDATE_BODIES } from "@/lib/proof";
 import { displayName } from "@/lib/user-display";
 import { PartnerRequestDialog } from "../partners/partner-request-dialog";
 
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
 export default async function HomePage() {
   const user = await requireOnboardedUser();
-  const [projects, publishedCount, partnerPool, updateEvents] = await Promise.all([
+  const [
+    projects,
+    publishedCount,
+    partnerPool,
+    updateEvents,
+    briefCount,
+    loggedCount,
+    witnessCount,
+  ] = await Promise.all([
     prisma.project.findMany({
       where: memberProjectWhere(user.id),
       orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
@@ -63,6 +77,16 @@ export default async function HomePage() {
       orderBy: { createdAt: "desc" },
       take: 500,
     }),
+    prisma.project.count({ where: memberProjectWhere(user.id) }),
+    prisma.projectUpdate.count({
+      where: {
+        authorId: user.id,
+        NOT: { body: { in: [...SYSTEM_UPDATE_BODIES] } },
+      },
+    }),
+    prisma.proofSignature.count({
+      where: { subjectId: user.id, revokedAt: null },
+    }),
   ]);
 
   const buildEvents: BuildEvent[] = updateEvents.map((update) => ({
@@ -89,19 +113,57 @@ export default async function HomePage() {
     ? { id: inviteTarget.id, name: inviteTarget.name }
     : null;
 
+  // Mirrors the proof gate in `lib/proof` so the path never promises a stage the
+  // signing flow would still reject.
+  const completed = {
+    brief: briefCount > 0,
+    log: loggedCount >= MIN_REAL_UPDATES,
+    verify: witnessCount > 0,
+    publish: publishedCount > 0,
+  };
+  const stageOrder = [
+    {
+      id: "brief",
+      label: "Brief",
+      hint: briefCount ? `${plural(briefCount, "brief")} filed` : "No brief yet",
+    },
+    {
+      id: "log",
+      label: "Log",
+      hint: completed.log
+        ? `${loggedCount} entries logged`
+        : `${loggedCount}/${MIN_REAL_UPDATES} real entries`,
+    },
+    {
+      id: "verify",
+      label: "Verify",
+      hint: witnessCount ? `${plural(witnessCount, "signature")} held` : "Not witnessed yet",
+    },
+    {
+      id: "publish",
+      label: "Publish",
+      hint: publishedCount ? `${plural(publishedCount, "build")} public` : "Nothing public yet",
+    },
+  ] as const;
+  const currentStageId = stageOrder.find((stage) => !completed[stage.id])?.id ?? null;
+  const buildStages: BuildStage[] = stageOrder.map((stage) => ({
+    ...stage,
+    state: completed[stage.id] ? "done" : stage.id === currentStageId ? "current" : "todo",
+  }));
+
   return (
     <div className="flex flex-col gap-10">
       <section className="border-app-divider bg-app-paper border p-8 lg:p-10">
-        <div className="grid items-start gap-10 lg:grid-cols-[1fr_auto]">
+        <div className="grid items-stretch gap-10 lg:grid-cols-[1fr_auto]">
           <div className="min-w-0">
             <PageHeader
               eyebrow="Home"
-              title="Build with someone. Publish proof that they signed."
-              description="The loop is invite → log work → sign → publish. The spine above always names the single next move."
+              title="Build together. Show what shipped."
+              description="Invite teammates, log the work, and publish the result."
             />
+            <BuildPath stages={buildStages} />
             {publishedCount > 0 && user.username ? (
               <p className="text-app-body mt-6 text-body-sm">
-                You have published proof.{" "}
                 <Link
                   href={`/u/${user.username}`}
                   className="border-app-ink text-app-ink border-b pb-0.5 font-medium"
@@ -111,7 +173,7 @@ export default async function HomePage() {
               </p>
             ) : null}
           </div>
-          <div className="relative hidden h-72 w-[24rem] shrink-0 justify-self-end lg:block xl:h-80 xl:w-[28rem]">
+          <div className="relative hidden min-h-72 w-[24rem] shrink-0 justify-self-end lg:block xl:min-h-80 xl:w-[28rem]">
             <CubeField className="absolute inset-0" />
             <div aria-hidden className="pointer-events-none absolute top-0 left-0">
               <span className="bg-app-ink text-app-paper inline-block px-3 py-1.5 font-mono text-meta tracking-meta">
@@ -177,7 +239,7 @@ export default async function HomePage() {
           <EmptyState
             eyebrow="Empty pipeline"
             title="No builds yet."
-            description="Create a brief so there is a shared surface to invite someone into."
+            description="Create a brief as the first task"
             action={
               <Link
                 href="/projects"
@@ -245,8 +307,7 @@ export default async function HomePage() {
           ) : (
             <EmptyState
               eyebrow="No overlap yet"
-              title="No matching builders to invite."
-              description="As more students onboard, people who share your skills show up here for this build."
+              title="No matching builders yet."
               action={
                 <Link
                   href="/partners"

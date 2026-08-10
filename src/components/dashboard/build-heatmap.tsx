@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocalePrefs } from "@/components/locale-provider";
 import {
   activityLevel,
@@ -11,11 +11,14 @@ import {
 } from "@/lib/build-activity";
 import { cn } from "@/lib/utils";
 
-// Fixed pixel geometry keeps the month labels, weekday rail, and cells on the
-// same grid; percentage tracks drift once the gap is added.
-const CELL = 11;
+// Pixel geometry keeps the month labels, weekday rail, and cells on the same
+// grid; percentage tracks drift once the gap is added. The cell edge is measured
+// from the container so a year of columns spans the full width instead of
+// leaving dead space to the right of December.
 const GAP = 3;
-const STEP = CELL + GAP;
+const MIN_CELL = 11;
+const RAIL_WIDTH = 28;
+const RAIL_GAP = 8;
 const TOOLTIP_WIDTH = 168;
 
 const LEVEL_CLASS = [
@@ -49,14 +52,6 @@ function formatDay(date: string): string {
   }).format(new Date(`${date}T12:00:00.000Z`));
 }
 
-function formatShortDay(date: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T12:00:00.000Z`));
-}
-
 function monthLabel(date: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     month: "short",
@@ -72,6 +67,9 @@ function eventLabel(count: number): string {
 export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
   const { resolvedTimezone } = useLocalePrefs();
   const [hovered, setHovered] = useState<HoverState | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
   // Server and first client render both use UTC, then the grid settles onto the
   // viewer's real zone once the provider detects it — no hydration mismatch.
   const days = useMemo(() => buildActivityYear(events, resolvedTimezone), [events, resolvedTimezone]);
@@ -97,16 +95,46 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
     return marks;
   }, [weeks]);
   const summary = useMemo(() => summarizeActivity(days), [days]);
-  const gridWidth = weeks.length * STEP - GAP;
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver((entries) => {
+      setViewport(entries[0]?.contentRect.width ?? 0);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // Below MIN_CELL the squares stop being readable, so narrow screens keep the
+  // floor and scroll horizontally instead. Rounding down with a 1px margin stops
+  // a sub-pixel overflow from flickering the scrollbar in and out.
+  const cell = useMemo(() => {
+    if (!viewport) return MIN_CELL;
+    const track = viewport - RAIL_WIDTH - RAIL_GAP - (weeks.length - 1) * GAP - 1;
+    return Math.max(MIN_CELL, Math.floor((track / weeks.length) * 100) / 100);
+  }, [viewport, weeks.length]);
+  const step = cell + GAP;
+  const gridWidth = weeks.length * step - GAP;
   const stats = [
-    { label: "Longest streak", value: `${summary.longestStreak}`, unit: summary.longestStreak === 1 ? "day" : "days" },
-    { label: "Active days", value: `${summary.activeDays}`, unit: "of 365" },
     {
-      label: "Busiest day",
-      value: summary.busiest ? formatShortDay(summary.busiest.date) : "—",
-      unit: summary.busiest ? eventLabel(summary.busiest.count).toLowerCase() : "nothing yet",
+      label: "Current streak",
+      value: `${summary.currentStreak}`,
+      unit: summary.currentStreak === 1 ? "day" : "days",
     },
+    {
+      label: "Longest streak",
+      value: `${summary.longestStreak}`,
+      unit: summary.longestStreak === 1 ? "day" : "days",
+    },
+    { label: "Active days", value: `${summary.activeDays}`, unit: "of 365" },
   ];
+  const anchorX = hovered
+    ? RAIL_WIDTH + RAIL_GAP + hovered.week * step + cell / 2 - scrollLeft
+    : 0;
+  const tooltipLeft = viewport
+    ? Math.min(Math.max(anchorX, TOOLTIP_WIDTH / 2), viewport - TOOLTIP_WIDTH / 2)
+    : anchorX;
   return (
     <div className={cn("flex h-full flex-col", className)}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -119,86 +147,97 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
         </p>
       </div>
 
-      {/* Top padding reserves room for the tooltip, which the scroll container would otherwise clip. */}
-      <div className="mt-4 overflow-x-auto pt-14">
-        <div className="flex gap-2" style={{ width: "max-content" }}>
-          <div className="flex flex-col" style={{ gap: GAP, paddingTop: STEP }}>
-            {WEEKDAY_LABELS.map((label, index) => (
-              <span
-                key={index}
-                className="text-app-meta flex items-center text-[9px] font-semibold tracking-[0.08em] uppercase"
-                style={{ height: CELL }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-          <div>
-            <div className="relative" style={{ width: gridWidth, height: STEP }}>
-              {monthMarks.map((mark) => (
+      {/* The tooltip lives outside the scroll box, which clips both axes once
+          overflow-x is set, so no empty band has to be reserved above the grid. */}
+      <div className="relative mt-4">
+        <div
+          ref={scrollRef}
+          className="overflow-x-auto"
+          onScroll={(event) => setScrollLeft(event.currentTarget.scrollLeft)}
+        >
+          <div className="flex" style={{ width: "max-content", gap: RAIL_GAP }}>
+            <div
+              className="flex flex-col"
+              style={{ gap: GAP, paddingTop: step, width: RAIL_WIDTH }}
+            >
+              {WEEKDAY_LABELS.map((label, index) => (
                 <span
-                  key={`${mark.label}-${mark.week}`}
-                  className="text-app-meta absolute top-0 text-[10px] font-semibold tracking-[0.12em] whitespace-nowrap uppercase"
-                  style={{ left: mark.week * STEP }}
+                  key={index}
+                  className="text-app-meta flex items-center text-[9px] font-semibold tracking-[0.08em] uppercase"
+                  style={{ height: cell }}
                 >
-                  {mark.label}
+                  {label}
                 </span>
               ))}
             </div>
-            <div className="relative flex" style={{ gap: GAP }}>
-              {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col" style={{ gap: GAP }}>
-                  {week.map((day, rowIndex) => {
-                    const level = activityLevel(day.count);
-                    const isHovered = hovered?.day.date === day.date;
-                    return (
-                      <button
-                        key={day.date}
-                        type="button"
-                        aria-label={`${formatDay(day.date)}: ${eventLabel(day.count).toLowerCase()}`}
-                        onMouseEnter={() => setHovered({ day, week: weekIndex, row: rowIndex })}
-                        onMouseLeave={() =>
-                          setHovered((current) => (current?.day.date === day.date ? null : current))
-                        }
-                        onFocus={() => setHovered({ day, week: weekIndex, row: rowIndex })}
-                        onBlur={() =>
-                          setHovered((current) => (current?.day.date === day.date ? null : current))
-                        }
-                        style={{ width: CELL, height: CELL }}
-                        className={cn(
-                          "rounded-[2px] transition-shadow duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ink",
-                          LEVEL_CLASS[level],
-                          isHovered && "shadow-[0_0_0_1.5px_var(--app-ink)]",
-                        )}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-              {hovered ? (
-                <div
-                  aria-hidden
-                  className="border-app-ink bg-app-ink pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-lg border px-3 py-2 text-center shadow-[0_14px_30px_rgba(0,0,0,0.24)]"
-                  style={{
-                    width: TOOLTIP_WIDTH,
-                    left: Math.min(
-                      Math.max(hovered.week * STEP + CELL / 2, TOOLTIP_WIDTH / 2),
-                      gridWidth - TOOLTIP_WIDTH / 2,
-                    ),
-                    top: hovered.row * STEP - 8,
-                  }}
-                >
-                  <p className="text-app-paper font-serif text-sm leading-snug font-light">
-                    {eventLabel(hovered.day.count)}
-                  </p>
-                  <p className="text-app-meta mt-1 font-mono text-[10px] tracking-[0.08em]">
-                    {formatDay(hovered.day.date)}
-                  </p>
-                </div>
-              ) : null}
+            <div>
+              <div className="relative" style={{ width: gridWidth, height: step }}>
+                {monthMarks.map((mark) => (
+                  <span
+                    key={`${mark.label}-${mark.week}`}
+                    className="text-app-meta absolute top-0 text-[10px] font-semibold tracking-[0.12em] whitespace-nowrap uppercase"
+                    style={{ left: mark.week * step }}
+                  >
+                    {mark.label}
+                  </span>
+                ))}
+              </div>
+              <div className="flex" style={{ gap: GAP }}>
+                {weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="flex flex-col" style={{ gap: GAP }}>
+                    {week.map((day, rowIndex) => {
+                      const level = activityLevel(day.count);
+                      const isHovered = hovered?.day.date === day.date;
+                      return (
+                        <button
+                          key={day.date}
+                          type="button"
+                          aria-label={`${formatDay(day.date)}: ${eventLabel(day.count).toLowerCase()}`}
+                          onMouseEnter={() => setHovered({ day, week: weekIndex, row: rowIndex })}
+                          onMouseLeave={() =>
+                            setHovered((current) =>
+                              current?.day.date === day.date ? null : current,
+                            )
+                          }
+                          onFocus={() => setHovered({ day, week: weekIndex, row: rowIndex })}
+                          onBlur={() =>
+                            setHovered((current) =>
+                              current?.day.date === day.date ? null : current,
+                            )
+                          }
+                          style={{ width: cell, height: cell }}
+                          className={cn(
+                            "rounded-[2px] transition-shadow duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ink",
+                            LEVEL_CLASS[level],
+                            isHovered && "shadow-[0_0_0_1.5px_var(--app-ink)]",
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+        {hovered ? (
+          <div
+            aria-hidden
+            className="border-app-ink bg-app-ink pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-lg border px-3 py-2 text-center shadow-[0_14px_30px_rgba(0,0,0,0.24)]"
+            style={{
+              width: TOOLTIP_WIDTH,
+              left: tooltipLeft,
+              top: step + hovered.row * step - 8,
+            }}
+          >
+            <p className="text-app-paper font-serif text-sm leading-snug font-light">
+              {eventLabel(hovered.day.count)}
+            </p>
+            <p className="text-app-meta mt-1 font-mono text-[10px] tracking-[0.08em]">
+              {formatDay(hovered.day.date)}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-end gap-4">
@@ -208,7 +247,7 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
             <span
               key={tone}
               aria-hidden
-              style={{ width: CELL, height: CELL }}
+              style={{ width: MIN_CELL, height: MIN_CELL }}
               className={cn("rounded-[2px]", tone)}
             />
           ))}
