@@ -86,7 +86,7 @@ export default async function InboxPage({
   return (
     <>
       <ReadMarker />
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
         <PageHeader
           eyebrow="Requests"
           title="Inbox"
@@ -178,14 +178,23 @@ export default async function InboxPage({
           ) : (
             <EmptyState
               eyebrow="Inbox empty"
-              title="No requests yet"
+              title="No requests yet."
+              description="Invites and join requests will appear here."
               action={
-                <Link
-                  href="/partners"
-                  className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
-                >
-                  Browse partners
-                </Link>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/partners"
+                    className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
+                  >
+                    Browse partners
+                  </Link>
+                  <Link
+                    href="/discover"
+                    className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
+                  >
+                    Browse builds
+                  </Link>
+                </div>
               }
             />
           )
@@ -231,15 +240,24 @@ export default async function InboxPage({
           </HairlineGrid>
         ) : (
           <EmptyState
-            eyebrow="Nothing out"
-            title="Nothing sent yet"
+            eyebrow="Nothing sent"
+            title="No sent requests yet."
+            description="Requests you send will appear here."
             action={
-              <Link
-                href="/partners"
-                className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
-              >
-                Find a partner
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/partners"
+                  className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
+                >
+                  Find a partner
+                </Link>
+                <Link
+                  href="/projects"
+                  className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
+                >
+                  View projects
+                </Link>
+              </div>
             }
           />
         )}

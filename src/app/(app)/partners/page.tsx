@@ -316,7 +316,7 @@ export default async function PartnersPage({
 
   const { skills, interests } = partnerFacets(pool);
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       <PageHeader
         eyebrow="Invite to build"
         title="Find a builder for your project."
@@ -325,7 +325,24 @@ export default async function PartnersPage({
       {pool.length === 0 ? (
         <EmptyState
           eyebrow="Early network"
-          title="No other builders yet"
+          title="No other builders yet."
+          description="Builders will appear here after they join mebi."
+          action={
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/projects"
+                className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
+              >
+                Start a build
+              </Link>
+              <Link
+                href="/onboarding"
+                className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
+              >
+                Edit profile
+              </Link>
+            </div>
+          }
         />
       ) : (
         <>

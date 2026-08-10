@@ -32,13 +32,8 @@ export default async function InboxRail() {
   });
 
   return (
-    <div className="flex h-full flex-col gap-6">
-      <div>
-        <p className="text-app-label text-meta font-semibold tracking-rail uppercase">Pending</p>
-        <p className="text-app-body mt-3 text-body-sm leading-6">
-          Build invites and join requests waiting on you.
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <p className="text-app-label text-meta font-semibold tracking-rail uppercase">Pending</p>
       {pending.length ? (
         <ul className="border-app-divider divide-app-divider divide-y border">
           {pending.map((request) => {
@@ -47,7 +42,7 @@ export default async function InboxRail() {
               <li key={request.id}>
                 <Link
                   href="/inbox?tab=received"
-                  className="bg-app-paper hover:bg-app-wash block p-4 transition-colors"
+                  className="bg-app-paper hover:bg-app-wash block p-3 transition-colors"
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="text-app-ink truncate text-sm font-medium">{name}</p>
@@ -65,9 +60,7 @@ export default async function InboxRail() {
           })}
         </ul>
       ) : (
-        <p className="text-app-body text-body-sm leading-6">
-          No pending requests. When someone reaches out about a build, a preview shows up here.
-        </p>
+        <p className="text-app-meta text-sm">No pending requests.</p>
       )}
     </div>
   );
