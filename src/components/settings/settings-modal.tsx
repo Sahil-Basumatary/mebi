@@ -1,7 +1,16 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
-import { Check, ShieldCheck, SlidersHorizontal, X } from "lucide-react";
+import { useClerk, useUser } from "@clerk/nextjs";
+import {
+  Bell,
+  Check,
+  CircleHelp,
+  Link2,
+  LogOut,
+  ShieldCheck,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -11,15 +20,17 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { cn } from "@/lib/utils";
 import { getSettingsData, type SettingsData } from "./actions";
+import { ConnectionsPanel } from "./connections-panel";
 import { EmailsPane } from "./email-manager";
+import { NotificationsPanel } from "./notifications-panel";
 import { PreferencesPanel } from "./preferences-panel";
 import { ProfileForm } from "./profile-form";
 import { SecurityPanel } from "./security-panel";
-import { useFocusTrap } from "@/hooks/use-focus-trap";
 
-type SectionId = "profile" | "preferences" | "security";
+type SectionId = "profile" | "preferences" | "notifications" | "connections" | "security";
 type SubviewId = "emails";
 
 const SECTIONS = [
@@ -31,7 +42,17 @@ const SECTIONS = [
   {
     id: "preferences",
     title: "Preferences",
-    description: "Choose how you want mebi to look and behave",
+    description: "Choose how you want mebi to look and behave.",
+  },
+  {
+    id: "notifications",
+    title: "Notifications",
+    description: "Control inbox, project, and email alerts.",
+  },
+  {
+    id: "connections",
+    title: "Connections",
+    description: "Manage linked accounts and what appears on your profile.",
   },
   {
     id: "security",
@@ -40,10 +61,22 @@ const SECTIONS = [
   },
 ] as const;
 
-const SECONDARY_SECTIONS = [
+const ACCOUNT_NAV = [
   { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "connections", label: "Connections", icon: Link2 },
   { id: "security", label: "Security", icon: ShieldCheck },
 ] as const;
+
+const SUPPORT_URL = "https://github.com/Sahil-Basumatary/mebi/issues/new/choose";
+
+const navItemClass = (active: boolean) =>
+  cn(
+    "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
+    active
+      ? "bg-app-surface-2 text-app-fg font-medium"
+      : "text-app-muted hover:bg-app-hover hover:text-app-fg",
+  );
 
 function initialsFrom(name: string): string {
   return (
@@ -177,6 +210,7 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
 // Rendered inside KeyboardShortcutsProvider so Preferences can call openCustomize.
 export function SettingsModalHost() {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const {
     isOpen,
     section,
@@ -232,52 +266,66 @@ export function SettingsModalHost() {
           <X size={18} strokeWidth={1.75} />
         </button>
 
-        <aside className="border-app-border bg-app-surface flex shrink-0 gap-1 overflow-x-auto border-b p-3 sm:w-60 sm:flex-col sm:overflow-x-visible sm:overflow-y-auto sm:border-r sm:border-b-0 sm:p-3">
-          <p className="text-app-muted-2 mb-1 hidden px-2 text-xs font-medium sm:block">
-            Account
-          </p>
+        <aside className="border-app-border bg-app-surface flex shrink-0 gap-1 overflow-x-auto border-b p-3 sm:w-60 sm:flex-col sm:overflow-hidden sm:border-r sm:border-b-0 sm:p-0">
+          <div className="flex gap-1 sm:min-h-0 sm:flex-1 sm:flex-col sm:overflow-y-auto sm:p-3">
+            <p className="text-app-muted-2 mb-1 hidden px-2 text-xs font-medium sm:block">
+              Account
+            </p>
 
-          <button
-            type="button"
-            onClick={() => selectSection("profile")}
-            className={cn(
-              "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-              section === "profile"
-                ? "bg-app-surface-2 text-app-fg font-medium"
-                : "text-app-muted hover:bg-app-hover hover:text-app-fg",
-            )}
-          >
-            <span className="border-app-border bg-app-canvas text-app-fg flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border text-[10px] font-semibold">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initials
-              )}
-            </span>
-            <span className="truncate">{displayName}</span>
-          </button>
-
-          {SECONDARY_SECTIONS.map((item) => {
-            const Icon = item.icon;
-            const active = item.id === section;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => selectSection(item.id)}
-                className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  active
-                    ? "bg-app-surface-2 text-app-fg font-medium"
-                    : "text-app-muted hover:bg-app-hover hover:text-app-fg",
+            <button
+              type="button"
+              onClick={() => selectSection("profile")}
+              className={navItemClass(section === "profile")}
+            >
+              <span className="border-app-border bg-app-canvas text-app-fg flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border text-[10px] font-semibold">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials
                 )}
-              >
-                <Icon size={16} strokeWidth={1.75} />
-                {item.label}
-              </button>
-            );
-          })}
+              </span>
+              <span className="truncate">{displayName}</span>
+            </button>
+
+            {ACCOUNT_NAV.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => selectSection(item.id)}
+                  className={navItemClass(item.id === section)}
+                >
+                  <Icon size={16} strokeWidth={1.75} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="border-app-border ml-1 flex shrink-0 items-center gap-1 border-l pl-1 sm:mt-auto sm:ml-0 sm:flex-col sm:items-stretch sm:gap-0.5 sm:border-t sm:border-l-0 sm:p-3 sm:pt-2">
+            <a
+              href={SUPPORT_URL}
+              target="_blank"
+              rel="noreferrer"
+              className={navItemClass(false)}
+            >
+              <CircleHelp size={16} strokeWidth={1.75} />
+              Get support
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                void signOut({ redirectUrl: "/" });
+              }}
+              className={navItemClass(false)}
+            >
+              <LogOut size={16} strokeWidth={1.75} />
+              Log out
+            </button>
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1 overflow-y-auto">
@@ -326,6 +374,16 @@ export function SettingsModalHost() {
                         startupPreference={data.startupPreference}
                         profilePrivate={data.profile.profilePrivate}
                         onDiscoverabilitySaved={refreshData}
+                      />
+                    ) : null}
+                    {section === "notifications" ? (
+                      <NotificationsPanel initial={data.notifications} />
+                    ) : null}
+                    {section === "connections" ? (
+                      <ConnectionsPanel
+                        githubUsername={data.profile.githubUsername}
+                        showGithub={data.profile.showGithub}
+                        onSaved={refreshData}
                       />
                     ) : null}
                     {section === "security" ? (

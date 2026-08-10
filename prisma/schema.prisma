@@ -87,6 +87,10 @@ model User {
   role             UserRole?
   prefersSolo      Boolean              @default(false)
   profilePrivate   Boolean              @default(false)
+  notifyInbox      Boolean              @default(true)
+  notifyProjectActivity Boolean         @default(true)
+  notifyWeeklyDigest Boolean            @default(false)
+  notifyMarketing  Boolean              @default(false)
   onboarded        Boolean              @default(false)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt

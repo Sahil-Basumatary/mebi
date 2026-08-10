@@ -3,6 +3,8 @@
 import { upload } from "@vercel/blob/client";
 import { useActionState, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { SocialIcon } from "@/components/social-icon";
+import { TagCombobox } from "@/components/ui/tag-combobox";
+import { INTEREST_OPTIONS, SKILL_OPTIONS } from "@/lib/expertise-options";
 import { MAX_SOCIAL_LINKS } from "@/lib/social-links";
 import { setAvatar, updateProfile, type ProfileState } from "./actions";
 
@@ -369,22 +371,32 @@ export function ProfileForm({ email, onSaved, initialValues }: ProfileFormProps)
         <SectionHeading>Expertise</SectionHeading>
         <div className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Skills" hint="Comma separated." htmlFor="skills">
-              <input
+            <Field
+              label="Skills"
+              hint="Search the list, or choose Other to add a custom skill."
+              htmlFor="skills"
+            >
+              <TagCombobox
                 id="skills"
                 name="skills"
+                label="Skills"
+                options={SKILL_OPTIONS}
                 defaultValue={initialValues.skills}
-                className={inputClass}
-                placeholder="TypeScript, React, PostgreSQL"
+                placeholder="Type to search skills…"
               />
             </Field>
-            <Field label="Interests" hint="Comma separated." htmlFor="interests">
-              <input
+            <Field
+              label="Interests"
+              hint="Search the list, or choose Other to add a custom interest."
+              htmlFor="interests"
+            >
+              <TagCombobox
                 id="interests"
                 name="interests"
+                label="Interests"
+                options={INTEREST_OPTIONS}
                 defaultValue={initialValues.interests}
-                className={inputClass}
-                placeholder="Fintech, Cybersecurity, AI"
+                placeholder="Type to search interests…"
               />
             </Field>
           </div>

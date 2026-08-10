@@ -33,6 +33,12 @@ export type SettingsData = {
   startupPreference: StartupPreferenceValue;
   shortcutBindings: ShortcutBindingMap;
   cookieConsent: CookieConsentState;
+  notifications: {
+    notifyInbox: boolean;
+    notifyProjectActivity: boolean;
+    notifyWeeklyDigest: boolean;
+    notifyMarketing: boolean;
+  };
   profile: {
     fullName: string;
     username: string;
@@ -165,6 +171,12 @@ export async function getSettingsData(): Promise<SettingsData | null> {
       marketing: user.cookieMarketing,
       decidedAt: user.cookieConsentAt?.toISOString() ?? null,
     }),
+    notifications: {
+      notifyInbox: user.notifyInbox,
+      notifyProjectActivity: user.notifyProjectActivity,
+      notifyWeeklyDigest: user.notifyWeeklyDigest,
+      notifyMarketing: user.notifyMarketing,
+    },
     profile: {
       fullName: user.fullName ?? "",
       username: user.username ?? "",
@@ -492,6 +504,47 @@ export async function updateProfileDiscoverability(
   revalidatePath("/partners");
   revalidatePath("/home");
   return { error: null, profilePrivate };
+}
+
+export async function updateNotificationPreferences(input: {
+  notifyInbox: boolean;
+  notifyProjectActivity: boolean;
+  notifyWeeklyDigest: boolean;
+  notifyMarketing: boolean;
+}): Promise<{ error: string | null }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first." };
+  }
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: {
+      notifyInbox: input.notifyInbox,
+      notifyProjectActivity: input.notifyProjectActivity,
+      notifyWeeklyDigest: input.notifyWeeklyDigest,
+      notifyMarketing: input.notifyMarketing,
+    },
+  });
+
+  return { error: null };
+}
+
+export async function updateShowGithub(
+  showGithub: boolean,
+): Promise<{ error: string | null }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first." };
+  }
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { showGithub },
+  });
+
+  revalidatePath("/home");
+  return { error: null };
 }
 
 export async function getCookieConsent(): Promise<CookieConsentState> {
