@@ -8,8 +8,10 @@ import { requireOnboardedUser } from "@/lib/current-user";
 import { getProjectMembership } from "@/lib/project-access";
 import {
   DEFAULT_SIGNATURE_STATEMENT,
-  SYSTEM_UPDATE_BODIES,
+  evaluateContribution,
   isProjectVerified,
+  MAX_ATTESTATION_CHARS,
+  MIN_ATTESTATION_CHARS,
 } from "@/lib/proof";
 import { prisma } from "@/lib/prisma";
 import { slugify, withSlugSuffix } from "@/lib/slug";
@@ -267,15 +269,27 @@ export async function signProofContribution(
 
   const subjectActivity = await prisma.projectUpdate.findMany({
     where: { projectId, authorId: subjectId },
-    select: { body: true },
+    select: { body: true, createdAt: true },
   });
-  const hasRealActivity = subjectActivity.some(
-    (update) => !SYSTEM_UPDATE_BODIES.has(update.body),
-  );
+  const contribution = evaluateContribution(subjectActivity);
 
-  if (!hasRealActivity) {
+  if (!contribution.ok) {
     return {
-      error: "They need to post a real build-log update before you can sign them.",
+      error: contribution.reason ?? "They need more substantive build-log activity before you can sign them.",
+      success: false,
+    };
+  }
+
+  const statement = getField(formData.get("statement"), MAX_ATTESTATION_CHARS);
+  if (!statement || statement.length < MIN_ATTESTATION_CHARS) {
+    return {
+      error: `Write at least ${MIN_ATTESTATION_CHARS} characters describing what they contributed.`,
+      success: false,
+    };
+  }
+  if (statement === DEFAULT_SIGNATURE_STATEMENT) {
+    return {
+      error: "Write your own attestation — the default boilerplate does not count.",
       success: false,
     };
   }
@@ -299,7 +313,7 @@ export async function signProofContribution(
       where: { id: existing.id },
       data: {
         revokedAt: null,
-        statement: DEFAULT_SIGNATURE_STATEMENT,
+        statement,
         createdAt: new Date(),
       },
     });
@@ -309,7 +323,7 @@ export async function signProofContribution(
         projectId,
         signerId: user.id,
         subjectId,
-        statement: DEFAULT_SIGNATURE_STATEMENT,
+        statement,
       },
     });
   }
@@ -539,4 +553,278 @@ export async function unpublishProject(
   }
 
   return { error: null, status: "unpublished", slug: project.slug };
+}
+
+export type LifecycleState = {
+  error: string | null;
+  success: boolean;
+};
+
+async function retractIfUnverified(projectId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      slug: true,
+      publishedAt: true,
+      members: { select: { userId: true, user: { select: { username: true } } } },
+      signatures: {
+        where: { revokedAt: null },
+        select: { signerId: true, subjectId: true, revokedAt: true },
+      },
+    },
+  });
+
+  if (!project?.publishedAt) return null;
+
+  const memberIds = project.members.map((member) => member.userId);
+  if (memberIds.length === 1 || isProjectVerified(memberIds, project.signatures)) {
+    return null;
+  }
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { publishedAt: null },
+  });
+
+  return {
+    slug: project.slug,
+    usernames: project.members
+      .map((member) => member.user.username)
+      .filter((username): username is string => Boolean(username)),
+  };
+}
+
+export async function updateProject(
+  _previousState: LifecycleState,
+  formData: FormData,
+): Promise<LifecycleState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+  const name = getField(formData.get("name"), 120);
+  const description = getField(formData.get("description"), 1200);
+  const estimatedTime = getField(formData.get("estimatedTime"), 80);
+  const techStack = parseTags(formData.get("techStack"));
+  const visibilityValue = formData.get("visibility");
+  const visibility =
+    visibilityValue === "PRIVATE" ? ProjectVisibility.PRIVATE : ProjectVisibility.PUBLIC;
+
+  if (!projectId) return { error: "Project not found.", success: false };
+
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership || membership.role !== ProjectRole.OWNER) {
+    return { error: "Only the owner can edit this brief.", success: false };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { status: true, publishedAt: true, slug: true },
+  });
+  if (!project) return { error: "Project not found.", success: false };
+  if (project.status === "COMPLETED") {
+    return { error: "Finished builds lock the brief. Unpublish stays available.", success: false };
+  }
+  if (!name) return { error: "Give the project a clear name.", success: false };
+  if (!description || description.length < 40) {
+    return { error: "Write at least 40 characters so partners understand the build.", success: false };
+  }
+
+  const shouldUnpublish =
+    visibility === ProjectVisibility.PRIVATE && Boolean(project.publishedAt);
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      name,
+      description,
+      estimatedTime,
+      techStack,
+      visibility,
+      ...(shouldUnpublish ? { publishedAt: null } : {}),
+    },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+  revalidatePath("/discover");
+  if (shouldUnpublish && project.slug) {
+    revalidatePath(`/b/${project.slug}`);
+    revalidatePath("/proof");
+  }
+  return { error: null, success: true };
+}
+
+export async function deleteProject(
+  _previousState: LifecycleState,
+  formData: FormData,
+): Promise<LifecycleState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+  if (!projectId) return { error: "Project not found.", success: false };
+
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership || membership.role !== ProjectRole.OWNER) {
+    return { error: "Only the owner can delete this project.", success: false };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      slug: true,
+      members: { select: { user: { select: { username: true } } } },
+    },
+  });
+  if (!project) return { error: "Project not found.", success: false };
+
+  await prisma.project.delete({ where: { id: projectId } });
+
+  revalidatePath("/projects");
+  revalidatePath("/home");
+  revalidatePath("/proof");
+  revalidatePath("/discover");
+  if (project.slug) revalidatePath(`/b/${project.slug}`);
+  for (const member of project.members) {
+    if (member.user.username) revalidatePath(`/u/${member.user.username}`);
+  }
+  redirect("/projects");
+}
+
+export async function leaveProject(
+  _previousState: LifecycleState,
+  formData: FormData,
+): Promise<LifecycleState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+  if (!projectId) return { error: "Project not found.", success: false };
+
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership) return { error: "You are not on this build.", success: false };
+
+  if (membership.role === ProjectRole.OWNER) {
+    const others = await prisma.projectMember.count({
+      where: { projectId, userId: { not: user.id } },
+    });
+    if (others > 0) {
+      return {
+        error: "Transfer ownership before leaving, or delete the project.",
+        success: false,
+      };
+    }
+    await prisma.project.delete({ where: { id: projectId } });
+    revalidatePath("/projects");
+    revalidatePath("/home");
+    revalidatePath("/discover");
+    redirect("/projects");
+  }
+
+  await prisma.projectMember.delete({
+    where: { projectId_userId: { projectId, userId: user.id } },
+  });
+  await prisma.proofSignature.updateMany({
+    where: {
+      projectId,
+      revokedAt: null,
+      OR: [{ signerId: user.id }, { subjectId: user.id }],
+    },
+    data: { revokedAt: new Date() },
+  });
+
+  const retracted = await retractIfUnverified(projectId);
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+  revalidatePath("/proof");
+  if (retracted?.slug) revalidatePath(`/b/${retracted.slug}`);
+  for (const username of retracted?.usernames ?? []) {
+    revalidatePath(`/u/${username}`);
+  }
+  if (user.username) revalidatePath(`/u/${user.username}`);
+  redirect("/projects");
+}
+
+export async function removeMember(
+  _previousState: LifecycleState,
+  formData: FormData,
+): Promise<LifecycleState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+  const memberUserId = getField(formData.get("memberUserId"), 80);
+  if (!projectId || !memberUserId) {
+    return { error: "Missing project or member.", success: false };
+  }
+  if (memberUserId === user.id) {
+    return { error: "Use leave project to remove yourself.", success: false };
+  }
+
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership || membership.role !== ProjectRole.OWNER) {
+    return { error: "Only the owner can remove members.", success: false };
+  }
+
+  const target = await getProjectMembership(projectId, memberUserId);
+  if (!target) return { error: "That person is not on this build.", success: false };
+  if (target.role === ProjectRole.OWNER) {
+    return { error: "Transfer ownership before removing the owner.", success: false };
+  }
+
+  await prisma.projectMember.delete({
+    where: { projectId_userId: { projectId, userId: memberUserId } },
+  });
+  await prisma.proofSignature.updateMany({
+    where: {
+      projectId,
+      revokedAt: null,
+      OR: [{ signerId: memberUserId }, { subjectId: memberUserId }],
+    },
+    data: { revokedAt: new Date() },
+  });
+
+  const retracted = await retractIfUnverified(projectId);
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/proof");
+  if (retracted?.slug) revalidatePath(`/b/${retracted.slug}`);
+  for (const username of retracted?.usernames ?? []) {
+    revalidatePath(`/u/${username}`);
+  }
+  return { error: null, success: true };
+}
+
+export async function transferOwnership(
+  _previousState: LifecycleState,
+  formData: FormData,
+): Promise<LifecycleState> {
+  const user = await requireOnboardedUser();
+  const projectId = getField(formData.get("projectId"), 80);
+  const nextOwnerId = getField(formData.get("nextOwnerId"), 80);
+  if (!projectId || !nextOwnerId) {
+    return { error: "Pick a teammate to transfer to.", success: false };
+  }
+  if (nextOwnerId === user.id) {
+    return { error: "You already own this build.", success: false };
+  }
+
+  const membership = await getProjectMembership(projectId, user.id);
+  if (!membership || membership.role !== ProjectRole.OWNER) {
+    return { error: "Only the owner can transfer ownership.", success: false };
+  }
+
+  const next = await getProjectMembership(projectId, nextOwnerId);
+  if (!next) return { error: "That person must already be on the roster.", success: false };
+
+  await prisma.$transaction([
+    prisma.project.update({
+      where: { id: projectId },
+      data: { ownerId: nextOwnerId },
+    }),
+    prisma.projectMember.update({
+      where: { projectId_userId: { projectId, userId: nextOwnerId } },
+      data: { role: ProjectRole.OWNER },
+    }),
+    prisma.projectMember.update({
+      where: { projectId_userId: { projectId, userId: user.id } },
+      data: { role: ProjectRole.MEMBER },
+    }),
+  ]);
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+  return { error: null, success: true };
 }

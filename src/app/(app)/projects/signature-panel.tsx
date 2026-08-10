@@ -44,6 +44,24 @@ function SignForm({
     <form action={formAction} className="border-app-divider mt-3 space-y-3 border-t pt-3">
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="subjectId" value={subjectId} />
+      <div className="grid gap-2">
+        <label
+          htmlFor={`statement-${subjectId}`}
+          className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+        >
+          What did they contribute?
+        </label>
+        <textarea
+          id={`statement-${subjectId}`}
+          name="statement"
+          rows={3}
+          minLength={40}
+          maxLength={280}
+          required
+          placeholder={`${name} built the matching query and reviewed the brief with me...`}
+          className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink resize-none border px-3 py-3 text-sm leading-5 outline-none"
+        />
+      </div>
       <label className="text-app-body flex items-start gap-2 text-body-sm leading-5">
         <input
           type="checkbox"
@@ -53,13 +71,19 @@ function SignForm({
           className="accent-app-ink mt-1"
         />
         <span>
-          I confirm {name} contributed real work. Signing is also my consent for their name to
+          I confirm this attestation is accurate. Signing is also my consent for their name to
           appear on a published proof of this build.
         </span>
       </label>
-      {state.error ? <p className="text-app-ink text-sm">{state.error}</p> : null}
+      {state.error ? (
+        <p role="alert" className="text-app-ink text-sm">
+          {state.error}
+        </p>
+      ) : null}
       {state.success ? (
-        <p className="text-app-label text-sm font-medium">Signed.</p>
+        <p role="status" className="text-app-label text-sm font-medium">
+          Signed.
+        </p>
       ) : (
         <button
           type="submit"
@@ -79,7 +103,11 @@ function RevokeForm({ signatureId }: { signatureId: string }) {
   return (
     <form action={formAction} className="mt-2">
       <input type="hidden" name="signatureId" value={signatureId} />
-      {state.error ? <p className="text-app-ink mb-2 text-sm">{state.error}</p> : null}
+      {state.error ? (
+        <p role="alert" className="text-app-ink mb-2 text-sm">
+          {state.error}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={isPending}
@@ -106,7 +134,7 @@ export function SignaturePanel({
         </p>
         <p className="text-app-body mt-3 text-body-sm leading-6">
           Peer signatures need at least two people on the roster. Invite a partner, then sign each
-          other after real build-log posts.
+          other after sustained build-log work.
         </p>
       </section>
     );
@@ -124,7 +152,7 @@ export function SignaturePanel({
         <p className="text-app-body mt-2 text-body-sm leading-5">
           {verified
             ? "Every member has a non-revoked signature from a teammate."
-            : `${signaturesReceived} of ${memberCount} members attested.`}
+            : `${signaturesReceived} of ${memberCount} members attested. Signatures require two days of substantive posts.`}
         </p>
       </div>
       <ul className="divide-app-divider divide-y">

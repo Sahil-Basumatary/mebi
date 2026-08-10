@@ -33,8 +33,23 @@ export default async function ProjectsPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Project Pipeline"
-        title="Turn a rough idea into something extraordinary."
-        description="Create the project brief here, then use it as the source of truth for partner matching, sprint planning, and future proof capture."
+        title="Projects"
+        aside={
+          <div>
+            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+              Looking for a build?
+            </p>
+            <p className="text-app-body mt-3 text-body-sm leading-6">
+              Browse open public briefs and ask to join.
+            </p>
+            <Link
+              href="/discover"
+              className="bg-app-ink text-app-paper hover:bg-app-accent-hover mt-6 inline-flex h-9 items-center px-4 text-sm font-medium transition-colors"
+            >
+              Open Discover
+            </Link>
+          </div>
+        }
       >
         <div aria-hidden className="flex items-center gap-4 py-8">
           <span className="flex items-center gap-1.5">
@@ -68,8 +83,7 @@ export default async function ProjectsPage() {
             <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
               New brief
             </p>
-            <h2 className="text-app-ink mt-3 font-serif text-3xl font-light">Time to Cook</h2>
-            <p className="text-app-body mt-4 text-body-sm leading-6">Keep the first version tight.</p>
+            <h2 className="text-app-ink mt-3 font-serif text-3xl font-light">New project</h2>
             <div className="border-app-divider mt-6 border-t pt-6">
               <BriefChecklist />
             </div>
@@ -80,8 +94,7 @@ export default async function ProjectsPage() {
 
       <Section
         eyebrow="Workspace"
-        title="Your project workspace"
-        description="Public projects are visible to everyone. Private projects stay with you."
+        title="Your projects"
         action={
           <span className="text-app-body text-sm">
             {projects.length} project{projects.length === 1 ? "" : "s"}
@@ -117,8 +130,7 @@ export default async function ProjectsPage() {
         ) : (
           <EmptyState
             eyebrow="No projects yet"
-            title="Your first project is important for matching."
-            description="Create one clear project brief first so we can match you with the right partners."
+            title="Create your first project."
             action={
               <Button asChild className="rounded-full bg-app-ink text-app-paper hover:bg-app-accent-hover px-6">
                 <Link href="#new-project">Create project</Link>

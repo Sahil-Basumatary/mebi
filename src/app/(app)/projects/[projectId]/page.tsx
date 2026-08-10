@@ -7,14 +7,16 @@ import { scoreMatch } from "@/lib/match";
 import { requireProjectMember } from "@/lib/project-access";
 import {
   attestationCountFor,
+  evaluateContribution,
   isProjectVerified,
-  SYSTEM_UPDATE_BODIES,
 } from "@/lib/proof";
 import { prisma } from "@/lib/prisma";
 import { displayName } from "@/lib/user-display";
 import { PartnerRequestDialog } from "../../partners/partner-request-dialog";
 import { ProjectCompletionPanel } from "../project-completion-panel";
+import { ProjectManagePanel } from "../project-manage-panel";
 import { PublishPanel } from "../publish-panel";
+import { RemoveMemberButton } from "../remove-member-button";
 import { SignaturePanel } from "../signature-panel";
 import { UpdateForm } from "../update-form";
 
@@ -52,7 +54,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const isCompleted = project.status === "COMPLETED";
   const canInvite = !isCompleted && !user.profilePrivate;
 
-  const [members, updates, signatures, activeAuthors, pendingInvites, candidatePool] =
+  const [members, updates, signatures, authorUpdates, pendingInvites, candidatePool] =
     await Promise.all([
     prisma.projectMember.findMany({
       where: { projectId: project.id },
@@ -104,12 +106,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
       },
     }),
     prisma.projectUpdate.findMany({
-      where: {
-        projectId: project.id,
-        NOT: { body: { in: [...SYSTEM_UPDATE_BODIES] } },
-      },
-      distinct: ["authorId"],
-      select: { authorId: true },
+      where: { projectId: project.id },
+      select: { authorId: true, body: true, createdAt: true },
     }),
     prisma.projectRequest.findMany({
       where: {
@@ -159,7 +157,12 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     (id) => attestationCountFor(id, signatures) > 0,
   ).length;
 
-  const activityByAuthor = new Set(activeAuthors.map((row) => row.authorId));
+  const updatesByAuthor = new Map<string, { body: string; createdAt: Date }[]>();
+  for (const update of authorUpdates) {
+    const list = updatesByAuthor.get(update.authorId) ?? [];
+    list.push({ body: update.body, createdAt: update.createdAt });
+    updatesByAuthor.set(update.authorId, list);
+  }
 
   const teammates = members
     .filter((member) => member.user.id !== user.id)
@@ -172,16 +175,16 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           signature.subjectId === subjectId &&
           !signature.revokedAt,
       );
-      const hasActivity = activityByAuthor.has(subjectId);
+      const contribution = evaluateContribution(updatesByAuthor.get(subjectId) ?? []);
       return {
         id: subjectId,
         name,
-        canSign: hasActivity && !mySignature,
+        canSign: contribution.ok && !mySignature,
         alreadySigned: Boolean(mySignature),
         signatureId: mySignature?.id ?? null,
-        reason: hasActivity
+        reason: contribution.ok
           ? undefined
-          : "Waiting for them to post a real build-log update.",
+          : contribution.reason ?? "Not ready to sign.",
       };
     });
 
@@ -283,7 +286,6 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
                 Build log
               </p>
-              <h2 className="mt-2 font-serif text-3xl font-light">What the team posted</h2>
             </div>
             {updates.length ? (
               <ul className="divide-app-divider divide-y">
@@ -344,13 +346,15 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
                 Roster
               </p>
-              <p className="text-app-body mt-2 text-body-sm leading-5">
-                Everyone with a seat on this build.
-              </p>
             </div>
             <ul className="divide-app-divider divide-y">
               {roster.map((member) => {
                 const attestations = attestationCountFor(member.user.id, signatures);
+                const canRemove =
+                  isOwner &&
+                  !isCompleted &&
+                  member.role !== ProjectRole.OWNER &&
+                  member.user.id !== user.id;
                 return (
                 <li key={member.id} className="px-5 py-4">
                   <UserRow
@@ -368,6 +372,13 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                       </p>
                     }
                   />
+                  {canRemove ? (
+                    <RemoveMemberButton
+                      projectId={project.id}
+                      memberUserId={member.user.id}
+                      memberName={displayName(member.user.fullName, member.user.username)}
+                    />
+                  ) : null}
                 </li>
                 );
               })}
@@ -406,9 +417,6 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               <div className="border-app-divider border-b px-5 py-4">
                 <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
                   Invite
-                </p>
-                <p className="text-app-body mt-2 text-body-sm leading-5">
-                  Pull in the missing role for this build.
                 </p>
               </div>
               {inviteSuggestions.length ? (
@@ -459,13 +467,29 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                   href="/partners"
                   className="text-app-ink text-sm font-medium underline underline-offset-2"
                 >
-                  Open full directory
+                  Browse partners
                 </Link>
               </div>
             </section>
           ) : null}
 
           {isOwner ? <ProjectCompletionPanel projectId={project.id} disabled={isCompleted} /> : null}
+
+          <ProjectManagePanel
+            projectId={project.id}
+            isOwner={isOwner}
+            isCompleted={isCompleted}
+            name={project.name}
+            description={project.description}
+            techStack={project.techStack}
+            estimatedTime={project.estimatedTime}
+            visibility={project.visibility}
+            members={members.map((member) => ({
+              userId: member.user.id,
+              name: displayName(member.user.fullName, member.user.username),
+              role: member.role,
+            }))}
+          />
         </aside>
       </section>
     </div>

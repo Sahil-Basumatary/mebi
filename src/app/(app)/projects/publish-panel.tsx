@@ -58,9 +58,6 @@ export function PublishPanel({
         <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
           Publish
         </p>
-        <p className="text-app-body mt-2 text-body-sm leading-5">
-          Put a public proof page live once the build is finished and attested.
-        </p>
       </div>
 
       <div className="space-y-4 px-5 py-5">

@@ -66,10 +66,10 @@ function FlatCheckbox({ checked }: { checked: boolean }) {
 }
 
 const CHECKLIST: { field: BriefField; label: string; hint: string }[] = [
-  { field: "name", label: "Project named", hint: "Crisp and searchable" },
-  { field: "description", label: "Problem described", hint: "A sentence or two of real substance" },
-  { field: "techStack", label: "Stack suggested", hint: "Lets specialists self-select" },
-  { field: "estimatedTime", label: "Time estimated", hint: "Sets the commitment level" },
+  { field: "name", label: "Project named", hint: "Clear and searchable" },
+  { field: "description", label: "Problem described", hint: "At least 40 characters" },
+  { field: "techStack", label: "Stack suggested", hint: "Tools and languages" },
+  { field: "estimatedTime", label: "Time estimated", hint: "Expected duration" },
 ];
 
 export function BriefChecklist() {
@@ -78,7 +78,7 @@ export function BriefChecklist() {
   return (
     <div>
       <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
-        Live Checklist
+        Brief checklist
       </p>
       <ul className="mt-4 grid gap-3.5">
         {CHECKLIST.map((item) => {
@@ -102,7 +102,7 @@ export function BriefChecklist() {
         })}
       </ul>
       <p className="text-app-meta mt-5 font-mono text-[11px] tracking-[0.2em] uppercase">
-        {done === CHECKLIST.length ? "Ready to publish" : `${done} / ${CHECKLIST.length} signals`}
+        {done === CHECKLIST.length ? "Brief ready" : `${done} / ${CHECKLIST.length} complete`}
       </p>
     </div>
   );

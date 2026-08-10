@@ -84,7 +84,9 @@ export function ProjectForm() {
             <input type="radio" name="visibility" value="PUBLIC" defaultChecked className="accent-app-ink mt-1" />
             <span>
               <span className="block font-semibold">Public</span>
-              <span className="text-app-label mt-1 block">Visible later in discovery and partner matching.</span>
+              <span className="text-app-label mt-1 block">
+                Shows on Discover so partners can ask to join.
+              </span>
             </span>
           </label>
           <label className="border-app-divider bg-app-wash flex cursor-pointer items-start gap-3 border p-4 text-sm">
