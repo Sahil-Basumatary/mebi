@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { TagCombobox } from "@/components/ui/tag-combobox";
+import { INTEREST_OPTIONS, SKILL_OPTIONS } from "@/lib/expertise-options";
 import { completeOnboarding, type OnboardingState } from "./actions";
 
 type OnboardingFormProps = {
@@ -110,28 +112,34 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
           <p className="mt-1 text-[17px] text-[#d8d8d8]">Tags make matching precise and browsable.</p>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
-          <label className="flex flex-col gap-2 text-sm">
+          <div className="flex flex-col gap-2 text-sm">
             <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
-              Skills (comma separated)
+              Skills
             </span>
-            <input
+            <TagCombobox
               name="skills"
+              label="Skills"
+              options={SKILL_OPTIONS}
               defaultValue={initialValues.skills}
-              className="border-b border-[#262626] bg-transparent px-1 py-3 text-[#ffffff] outline-none placeholder:text-[#606060] focus:border-[#ffffff]"
-              placeholder="TypeScript, React, PostgreSQL"
+              placeholder="Type to search skills…"
+              hint="Search the list, or choose Other to add your own."
+              tone="onboarding"
             />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
+          </div>
+          <div className="flex flex-col gap-2 text-sm">
             <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
-              Interests (comma separated)
+              Interests
             </span>
-            <input
+            <TagCombobox
               name="interests"
+              label="Interests"
+              options={INTEREST_OPTIONS}
               defaultValue={initialValues.interests}
-              className="border-b border-[#262626] bg-transparent px-1 py-3 text-[#ffffff] outline-none placeholder:text-[#606060] focus:border-[#ffffff]"
-              placeholder="Fintech, Cybersecurity, AI"
+              placeholder="Type to search interests…"
+              hint="Search the list, or choose Other to add your own."
+              tone="onboarding"
             />
-          </label>
+          </div>
         </div>
       </section>
 
