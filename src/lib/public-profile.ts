@@ -45,6 +45,7 @@ export const getPublicProfileByUsername = cache(async (rawUsername: string) => {
       githubUsername: true,
       showGithub: true,
       socialLinks: true,
+      timezone: true,
     },
   });
 });

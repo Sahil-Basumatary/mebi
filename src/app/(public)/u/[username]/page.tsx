@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Chip } from "@/components/layout";
+import { resolveTimezone } from "@/lib/locale";
 import {
   getPublicProfileByUsername,
   getPublishedBuildsForUser,
 } from "@/lib/public-profile";
+import { getBadgesForUser } from "@/lib/standings";
 import { displayName } from "@/lib/user-display";
 
 type ProfilePageProps = {
@@ -20,6 +22,13 @@ function formatDate(date: Date | null): string {
     year: "numeric",
   }).format(date);
 }
+
+const TIER_TONE: Record<string, "ink" | "wash"> = {
+  bronze: "wash",
+  silver: "wash",
+  gold: "ink",
+  platinum: "ink",
+};
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { username } = await params;
@@ -45,8 +54,12 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
   const profile = await getPublicProfileByUsername(username);
   if (!profile) notFound();
 
-  const builds = await getPublishedBuildsForUser(profile.id);
+  const [builds, recognition] = await Promise.all([
+    getPublishedBuildsForUser(profile.id),
+    getBadgesForUser(profile.id, resolveTimezone(profile.timezone)),
+  ]);
   const name = displayName(profile.fullName, profile.username);
+  const { badges, stats } = recognition;
 
   return (
     <div className="flex flex-col gap-10">
@@ -65,7 +78,7 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
           )}
           <div className="min-w-0">
             <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
-              Public builder
+              Profile
             </p>
             <h1 className="mt-3 font-serif text-5xl font-light tracking-tight">{name}</h1>
             {profile.username ? (
@@ -82,9 +95,59 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
                 <Chip key={skill}>{skill}</Chip>
               ))}
             </div>
+            <dl className="text-app-meta mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-chip tracking-meta uppercase">
+              <div>
+                <dt className="sr-only">Published ships</dt>
+                <dd>{stats.publishedCount} ships</dd>
+              </div>
+              <div>
+                <dt className="sr-only">Verified ships</dt>
+                <dd>{stats.verifiedPublishedCount} verified</dd>
+              </div>
+              <div>
+                <dt className="sr-only">Peer signatures</dt>
+                <dd>{stats.attestationsReceived} attested</dd>
+              </div>
+              <div>
+                <dt className="sr-only">Current streak</dt>
+                <dd>{stats.currentStreak}-day streak</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </header>
+
+      <section>
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="font-serif text-3xl font-light">Badges</h2>
+          <Link
+            href="/leaderboard"
+            className="text-app-ink shrink-0 text-sm font-medium underline underline-offset-2"
+          >
+            Leaderboard
+          </Link>
+        </div>
+        {badges.length ? (
+          <ul className="border-app-divider mt-5 grid gap-px border sm:grid-cols-2">
+            {badges.map((badge) => (
+              <li key={badge.id} className="bg-app-paper flex flex-col gap-2 p-5">
+                <div className="flex items-center gap-2">
+                  <Chip tone={TIER_TONE[badge.tier] ?? "wash"}>{badge.tier}</Chip>
+                  <p className="text-app-label font-mono text-chip tracking-meta uppercase">
+                    {badge.category}
+                  </p>
+                </div>
+                <h3 className="text-app-ink font-serif text-2xl font-light">{badge.label}</h3>
+                <p className="text-app-body text-body-sm leading-6">{badge.description}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-app-body mt-5 text-body-sm leading-6">
+            No badges yet. Publish, get attested, and keep a real build log.
+          </p>
+        )}
+      </section>
 
       <section>
         <h2 className="font-serif text-3xl font-light">Published builds</h2>
