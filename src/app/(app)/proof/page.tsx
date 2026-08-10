@@ -60,13 +60,39 @@ export default async function ProofPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Proof"
-        title="Verified builds you can put in front of an interviewer."
-        description="Published proofs live on public URLs. Peer signatures are what make them credible."
+        title="Published builds."
+        description="Peer signatures distinguish verified work from self-attested work."
+        aside={
+          <div>
+            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+              Recognition
+            </p>
+            <p className="text-app-body mt-3 text-body-sm leading-6">
+              Badges and the leaderboard come from ships, attestations, and real build-log work.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/leaderboard"
+                className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center px-4 text-sm font-medium transition-colors"
+              >
+                Leaderboard
+              </Link>
+              {user.username ? (
+                <Link
+                  href={`/u/${user.username}`}
+                  className="border-app-ink text-app-ink inline-flex h-9 items-center border px-4 text-sm font-medium"
+                >
+                  Your badges
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        }
       />
 
       <Section
-        eyebrow="Published"
-        title="Your proof pages"
+        eyebrow="Public"
+        title="Proof pages"
         action={
           user.username ? (
             <Link
@@ -127,9 +153,8 @@ export default async function ProofPage() {
           </HairlineGrid>
         ) : (
           <EmptyState
-            eyebrow="No published proof"
-            title="Finish, attest, then publish."
-            description="Completed projects stay private until you publish. Verified builds need a peer signature on every teammate."
+            eyebrow="Nothing published"
+            title="No proof pages yet."
             action={
               <Link
                 href="/projects"
@@ -143,7 +168,7 @@ export default async function ProofPage() {
       </Section>
 
       {drafts.length ? (
-        <Section eyebrow="Ready to publish" title="Finished, not public yet">
+        <Section eyebrow="Private" title="Finished builds">
           <HairlineGrid>
             {drafts.map((project) => {
               const verified = isProjectVerified(
@@ -160,11 +185,11 @@ export default async function ProofPage() {
                     <h3 className="text-app-ink font-serif text-2xl font-light">{project.name}</h3>
                     <Chip>{verified ? "verified" : "needs attesting"}</Chip>
                   </div>
-                  <p className="text-app-body text-body-sm leading-6">
-                    {project.completedAt
-                      ? `Finished ${formatDate(project.completedAt)}. Open the build to publish.`
-                      : "Open the build to publish."}
-                  </p>
+                  {project.completedAt ? (
+                    <p className="text-app-meta font-mono text-chip tracking-meta uppercase">
+                      {formatDate(project.completedAt)}
+                    </p>
+                  ) : null}
                 </Link>
               );
             })}

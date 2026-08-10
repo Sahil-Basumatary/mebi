@@ -44,9 +44,9 @@ export function resolveNextAction({
 
   if (!user.bio || user.skills.length === 0) {
     return {
-      label: "Tighten profile signal",
+      label: "Complete profile",
       href: "/onboarding",
-      detail: "Partners need a clear thesis and skills before they will join a build.",
+      detail: "Add a bio and skills so partners can find you.",
     };
   }
 
@@ -63,7 +63,7 @@ export function resolveNextAction({
       return {
         label: "Invite a builder",
         href: "/partners",
-        detail: `${activeProject.name} still needs a teammate who will ship and sign.`,
+        detail: `${activeProject.name} needs a teammate.`,
       };
     }
 
@@ -102,7 +102,7 @@ export function resolveNextAction({
     return {
       label: "Publish proof",
       href: `/projects/${activeProject.id}`,
-      detail: "This build is finished and attested. Put the public proof page live.",
+      detail: "Ready to publish.",
     };
   }
 

@@ -131,6 +131,11 @@ export default async function PublicBuildPage({ params }: BuildPageProps) {
                       {displayName(subject.fullName, subject.username)}
                     </span>
                   </p>
+                  {signature.statement ? (
+                    <p className="text-app-body mt-2 max-w-2xl text-body-sm leading-6">
+                      “{signature.statement}”
+                    </p>
+                  ) : null}
                   <p className="text-app-meta mt-1 font-mono text-chip tracking-meta uppercase">
                     {formatDate(signature.createdAt)}
                   </p>
