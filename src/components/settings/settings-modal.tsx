@@ -381,8 +381,16 @@ export function SettingsModalHost() {
                     ) : null}
                     {section === "connections" ? (
                       <ConnectionsPanel
-                        githubUsername={data.profile.githubUsername}
-                        showGithub={data.profile.showGithub}
+                        initial={{
+                          githubUsername: data.profile.githubUsername,
+                          showGithub: data.profile.showGithub,
+                          linkedinUrl: data.profile.linkedinUrl,
+                          showLinkedin: data.profile.showLinkedin,
+                          discordHandle: data.profile.discordHandle,
+                          showDiscord: data.profile.showDiscord,
+                          calendarUrl: data.profile.calendarUrl,
+                          showCalendar: data.profile.showCalendar,
+                        }}
                         onSaved={refreshData}
                       />
                     ) : null}

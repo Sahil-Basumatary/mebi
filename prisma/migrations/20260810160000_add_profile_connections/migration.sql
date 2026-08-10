@@ -1,0 +1,8 @@
+-- Profile connections managed from Account → Connections.
+ALTER TABLE "User"
+ADD COLUMN IF NOT EXISTS "linkedinUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "showLinkedin" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN IF NOT EXISTS "discordHandle" TEXT,
+ADD COLUMN IF NOT EXISTS "showDiscord" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN IF NOT EXISTS "calendarUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "showCalendar" BOOLEAN NOT NULL DEFAULT true;

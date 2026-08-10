@@ -4,6 +4,12 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import type { StartupPreference, ThemePreference } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import {
+  normalizeCalendarConnection,
+  normalizeDiscordConnection,
+  normalizeGithubConnection,
+  normalizeLinkedinConnection,
+} from "@/lib/connections";
+import {
   DEFAULT_SHORTCUT_BINDINGS,
   mergeShortcutBindings,
   normalizeCombo,
@@ -47,6 +53,12 @@ export type SettingsData = {
     imageUrl: string;
     githubUsername: string;
     showGithub: boolean;
+    linkedinUrl: string;
+    showLinkedin: boolean;
+    discordHandle: string;
+    showDiscord: boolean;
+    calendarUrl: string;
+    showCalendar: boolean;
     socialLinks: string[];
     skills: string;
     interests: string;
@@ -185,6 +197,12 @@ export async function getSettingsData(): Promise<SettingsData | null> {
       imageUrl: user.imageUrl ?? "",
       githubUsername: user.githubUsername ?? "",
       showGithub: user.showGithub,
+      linkedinUrl: user.linkedinUrl ?? "",
+      showLinkedin: user.showLinkedin,
+      discordHandle: user.discordHandle ?? "",
+      showDiscord: user.showDiscord,
+      calendarUrl: user.calendarUrl ?? "",
+      showCalendar: user.showCalendar,
       socialLinks: user.socialLinks,
       skills: user.skills.join(", "),
       interests: user.interests.join(", "),
@@ -530,21 +548,97 @@ export async function updateNotificationPreferences(input: {
   return { error: null };
 }
 
-export async function updateShowGithub(
-  showGithub: boolean,
-): Promise<{ error: string | null }> {
+export async function updateGithubConnection(input: {
+  username: string;
+  show: boolean;
+}): Promise<{ error: string | null; username: string | null; show: boolean }> {
   const { userId } = await auth();
   if (!userId) {
-    return { error: "You need to sign in first." };
+    return { error: "You need to sign in first.", username: null, show: input.show };
+  }
+
+  const github = normalizeGithubConnection(input.username);
+  if (github.error) {
+    return { error: github.error, username: null, show: input.show };
   }
 
   await prisma.user.update({
     where: { clerkId: userId },
-    data: { showGithub },
+    data: { githubUsername: github.value, showGithub: input.show },
   });
+  revalidatePublicSurfaces();
+  return { error: null, username: github.value, show: input.show };
+}
 
+export async function updateLinkedinConnection(input: {
+  url: string;
+  show: boolean;
+}): Promise<{ error: string | null; url: string | null; show: boolean }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", url: null, show: input.show };
+  }
+
+  const linkedin = normalizeLinkedinConnection(input.url);
+  if (linkedin.error) {
+    return { error: linkedin.error, url: null, show: input.show };
+  }
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { linkedinUrl: linkedin.value, showLinkedin: input.show },
+  });
+  revalidatePublicSurfaces();
+  return { error: null, url: linkedin.value, show: input.show };
+}
+
+export async function updateDiscordConnection(input: {
+  handle: string;
+  show: boolean;
+}): Promise<{ error: string | null; handle: string | null; show: boolean }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", handle: null, show: input.show };
+  }
+
+  const discord = normalizeDiscordConnection(input.handle);
+  if (discord.error) {
+    return { error: discord.error, handle: null, show: input.show };
+  }
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { discordHandle: discord.value, showDiscord: input.show },
+  });
+  revalidatePublicSurfaces();
+  return { error: null, handle: discord.value, show: input.show };
+}
+
+export async function updateCalendarConnection(input: {
+  url: string;
+  show: boolean;
+}): Promise<{ error: string | null; url: string | null; show: boolean }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", url: null, show: input.show };
+  }
+
+  const calendar = normalizeCalendarConnection(input.url);
+  if (calendar.error) {
+    return { error: calendar.error, url: null, show: input.show };
+  }
+
+  await prisma.user.update({
+    where: { clerkId: userId },
+    data: { calendarUrl: calendar.value, showCalendar: input.show },
+  });
+  revalidatePublicSurfaces();
+  return { error: null, url: calendar.value, show: input.show };
+}
+
+function revalidatePublicSurfaces() {
   revalidatePath("/home");
-  return { error: null };
+  revalidatePath("/partners");
 }
 
 export async function getCookieConsent(): Promise<CookieConsentState> {

@@ -72,6 +72,12 @@ model User {
   imageUrl         String?
   githubUsername   String?
   showGithub       Boolean              @default(true)
+  linkedinUrl      String?
+  showLinkedin     Boolean              @default(true)
+  discordHandle    String?
+  showDiscord      Boolean              @default(true)
+  calendarUrl      String?
+  showCalendar     Boolean              @default(true)
   socialLinks      String[]             @default([])
   themePreference  ThemePreference      @default(LIGHT)
   spellcheckerLanguage String            @default("en-GB")

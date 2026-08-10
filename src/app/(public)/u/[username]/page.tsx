@@ -60,6 +60,27 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
   ]);
   const name = displayName(profile.fullName, profile.username);
   const { badges, stats } = recognition;
+  const connectionLinks: { label: string; href: string | null }[] = [];
+  if (profile.githubUsername && profile.showGithub) {
+    connectionLinks.push({
+      label: `GitHub @${profile.githubUsername}`,
+      href: `https://github.com/${profile.githubUsername}`,
+    });
+  }
+  if (profile.linkedinUrl && profile.showLinkedin) {
+    connectionLinks.push({ label: "LinkedIn", href: profile.linkedinUrl });
+  }
+  if (profile.discordHandle && profile.showDiscord) {
+    connectionLinks.push({
+      label: profile.discordHandle.startsWith("http")
+        ? "Discord"
+        : `Discord @${profile.discordHandle}`,
+      href: profile.discordHandle.startsWith("http") ? profile.discordHandle : null,
+    });
+  }
+  if (profile.calendarUrl && profile.showCalendar) {
+    connectionLinks.push({ label: "Calendar", href: profile.calendarUrl });
+  }
 
   return (
     <div className="flex flex-col gap-10">
@@ -95,6 +116,26 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
                 <Chip key={skill}>{skill}</Chip>
               ))}
             </div>
+            {connectionLinks.length ? (
+              <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
+                {connectionLinks.map((link) => (
+                  <li key={link.label}>
+                    {link.href ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-app-ink text-sm font-medium underline underline-offset-2"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <span className="text-app-body text-sm">{link.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <dl className="text-app-meta mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-chip tracking-meta uppercase">
               <div>
                 <dt className="sr-only">Published ships</dt>
