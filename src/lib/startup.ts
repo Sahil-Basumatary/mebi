@@ -10,7 +10,10 @@ const ALLOWED_PREFIXES = [
   "/inbox",
   "/proof",
   "/community",
+  "/forum",
   "/events",
+  "/discover",
+  "/leaderboard",
 ] as const;
 
 export function isAllowedAppPath(path: string): boolean {
@@ -35,7 +38,7 @@ export function resolveStartupPath(
       lastVisitedPath === "/events" ||
       lastVisitedPath.startsWith("/events/")
     ) {
-      return "/proof";
+      return "/forum";
     }
     return lastVisitedPath;
   }

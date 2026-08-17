@@ -1,12 +1,16 @@
 import type { ProjectRequestKind, RequestStatus } from "@prisma/client";
 import Link from "next/link";
 import {
+  AppTabs,
   Chip,
+  DataList,
+  DataRow,
   EmptyState,
-  HairlineGrid,
+  MetaLine,
   PageHeader,
   UserRow,
 } from "@/components/layout";
+import { AppButton } from "@/components/ui/app-button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { ReadMarker } from "./read-marker";
@@ -33,11 +37,18 @@ function KindBadge({ kind }: { kind: ProjectRequestKind }) {
   return <Chip>{kind === "INVITE" ? "invite" : "join request"}</Chip>;
 }
 
+function safeNotificationHref(href: string | null): string {
+  if (href && href.startsWith("/") && !href.startsWith("//") && !href.includes("\\")) {
+    return href;
+  }
+  return "/inbox";
+}
+
 function SharedTags({ skills, interests }: { skills: string[]; interests: string[] }) {
   const tags = [...skills, ...interests].slice(0, 8);
   if (!tags.length) return null;
   return (
-    <div className="mt-4 flex flex-wrap gap-2">
+    <div className="mt-2 flex flex-wrap gap-1.5">
       {tags.map((tag) => (
         <Chip key={tag}>{tag}</Chip>
       ))}
@@ -53,9 +64,9 @@ export default async function InboxPage({
   const viewer = await requireOnboardedUser();
   const params = await searchParams;
   const rawTab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
-  const tab = rawTab === "sent" ? "sent" : "received";
+  const tab = rawTab === "sent" ? "sent" : rawTab === "activity" ? "activity" : "received";
 
-  const [received, sent] = await Promise.all([
+  const [received, sent, activity] = await Promise.all([
     prisma.projectRequest.findMany({
       where: { toUserId: viewer.id },
       orderBy: { createdAt: "desc" },
@@ -72,66 +83,96 @@ export default async function InboxPage({
         project: { select: { id: true, name: true } },
       },
     }),
+    prisma.notification.findMany({
+      where: { userId: viewer.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        id: true,
+        type: true,
+        message: true,
+        href: true,
+        read: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   const pendingReceived = received.filter((request) => request.status === "PENDING");
   const resolvedReceived = received.filter((request) => request.status !== "PENDING");
   const orderedReceived = [...pendingReceived, ...resolvedReceived];
 
+  const unreadActivity = activity.filter((item) => !item.read).length;
   const tabs = [
-    { id: "received", label: "Received", count: pendingReceived.length },
-    { id: "sent", label: "Sent", count: sent.length },
+    {
+      id: "received",
+      label: "Received",
+      count: pendingReceived.length,
+      href: "/inbox?tab=received",
+    },
+    { id: "sent", label: "Sent", count: sent.length, href: "/inbox?tab=sent" },
+    {
+      id: "activity",
+      label: "Activity",
+      count: unreadActivity,
+      href: "/inbox?tab=activity",
+    },
   ] as const;
 
   return (
     <>
-      <ReadMarker />
-      <div className="flex flex-col gap-4">
-        <PageHeader
-          eyebrow="Requests"
-          title="Inbox"
-        />
+      <ReadMarker includeForum={tab === "activity"} />
+      <div className="flex flex-1 flex-col gap-4">
+        <PageHeader eyebrow="Requests" title="Inbox" />
 
-        <div className="border-app-divider bg-app-divider flex items-center gap-px self-start border" role="tablist" aria-label="Inbox folders">
-          {tabs.map((item) => {
-            const active = tab === item.id;
-            return (
-              <Link
-                key={item.id}
-                href={`/inbox?tab=${item.id}`}
-                role="tab"
-                aria-selected={active}
-                aria-current={active ? "page" : undefined}
-                className={
-                  active
-                    ? "bg-app-ink text-app-paper flex items-center gap-2 px-5 py-2.5 text-sm font-medium"
-                    : "bg-app-paper text-app-label hover:text-app-ink flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition-colors"
-                }
-              >
-                {item.label}
-                {item.count > 0 ? (
-                  <span
-                    className={
-                      active
-                        ? "bg-app-paper text-app-ink rounded-full px-1.5 text-[11px] font-semibold"
-                        : "bg-app-chip text-app-label rounded-full px-1.5 text-[11px] font-semibold"
-                    }
+        <AppTabs items={tabs} active={tab} ariaLabel="Inbox folders" className="self-start" />
+
+        {tab === "activity" ? (
+          activity.length ? (
+            <DataList ariaLabel="Activity">
+              {activity.map((item) => {
+                const href = safeNotificationHref(item.href);
+                return (
+                  <DataRow
+                    key={item.id}
+                    className="hover:bg-app-wash grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
                   >
-                    {item.count}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </div>
-
-        {tab === "received" ? (
+                    <div className="min-w-0">
+                      <p className="text-app-ink text-sm leading-5">{item.message}</p>
+                      <MetaLine className="mt-2">
+                        <span>{timeAgo(item.createdAt)}</span>
+                        <span aria-hidden>·</span>
+                        <span>{item.type === "FORUM_REPLY" ? "Forum" : "Request"}</span>
+                        {!item.read ? <Chip tone="ink">new</Chip> : null}
+                      </MetaLine>
+                    </div>
+                    <AppButton asChild variant="secondary" size="sm">
+                      <Link href={href}>Open</Link>
+                    </AppButton>
+                  </DataRow>
+                );
+              })}
+            </DataList>
+          ) : (
+            <EmptyState
+              fill
+              eyebrow="Quiet"
+              title="No activity yet."
+              description="Forum replies and request updates will land here."
+              action={
+                <AppButton asChild>
+                  <Link href="/forum">Open the forum</Link>
+                </AppButton>
+              }
+            />
+          )
+        ) : tab === "received" ? (
           orderedReceived.length ? (
-            <HairlineGrid>
+            <DataList ariaLabel="Received requests">
               {orderedReceived.map((request) => (
-                <article
+                <DataRow
                   key={request.id}
-                  className="bg-app-paper grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-start"
+                  className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
                 >
                   <UserRow
                     fullName={request.fromUser.fullName}
@@ -140,28 +181,30 @@ export default async function InboxPage({
                     role={request.fromUser.role}
                     meta={
                       <>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <MetaLine className="mt-1.5">
                           <KindBadge kind={request.kind} />
-                          <p className="text-app-meta text-xs">{timeAgo(request.createdAt)}</p>
-                        </div>
-                        <p className="text-app-ink mt-3 text-body">
-                          <span className="font-semibold">Build:</span>{" "}
+                          <span>{timeAgo(request.createdAt)}</span>
+                        </MetaLine>
+                        <p className="text-app-ink mt-2 text-sm">
                           <Link
                             href={`/projects/${request.project.id}`}
-                            className="underline underline-offset-2"
+                            className="font-semibold underline underline-offset-2"
                           >
                             {request.project.name}
                           </Link>
                         </p>
-                        <p className="border-app-ink text-app-body mt-3 max-w-2xl border-l-2 pl-4 text-body leading-6">
+                        <p className="border-app-ink text-app-body mt-2 line-clamp-2 max-w-3xl border-l-2 pl-3 text-sm leading-5">
                           {request.message}
                         </p>
                         {request.note ? (
-                          <p className="text-app-ink mt-3 text-body">
+                          <p className="text-app-ink mt-2 text-sm">
                             <span className="font-semibold">Role note:</span> {request.note}
                           </p>
                         ) : null}
-                        <SharedTags skills={request.sharedSkills} interests={request.sharedInterests} />
+                        <SharedTags
+                          skills={request.sharedSkills}
+                          interests={request.sharedInterests}
+                        />
                       </>
                     }
                   />
@@ -172,38 +215,33 @@ export default async function InboxPage({
                       <StatusBadge status={request.status} />
                     )}
                   </div>
-                </article>
+                </DataRow>
               ))}
-            </HairlineGrid>
+            </DataList>
           ) : (
             <EmptyState
+              fill
               eyebrow="Inbox empty"
               title="No requests yet."
               description="Invites and join requests will appear here."
               action={
                 <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/partners"
-                    className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
-                  >
-                    Browse partners
-                  </Link>
-                  <Link
-                    href="/discover"
-                    className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
-                  >
-                    Browse builds
-                  </Link>
+                  <AppButton asChild>
+                    <Link href="/partners">Browse partners</Link>
+                  </AppButton>
+                  <AppButton asChild variant="secondary">
+                    <Link href="/discover">Browse builds</Link>
+                  </AppButton>
                 </div>
               }
             />
           )
         ) : sent.length ? (
-          <HairlineGrid>
+          <DataList ariaLabel="Sent requests">
             {sent.map((request) => (
-              <article
+              <DataRow
                 key={request.id}
-                className="bg-app-paper grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-start"
+                className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
               >
                 <UserRow
                   fullName={request.toUser.fullName}
@@ -212,20 +250,19 @@ export default async function InboxPage({
                   role={request.toUser.role}
                   meta={
                     <>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <MetaLine className="mt-1.5">
                         <KindBadge kind={request.kind} />
-                        <p className="text-app-meta text-xs">{timeAgo(request.createdAt)}</p>
-                      </div>
-                      <p className="text-app-ink mt-3 text-body">
-                        <span className="font-semibold">Build:</span>{" "}
+                        <span>{timeAgo(request.createdAt)}</span>
+                      </MetaLine>
+                      <p className="text-app-ink mt-2 text-sm">
                         <Link
                           href={`/projects/${request.project.id}`}
-                          className="underline underline-offset-2"
+                          className="font-semibold underline underline-offset-2"
                         >
                           {request.project.name}
                         </Link>
                       </p>
-                      <p className="border-app-divider text-app-body mt-3 max-w-2xl border-l-2 pl-4 text-body leading-6">
+                      <p className="border-app-divider text-app-body mt-2 line-clamp-2 max-w-3xl border-l-2 pl-3 text-sm leading-5">
                         {request.message}
                       </p>
                     </>
@@ -235,28 +272,23 @@ export default async function InboxPage({
                   <StatusBadge status={request.status} />
                   {request.status === "PENDING" ? <CancelRequest requestId={request.id} /> : null}
                 </div>
-              </article>
+              </DataRow>
             ))}
-          </HairlineGrid>
+          </DataList>
         ) : (
           <EmptyState
+            fill
             eyebrow="Nothing sent"
             title="No sent requests yet."
             description="Requests you send will appear here."
             action={
               <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/partners"
-                  className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
-                >
-                  Find a partner
-                </Link>
-                <Link
-                  href="/projects"
-                  className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
-                >
-                  View projects
-                </Link>
+                <AppButton asChild>
+                  <Link href="/partners">Find a partner</Link>
+                </AppButton>
+                <AppButton asChild variant="secondary">
+                  <Link href="/projects">View projects</Link>
+                </AppButton>
               </div>
             }
           />

@@ -45,6 +45,8 @@
   --app-wash: #f7f7f7;
   --app-chip: #f4f4f4;
   --app-signal: #ff4d4d;
+  --forum-blue: #0582b8;
+  --forum-red: #d24b57;
 }
 
 .dark {
@@ -91,6 +93,8 @@
   --app-wash: #1a1a1a;
   --app-chip: #1b1b1b;
   --app-signal: #ff4d4d;
+  --forum-blue: #45a9d6;
+  --forum-red: #e06570;
 }
 
 @theme inline {
@@ -133,6 +137,8 @@
   --color-app-wash: var(--app-wash);
   --color-app-chip: var(--app-chip);
   --color-app-signal: var(--app-signal);
+  --color-forum-blue: var(--forum-blue);
+  --color-forum-red: var(--forum-red);
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -159,6 +165,45 @@ body {
   letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.forum-canvas {
+  background: #e7e7e4;
+}
+
+.forum-theme {
+  --app-paper: #fafaf9;
+  --app-ink: #444444;
+  --app-divider: #cccccc;
+  --app-label: #666666;
+  --app-body: #444444;
+  --app-meta: #888888;
+  --app-muted: #999999;
+  --app-wash: #eeeeec;
+  --app-chip: #eeeeec;
+  background: transparent;
+}
+
+.forum-theme .text-eyebrow {
+  font-size: 0.875rem;
+  letter-spacing: 0.16em;
+}
+
+.dark .forum-canvas {
+  background: #1b1f22;
+}
+
+.dark .forum-theme {
+  --app-paper: #202427;
+  --app-ink: #eeeeec;
+  --app-divider: #3c4246;
+  --app-label: #bcc1c4;
+  --app-body: #e1e4e6;
+  --app-meta: #9ba2a6;
+  --app-muted: #7e878c;
+  --app-wash: #292e32;
+  --app-chip: #292e32;
+  background: transparent;
 }
 
 * {

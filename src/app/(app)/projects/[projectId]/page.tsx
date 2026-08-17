@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { requireProjectMember } from "@/lib/project-access";
-import {
-  attestationCountFor,
-  evaluateContribution,
-  isProjectVerified,
-} from "@/lib/proof";
+import { attestationCountFor, evaluateContribution, isProjectVerified } from "@/lib/proof";
 import { prisma } from "@/lib/prisma";
 import { displayName } from "@/lib/user-display";
 import { PartnerRequestDialog } from "../../partners/partner-request-dialog";
@@ -56,93 +52,93 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
   const [members, updates, signatures, authorUpdates, pendingInvites, candidatePool] =
     await Promise.all([
-    prisma.projectMember.findMany({
-      where: { projectId: project.id },
-      orderBy: { joinedAt: "asc" },
-      select: {
-        id: true,
-        role: true,
-        joinedAt: true,
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            username: true,
-            imageUrl: true,
-            role: true,
+      prisma.projectMember.findMany({
+        where: { projectId: project.id },
+        orderBy: { joinedAt: "asc" },
+        select: {
+          id: true,
+          role: true,
+          joinedAt: true,
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              username: true,
+              imageUrl: true,
+              role: true,
+            },
           },
         },
-      },
-    }),
-    prisma.projectUpdate.findMany({
-      where: { projectId: project.id },
-      orderBy: { createdAt: "desc" },
-      take: 40,
-      select: {
-        id: true,
-        body: true,
-        progress: true,
-        createdAt: true,
-        author: {
-          select: {
-            fullName: true,
-            username: true,
-            imageUrl: true,
-            role: true,
+      }),
+      prisma.projectUpdate.findMany({
+        where: { projectId: project.id },
+        orderBy: { createdAt: "desc" },
+        take: 40,
+        select: {
+          id: true,
+          body: true,
+          progress: true,
+          createdAt: true,
+          author: {
+            select: {
+              fullName: true,
+              username: true,
+              imageUrl: true,
+              role: true,
+            },
           },
         },
-      },
-    }),
-    prisma.proofSignature.findMany({
-      where: { projectId: project.id },
-      select: {
-        id: true,
-        signerId: true,
-        subjectId: true,
-        revokedAt: true,
-        createdAt: true,
-        signer: { select: { fullName: true, username: true } },
-        subject: { select: { fullName: true, username: true } },
-      },
-    }),
-    prisma.projectUpdate.findMany({
-      where: { projectId: project.id },
-      select: { authorId: true, body: true, createdAt: true },
-    }),
-    prisma.projectRequest.findMany({
-      where: {
-        projectId: project.id,
-        status: "PENDING",
-        kind: "INVITE",
-      },
-      select: {
-        id: true,
-        toUser: {
-          select: { id: true, fullName: true, username: true, imageUrl: true, role: true },
+      }),
+      prisma.proofSignature.findMany({
+        where: { projectId: project.id },
+        select: {
+          id: true,
+          signerId: true,
+          subjectId: true,
+          revokedAt: true,
+          createdAt: true,
+          signer: { select: { fullName: true, username: true } },
+          subject: { select: { fullName: true, username: true } },
         },
-      },
-    }),
-    canInvite
-      ? prisma.user.findMany({
-          where: {
-            onboarded: true,
-            profilePrivate: false,
-            id: { not: user.id },
+      }),
+      prisma.projectUpdate.findMany({
+        where: { projectId: project.id },
+        select: { authorId: true, body: true, createdAt: true },
+      }),
+      prisma.projectRequest.findMany({
+        where: {
+          projectId: project.id,
+          status: "PENDING",
+          kind: "INVITE",
+        },
+        select: {
+          id: true,
+          toUser: {
+            select: { id: true, fullName: true, username: true, imageUrl: true, role: true },
           },
-          orderBy: { updatedAt: "desc" },
-          take: 40,
-          select: {
-            id: true,
-            fullName: true,
-            username: true,
-            imageUrl: true,
-            role: true,
-            skills: true,
-            interests: true,
-          },
-        })
-      : Promise.resolve([]),
-  ]);
+        },
+      }),
+      canInvite
+        ? prisma.user.findMany({
+            where: {
+              onboarded: true,
+              profilePrivate: false,
+              id: { not: user.id },
+            },
+            orderBy: { updatedAt: "desc" },
+            take: 40,
+            select: {
+              id: true,
+              fullName: true,
+              username: true,
+              imageUrl: true,
+              role: true,
+              skills: true,
+              interests: true,
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
   const memberIds = new Set(members.map((member) => member.user.id));
   const pendingInviteIds = new Set(pendingInvites.map((invite) => invite.toUser.id));
@@ -182,9 +178,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         canSign: contribution.ok && !mySignature,
         alreadySigned: Boolean(mySignature),
         signatureId: mySignature?.id ?? null,
-        reason: contribution.ok
-          ? undefined
-          : contribution.reason ?? "Not ready to sign.",
+        reason: contribution.ok ? undefined : (contribution.reason ?? "Not ready to sign."),
       };
     });
 
@@ -200,8 +194,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const fixedProject = { id: project.id, name: project.name };
   const soloSelfAttested = memberIdList.length === 1 && memberIdList[0] === user.id;
   const isPublic = project.visibility === "PUBLIC";
-  const canPublish =
-    isOwner && isCompleted && isPublic && (verified || soloSelfAttested);
+  const canPublish = isOwner && isCompleted && isPublic && (verified || soloSelfAttested);
   const publishBlockReason = !isOwner
     ? null
     : !isCompleted
@@ -213,7 +206,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           : null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <Button
           asChild
@@ -230,7 +223,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         description={project.description}
         aside={
           <>
-            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+            <p className="text-app-label text-eyebrow tracking-eyebrow font-semibold uppercase">
               Status
             </p>
             <p className="text-app-ink mt-4 font-serif text-5xl font-light">{project.progress}%</p>
@@ -298,12 +291,14 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                       role={update.author.role}
                       meta={
                         <>
-                          <p className="text-app-meta mt-1 text-xs">{formatStamp(update.createdAt)}</p>
-                          <p className="text-app-body mt-3 max-w-3xl text-body leading-6">
+                          <p className="text-app-meta mt-1 text-xs">
+                            {formatStamp(update.createdAt)}
+                          </p>
+                          <p className="text-app-body text-body mt-3 max-w-3xl leading-6">
                             {update.body}
                           </p>
                           {update.progress !== null ? (
-                            <p className="text-app-label mt-3 font-mono text-chip tracking-meta uppercase">
+                            <p className="text-app-label text-chip tracking-meta mt-3 font-mono uppercase">
                               Progress → {update.progress}%
                             </p>
                           ) : null}
@@ -314,7 +309,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 ))}
               </ul>
             ) : (
-              <p className="text-app-body px-6 py-8 text-body-sm leading-6">
+              <p className="text-app-body text-body-sm px-6 py-8 leading-6">
                 No updates yet. Post the first one above.
               </p>
             )}
@@ -356,30 +351,30 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                   member.role !== ProjectRole.OWNER &&
                   member.user.id !== user.id;
                 return (
-                <li key={member.id} className="px-5 py-4">
-                  <UserRow
-                    fullName={member.user.fullName}
-                    username={member.user.username}
-                    imageUrl={member.user.imageUrl}
-                    role={member.user.role}
-                    meta={
-                      <p className="text-app-meta mt-1 font-mono text-chip tracking-meta uppercase">
-                        {member.role === ProjectRole.OWNER ? "Owner" : "Member"} · joined{" "}
-                        {formatDate(member.joinedAt)}
-                        {attestations > 0
-                          ? ` · ${attestations} signature${attestations === 1 ? "" : "s"}`
-                          : ""}
-                      </p>
-                    }
-                  />
-                  {canRemove ? (
-                    <RemoveMemberButton
-                      projectId={project.id}
-                      memberUserId={member.user.id}
-                      memberName={displayName(member.user.fullName, member.user.username)}
+                  <li key={member.id} className="px-5 py-4">
+                    <UserRow
+                      fullName={member.user.fullName}
+                      username={member.user.username}
+                      imageUrl={member.user.imageUrl}
+                      role={member.user.role}
+                      meta={
+                        <p className="text-app-meta text-chip tracking-meta mt-1 font-mono uppercase">
+                          {member.role === ProjectRole.OWNER ? "Owner" : "Member"} · joined{" "}
+                          {formatDate(member.joinedAt)}
+                          {attestations > 0
+                            ? ` · ${attestations} signature${attestations === 1 ? "" : "s"}`
+                            : ""}
+                        </p>
+                      }
                     />
-                  ) : null}
-                </li>
+                    {canRemove ? (
+                      <RemoveMemberButton
+                        projectId={project.id}
+                        memberUserId={member.user.id}
+                        memberName={displayName(member.user.fullName, member.user.username)}
+                      />
+                    ) : null}
+                  </li>
                 );
               })}
             </ul>
@@ -401,7 +396,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                       imageUrl={invite.toUser.imageUrl}
                       role={invite.toUser.role}
                       meta={
-                        <p className="text-app-meta mt-1 font-mono text-chip tracking-meta uppercase">
+                        <p className="text-app-meta text-chip tracking-meta mt-1 font-mono uppercase">
                           Waiting on reply
                         </p>
                       }
@@ -455,7 +450,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                   ))}
                 </ul>
               ) : (
-                <p className="text-app-body px-5 py-5 text-body-sm leading-6">
+                <p className="text-app-body text-body-sm px-5 py-5 leading-6">
                   No open builders to invite yet.{" "}
                   <Link href="/partners" className="border-app-ink border-b pb-0.5">
                     Browse partners
@@ -473,7 +468,9 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             </section>
           ) : null}
 
-          {isOwner ? <ProjectCompletionPanel projectId={project.id} disabled={isCompleted} /> : null}
+          {isOwner ? (
+            <ProjectCompletionPanel projectId={project.id} disabled={isCompleted} />
+          ) : null}
 
           <ProjectManagePanel
             projectId={project.id}

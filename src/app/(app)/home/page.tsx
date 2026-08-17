@@ -109,9 +109,7 @@ export default async function HomePage() {
         .slice(0, 3)
     : [];
 
-  const fixedProject = inviteTarget
-    ? { id: inviteTarget.id, name: inviteTarget.name }
-    : null;
+  const fixedProject = inviteTarget ? { id: inviteTarget.id, name: inviteTarget.name } : null;
 
   // Mirrors the proof gate in `lib/proof` so the path never promises a stage the
   // signing flow would still reject.
@@ -152,7 +150,7 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-6">
       <section className="border-app-divider bg-app-paper border p-8 lg:p-10">
         <div className="grid items-stretch gap-10 lg:grid-cols-[1fr_auto]">
           <div className="min-w-0">
@@ -163,7 +161,7 @@ export default async function HomePage() {
             />
             <BuildPath stages={buildStages} />
             {publishedCount > 0 && user.username ? (
-              <p className="text-app-body mt-6 text-body-sm">
+              <p className="text-app-body text-body-sm mt-6">
                 <Link
                   href={`/u/${user.username}`}
                   className="border-app-ink text-app-ink border-b pb-0.5 font-medium"
@@ -176,10 +174,14 @@ export default async function HomePage() {
           <div className="relative hidden min-h-72 w-[24rem] shrink-0 justify-self-end lg:block xl:min-h-80 xl:w-[28rem]">
             <CubeField className="absolute inset-0" />
             <div aria-hidden className="pointer-events-none absolute top-0 left-0">
-              <span className="bg-app-ink text-app-paper inline-block px-3 py-1.5 font-mono text-meta tracking-meta">
+              <span className="bg-app-ink text-app-paper text-meta tracking-meta inline-block px-3 py-1.5 font-mono">
                 $ git init
               </span>
-              <svg viewBox="0 0 120 70" fill="none" className="text-app-ink ml-3 h-[70px] w-[120px]">
+              <svg
+                viewBox="0 0 120 70"
+                fill="none"
+                className="text-app-ink ml-3 h-[70px] w-[120px]"
+              >
                 <path
                   className="line-draw"
                   pathLength="100"
@@ -189,7 +191,7 @@ export default async function HomePage() {
                 />
               </svg>
             </div>
-            <span className="text-app-meta pointer-events-none absolute right-0 bottom-1 font-mono text-meta tracking-meta">
+            <span className="text-app-meta text-meta tracking-meta pointer-events-none absolute right-0 bottom-1 font-mono">
               # tap a cube to commit it
             </span>
           </div>
@@ -222,12 +224,10 @@ export default async function HomePage() {
                     <Chip>{project.status.toLowerCase()}</Chip>
                     {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
                   </div>
-                  <p className="text-app-body mt-2 line-clamp-1 text-body">{project.description}</p>
-                  <p className="text-app-meta mt-3 font-mono text-chip tracking-meta uppercase">
+                  <p className="text-app-body text-body mt-2 line-clamp-1">{project.description}</p>
+                  <p className="text-app-meta text-chip tracking-meta mt-3 font-mono uppercase">
                     {project.members
-                      .map((member) =>
-                        displayName(member.user.fullName, member.user.username),
-                      )
+                      .map((member) => displayName(member.user.fullName, member.user.username))
                       .join(" · ")}
                   </p>
                 </div>

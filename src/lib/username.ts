@@ -6,6 +6,7 @@ const RESERVED_USERNAMES = new Set([
   "community",
   "dashboard",
   "events",
+  "forum",
   "help",
   "home",
   "inbox",

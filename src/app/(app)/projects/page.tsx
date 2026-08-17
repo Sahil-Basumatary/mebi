@@ -1,18 +1,11 @@
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import {
-  Chip,
-  EmptyState,
-  HairlineGrid,
-  PageHeader,
-  ProgressBar,
-  Section,
-} from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { Chip, EmptyState, ProgressBar } from "@/components/layout";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { memberProjectWhere } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
-import { BriefChecklist, BriefSignalProvider } from "./brief-signal";
-import { ProjectForm } from "./project-form";
+import { displayName, initials } from "@/lib/user-display";
+import { NewProjectWindow } from "./new-project-window";
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-GB", {
@@ -27,118 +20,208 @@ export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
     where: memberProjectWhere(user.id),
     orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      techStack: true,
+      visibility: true,
+      status: true,
+      progress: true,
+      updatedAt: true,
+      publishedAt: true,
+      members: {
+        orderBy: { joinedAt: "asc" },
+        take: 4,
+        select: {
+          user: {
+            select: {
+              fullName: true,
+              username: true,
+              imageUrl: true,
+            },
+          },
+        },
+      },
+      updates: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { createdAt: true },
+      },
+      _count: {
+        select: {
+          members: true,
+          updates: true,
+          requests: { where: { status: "PENDING" } },
+        },
+      },
+    },
   });
+  const active = projects.filter((project) => project.status === "ACTIVE").length;
+  const completed = projects.length - active;
+  const updateCount = projects.reduce((sum, project) => sum + project._count.updates, 0);
+  const averageProgress = projects.length
+    ? Math.round(projects.reduce((sum, project) => sum + project.progress, 0) / projects.length)
+    : 0;
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader
-        eyebrow="Project Pipeline"
-        title="Projects"
-        aside={
-          <div>
-            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
-              Looking for a build?
-            </p>
-            <p className="text-app-body mt-3 text-body-sm leading-6">
-              Browse open public briefs and ask to join.
-            </p>
-            <Link
-              href="/discover"
-              className="bg-app-ink text-app-paper hover:bg-app-accent-hover mt-6 inline-flex h-9 items-center px-4 text-sm font-medium transition-colors"
-            >
-              Open Discover
-            </Link>
+    <div className="flex flex-1 flex-col gap-5">
+      <header className="border-app-divider bg-app-paper flex flex-col gap-4 border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
+            Workspace
+          </p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-app-ink font-serif text-4xl leading-none font-light">Projects</h1>
+            <span className="text-app-meta text-sm">{projects.length} total</span>
           </div>
-        }
-      >
-        <div aria-hidden className="flex items-center gap-4 py-8">
-          <span className="flex items-center gap-1.5">
-            <span
-              className="border-app-meta/40 square-step h-2.5 w-2.5 border"
-              style={{ animationDelay: "150ms" }}
-            />
-            <span
-              className="bg-app-divider square-step h-2.5 w-2.5"
-              style={{ animationDelay: "300ms" }}
-            />
-            <span
-              className="bg-app-meta square-step h-2.5 w-2.5"
-              style={{ animationDelay: "450ms" }}
-            />
-            <span
-              className="bg-app-ink square-step h-2.5 w-2.5"
-              style={{ animationDelay: "600ms" }}
-            />
-          </span>
-          <span className="bg-app-divider h-px flex-1" />
-          <span className="text-app-meta font-mono text-chip tracking-[0.2em] uppercase">
-            Idea → Proof
-          </span>
         </div>
-      </PageHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/discover"
+            className="border-app-divider text-app-ink hover:bg-app-wash inline-flex h-10 items-center border px-4 text-sm font-medium transition-colors"
+          >
+            Discover
+          </Link>
+          <NewProjectWindow anchorId="new-project" />
+        </div>
+      </header>
 
-      <section id="new-project" className="grid gap-6 xl:grid-cols-[0.65fr_1.35fr]">
-        <BriefSignalProvider>
-          <div className="border-app-divider bg-app-paper self-start border p-6">
-            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
-              New brief
-            </p>
-            <h2 className="text-app-ink mt-3 font-serif text-3xl font-light">New project</h2>
-            <div className="border-app-divider mt-6 border-t pt-6">
-              <BriefChecklist />
-            </div>
+      <dl className="border-app-divider bg-app-paper grid grid-cols-2 divide-x divide-y border sm:grid-cols-4 sm:divide-y-0">
+        <ProjectStat label="Active" value={active} />
+        <ProjectStat label="Completed" value={completed} />
+        <ProjectStat label="Updates" value={updateCount} />
+        <ProjectStat label="Average progress" value={`${averageProgress}%`} />
+      </dl>
+
+      {projects.length ? (
+        <section
+          role="table"
+          aria-label="Your projects"
+          className="border-app-divider bg-app-paper border"
+        >
+          <div
+            role="row"
+            className="text-app-meta border-app-divider hidden grid-cols-[minmax(0,1.6fr)_9rem_8rem_12rem_2rem] items-center gap-4 border-b px-4 py-2 font-mono text-[11px] tracking-[0.08em] uppercase lg:grid"
+          >
+            <span role="columnheader">Project</span>
+            <span role="columnheader">Team</span>
+            <span role="columnheader">Activity</span>
+            <span role="columnheader">Progress</span>
+            <span aria-hidden />
           </div>
-          <ProjectForm />
-        </BriefSignalProvider>
-      </section>
-
-      <Section
-        eyebrow="Workspace"
-        title="Your projects"
-        action={
-          <span className="text-app-body text-sm">
-            {projects.length} project{projects.length === 1 ? "" : "s"}
-          </span>
-        }
-      >
-        {projects.length ? (
-          <HairlineGrid>
-            {projects.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.id}`}
-                className="bg-app-paper hover:bg-app-wash grid gap-5 p-5 transition-colors lg:grid-cols-[1fr_11rem_8rem] lg:items-center"
-              >
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-app-ink font-serif text-2xl font-light">{project.name}</h3>
-                    <Chip>{project.visibility.toLowerCase()}</Chip>
-                    <Chip tone="paper">{project.status.toLowerCase()}</Chip>
+          <div className="divide-app-divider divide-y">
+            {projects.map((project) => {
+              const lastActivity = project.updates[0]?.createdAt ?? project.updatedAt;
+              return (
+                <Link
+                  key={project.id}
+                  href={`/projects/${project.id}`}
+                  role="row"
+                  className="hover:bg-app-wash grid gap-4 px-4 py-4 transition-colors lg:grid-cols-[minmax(0,1.6fr)_9rem_8rem_12rem_2rem] lg:items-center"
+                >
+                  <div role="cell" className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-app-ink truncate text-base font-semibold">
+                        {project.name}
+                      </h2>
+                      <Chip tone={project.status === "COMPLETED" ? "ink" : "wash"}>
+                        {project.status.toLowerCase()}
+                      </Chip>
+                      {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
+                      {project._count.requests ? (
+                        <Chip tone="paper">{project._count.requests} pending</Chip>
+                      ) : null}
+                    </div>
+                    <p className="text-app-body mt-1 line-clamp-1 text-sm">{project.description}</p>
+                    {project.techStack.length ? (
+                      <p className="text-app-meta mt-2 truncate text-xs">
+                        {project.techStack.slice(0, 5).join(" · ")}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="text-app-body mt-2 line-clamp-2 max-w-3xl text-body-sm leading-6">
-                    {project.description}
-                  </p>
-                  <p className="text-app-label mt-3 text-xs">
-                    Updated {formatDate(project.updatedAt)}
-                  </p>
-                </div>
-                <ProgressBar value={project.progress} />
-                <span className="text-app-ink text-sm font-medium lg:text-right">Open brief</span>
-              </Link>
-            ))}
-          </HairlineGrid>
-        ) : (
-          <EmptyState
-            eyebrow="No projects yet"
-            title="Create your first project."
-            action={
-              <Button asChild className="rounded-full bg-app-ink text-app-paper hover:bg-app-accent-hover px-6">
-                <Link href="#new-project">Create project</Link>
-              </Button>
-            }
-          />
-        )}
-      </Section>
+
+                  <div role="cell" className="flex items-center gap-2">
+                    <MemberStack members={project.members} />
+                    <span className="text-app-meta text-xs tabular-nums">
+                      {project._count.members}
+                    </span>
+                  </div>
+
+                  <div role="cell">
+                    <p className="text-app-ink text-sm font-medium tabular-nums">
+                      {project._count.updates}
+                    </p>
+                    <p className="text-app-meta mt-0.5 text-xs">{formatDate(lastActivity)}</p>
+                  </div>
+
+                  <div role="cell">
+                    <ProgressBar value={project.progress} />
+                  </div>
+
+                  <span role="cell" className="text-app-meta hidden lg:block">
+                    <ArrowUpRight size={17} strokeWidth={1.75} aria-hidden />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : (
+        <EmptyState
+          fill
+          eyebrow="No projects"
+          title="Your workspace is ready."
+          action={<NewProjectWindow label="Create project" />}
+        />
+      )}
     </div>
+  );
+}
+
+function ProjectStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="p-4">
+      <dt className="text-app-meta text-xs font-medium">{label}</dt>
+      <dd className="text-app-ink mt-1 text-2xl font-semibold tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
+function MemberStack({
+  members,
+}: {
+  members: {
+    user: {
+      fullName: string | null;
+      username: string | null;
+      imageUrl: string | null;
+    };
+  }[];
+}) {
+  return (
+    <span className="flex -space-x-2">
+      {members.map(({ user }, index) => {
+        const name = displayName(user.fullName, user.username);
+        return user.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={`${name}-${index}`}
+            src={user.imageUrl}
+            alt=""
+            title={name}
+            className="border-app-paper h-7 w-7 rounded-full border-2 object-cover"
+          />
+        ) : (
+          <span
+            key={`${name}-${index}`}
+            title={name}
+            className="border-app-paper bg-app-wash text-app-label flex h-7 w-7 items-center justify-center rounded-full border-2 font-mono text-[9px] font-semibold"
+          >
+            {initials(user.fullName, user.username)}
+          </span>
+        );
+      })}
+    </span>
   );
 }

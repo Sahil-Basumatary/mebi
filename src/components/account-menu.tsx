@@ -1,7 +1,7 @@
 "use client";
 
 import { useClerk, useUser } from "@clerk/nextjs";
-import { Bell, FolderKanban, Home, LogOut, Moon, Settings, Sun, Users } from "lucide-react";
+import { Bell, FolderKanban, Home, LogOut, MessagesSquare, Moon, Settings, Sun, Users } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -11,6 +11,7 @@ const menuLinks = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/projects", label: "Your projects", icon: FolderKanban },
   { href: "/partners", label: "Partners", icon: Users },
+  { href: "/forum", label: "Forum", icon: MessagesSquare },
   { href: "/inbox", label: "Requests", icon: Bell },
 ];
 

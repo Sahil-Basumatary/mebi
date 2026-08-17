@@ -336,10 +336,10 @@ export default async function PartnersPage({
                 Start a build
               </Link>
               <Link
-                href="/onboarding"
+                href="/forum/looking-for-partners"
                 className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
               >
-                Edit profile
+                Post on the forum
               </Link>
             </div>
           }

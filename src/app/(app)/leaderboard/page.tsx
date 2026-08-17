@@ -50,13 +50,9 @@ function StandingEntry({
       <div className="flex min-w-0 items-center gap-3">
         {row.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={row.imageUrl}
-            alt=""
-            className="h-9 w-9 shrink-0 rounded-full object-cover"
-          />
+          <img src={row.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
         ) : (
-          <span className="bg-app-wash text-app-label flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-mono text-[10px] tracking-meta">
+          <span className="bg-app-wash text-app-label tracking-meta flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-mono text-[10px]">
             {mark}
           </span>
         )}
@@ -64,12 +60,12 @@ function StandingEntry({
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-app-ink truncate text-[15px] font-semibold">{name}</span>
             {row.username ? (
-              <span className="bg-app-chip text-app-meta rounded px-1.5 py-0.5 font-mono text-[11px] tracking-meta">
+              <span className="bg-app-chip text-app-meta tracking-meta rounded px-1.5 py-0.5 font-mono text-[11px]">
                 #{row.username}
               </span>
             ) : null}
             {isYou ? (
-              <span className="text-app-meta font-mono text-[11px] tracking-meta uppercase">
+              <span className="text-app-meta tracking-meta font-mono text-[11px] uppercase">
                 You
               </span>
             ) : null}
@@ -107,26 +103,27 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
   const viewerInList = rows.some((row) => row.userId === viewer.id);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-4">
       <PageHeader eyebrow="Rankings" title="Leaderboard" />
 
-      <section className="border-app-divider bg-app-paper overflow-hidden border">
+      <section
+        className={cn(
+          "border-app-divider bg-app-paper overflow-hidden border",
+          !rows.length && "flex min-h-80 flex-1 flex-col",
+        )}
+      >
         <div className="border-app-divider flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b px-4 py-3">
           <h2 className="text-app-ink text-base font-semibold">{board.title}</h2>
-          <p className="text-app-meta font-mono text-[11px] tracking-meta uppercase">
+          <p className="text-app-meta tracking-meta font-mono text-[11px] uppercase">
             {shown} builder{shown === 1 ? "" : "s"}
           </p>
           <p className="text-app-body w-full text-sm">{board.description}</p>
         </div>
 
-        <div className="text-app-meta border-app-divider grid grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] items-center gap-3 border-b px-4 py-2 font-mono text-[11px] tracking-meta uppercase sm:grid-cols-[3rem_minmax(0,1fr)_6.5rem] sm:gap-4">
+        <div className="text-app-meta border-app-divider tracking-meta grid grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] items-center gap-3 border-b px-4 py-2 font-mono text-[11px] uppercase sm:grid-cols-[3rem_minmax(0,1fr)_6.5rem] sm:gap-4">
           <span className="text-right">#</span>
           <span>Builder</span>
-          <Suspense
-            fallback={
-              <span className="text-right">{board.metric}</span>
-            }
-          >
+          <Suspense fallback={<span className="text-right">{board.metric}</span>}>
             <BoardMetricSelect />
           </Suspense>
         </div>
@@ -145,11 +142,13 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
             ))}
           </ol>
         ) : (
-          <div className="px-4 py-16 text-center">
-            <p className="text-app-ink text-base font-medium">No students yet.</p>
-            <p className="text-app-meta mt-1 text-sm">
-              Rankings show once builders publish proof.
-            </p>
+          <div className="flex flex-1 items-center justify-center px-4 py-16 text-center">
+            <div>
+              <p className="text-app-ink text-base font-medium">No students yet.</p>
+              <p className="text-app-meta mt-1 text-sm">
+                Rankings show once builders publish proof.
+              </p>
+            </div>
           </div>
         )}
 
@@ -160,9 +159,7 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
         ) : null}
       </section>
 
-      <p className="text-app-meta text-sm">
-        Rankings use published proof and peer signatures.
-      </p>
+      <p className="text-app-meta text-sm">Rankings use published proof and peer signatures.</p>
     </div>
   );
 }

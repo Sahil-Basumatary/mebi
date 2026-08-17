@@ -111,6 +111,22 @@ export const getPublishedBuildBySlug = cache(async (slug: string) => {
   });
 });
 
+export const getPublicForumThreads = cache(async (userId: string) => {
+  return prisma.forumThread.findMany({
+    where: { authorId: userId, deletedAt: null },
+    orderBy: { lastPostedAt: "desc" },
+    take: 8,
+    select: {
+      id: true,
+      title: true,
+      replyCount: true,
+      lastPostedAt: true,
+      tags: true,
+      board: { select: { slug: true, title: true } },
+    },
+  });
+});
+
 export const getPublishedBuildsForUser = cache(async (userId: string) => {
   return prisma.project.findMany({
     where: {

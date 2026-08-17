@@ -57,17 +57,17 @@ export default async function ProofPage() {
   });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <PageHeader
         eyebrow="Proof"
         title="Published builds."
         description="Peer signatures distinguish verified work from self-attested work."
         aside={
           <div>
-            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+            <p className="text-app-label text-eyebrow tracking-eyebrow font-semibold uppercase">
               Recognition
             </p>
-            <p className="text-app-body mt-3 text-body-sm leading-6">
+            <p className="text-app-body text-body-sm mt-3 leading-6">
               Badges and the leaderboard come from ships, attestations, and real build-log work.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -123,14 +123,12 @@ export default async function ProofPage() {
                       </h3>
                       <Chip tone="ink">{verified ? "verified" : "self-attested"}</Chip>
                     </div>
-                    <p className="text-app-body mt-2 line-clamp-2 max-w-3xl text-body-sm leading-6">
+                    <p className="text-app-body text-body-sm mt-2 line-clamp-2 max-w-3xl leading-6">
                       {project.summary ?? project.description}
                     </p>
-                    <p className="text-app-meta mt-3 font-mono text-chip tracking-meta uppercase">
+                    <p className="text-app-meta text-chip tracking-meta mt-3 font-mono uppercase">
                       {project.members
-                        .map((member) =>
-                          displayName(member.user.fullName, member.user.username),
-                        )
+                        .map((member) => displayName(member.user.fullName, member.user.username))
                         .join(" · ")}
                     </p>
                     {project.techStack.length ? (
@@ -141,11 +139,9 @@ export default async function ProofPage() {
                       </div>
                     ) : null}
                   </div>
-                  <div className="text-app-label font-mono text-meta tracking-meta md:text-right">
+                  <div className="text-app-label text-meta tracking-meta font-mono md:text-right">
                     {project.publishedAt ? formatDate(project.publishedAt) : ""}
-                    {project.slug ? (
-                      <p className="mt-2 text-app-ink">/b/{project.slug}</p>
-                    ) : null}
+                    {project.slug ? <p className="text-app-ink mt-2">/b/{project.slug}</p> : null}
                   </div>
                 </Link>
               );
@@ -186,7 +182,7 @@ export default async function ProofPage() {
                     <Chip>{verified ? "verified" : "needs attesting"}</Chip>
                   </div>
                   {project.completedAt ? (
-                    <p className="text-app-meta font-mono text-chip tracking-meta uppercase">
+                    <p className="text-app-meta text-chip tracking-meta font-mono uppercase">
                       {formatDate(project.completedAt)}
                     </p>
                   ) : null}

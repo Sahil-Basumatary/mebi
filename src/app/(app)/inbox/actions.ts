@@ -328,10 +328,20 @@ export async function cancelRequest(
   return { error: null };
 }
 
-export async function markNotificationsRead(): Promise<void> {
+export async function markNotificationsRead(includeForum = false): Promise<void> {
   const viewer = await requireOnboardedUser();
   await prisma.notification.updateMany({
-    where: { userId: viewer.id, read: false },
+    where: {
+      userId: viewer.id,
+      read: false,
+      ...(includeForum
+        ? {}
+        : {
+            type: {
+              in: ["REQUEST_RECEIVED", "REQUEST_ACCEPTED", "REQUEST_DECLINED"],
+            },
+          }),
+    },
     data: { read: true },
   });
   revalidatePath("/inbox");

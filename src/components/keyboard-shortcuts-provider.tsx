@@ -58,6 +58,7 @@ const NAV_ITEMS = [
   { href: "/projects", label: "Projects", keywords: "projects build" },
   { href: "/partners", label: "Partners", keywords: "partners people" },
   { href: "/inbox", label: "Requests", keywords: "inbox requests" },
+  { href: "/forum", label: "Forum", keywords: "forum threads partners lft chat" },
   { href: "/proof", label: "Proof", keywords: "proof community evidence" },
 ] as const;
 
@@ -465,6 +466,9 @@ export function KeyboardShortcutsProvider({ children }: { children: ReactNode })
           return;
         case "goInbox":
           router.push("/inbox");
+          return;
+        case "goForum":
+          router.push("/forum");
           return;
         case "goProof":
           router.push("/proof");

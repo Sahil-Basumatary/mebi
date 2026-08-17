@@ -3,11 +3,10 @@
 import { useEffect } from "react";
 import { markNotificationsRead } from "./actions";
 
-// Visiting the inbox is the read signal that clears the red nav dot.
-export function ReadMarker() {
+export function ReadMarker({ includeForum = false }: { includeForum?: boolean }) {
   useEffect(() => {
-    void markNotificationsRead().catch(() => {});
-  }, []);
+    void markNotificationsRead(includeForum).catch(() => {});
+  }, [includeForum]);
 
   return null;
 }

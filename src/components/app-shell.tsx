@@ -6,29 +6,21 @@ import {
   FileText,
   FolderKanban,
   Home,
+  MessagesSquare,
   Search,
   Trophy,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { AccountMenu } from "@/components/account-menu";
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
 } from "@/components/keyboard-shortcuts-provider";
 import { SkipLink } from "@/components/layout/skip-link";
-import {
-  SettingsModalHost,
-  SettingsModalProvider,
-} from "@/components/settings/settings-modal";
+import { SettingsModalHost, SettingsModalProvider } from "@/components/settings/settings-modal";
 import { formatCombo } from "@/lib/keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 
@@ -47,17 +39,14 @@ const allNavItems: NavItem[] = [
   { href: "/leaderboard", label: "Leaderboard", short: "Board", icon: Trophy },
   { href: "/discover", label: "Discover", short: "Discover", icon: Search },
   { href: "/partners", label: "Partners", short: "Partners", icon: Users },
+  { href: "/forum", label: "Forum", short: "Forum", icon: MessagesSquare },
   { href: "/inbox", label: "Requests", short: "Requests", icon: Bell },
   { href: "/proof", label: "Proof", short: "Proof", icon: FileText },
 ];
 
-const MOBILE_NAV = [
-  allNavItems[0],
-  allNavItems[1],
-  allNavItems[2],
-  allNavItems[3],
-  allNavItems[5],
-];
+const MOBILE_NAV = ["/home", "/projects", "/forum", "/partners", "/inbox"].map((href) =>
+  allNavItems.find((item) => item.href === href)!,
+);
 
 const railRoutes = new Set(["/projects", "/partners", "/inbox"]);
 
@@ -98,6 +87,7 @@ export function AppShell({ children, rail, spine }: AppShellProps) {
           setMoreOpen={setMoreOpen}
           isActive={isActive}
           hasRail={railRoutes.has(pathname)}
+          forumMode={pathname.startsWith("/forum")}
           rail={rail}
           spine={spine}
         >
@@ -121,6 +111,7 @@ function AppShellChrome({
   rail,
   spine,
   hasRail,
+  forumMode,
   unreadRequests,
   moreOpen,
   setMoreOpen,
@@ -130,6 +121,7 @@ function AppShellChrome({
   rail?: ReactNode;
   spine?: ReactNode;
   hasRail: boolean;
+  forumMode: boolean;
   unreadRequests: number;
   moreOpen: boolean;
   setMoreOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
@@ -189,7 +181,7 @@ function AppShellChrome({
   const overflowItems = allNavItems.slice(visibleCount);
 
   return (
-    <div className="bg-app-canvas text-app-fg min-h-screen">
+    <div className="bg-app-canvas text-app-fg flex min-h-screen flex-col">
       <SkipLink />
       <header className="border-app-chrome-border bg-app-chrome text-app-chrome-fg sticky top-0 z-50 border-b">
         <div className="mx-auto flex h-16 w-full max-w-[88rem] items-center justify-between gap-6 px-6 lg:px-12">
@@ -333,15 +325,32 @@ function AppShellChrome({
 
       {spine}
 
-      <div className="bg-app-canvas text-app-fg min-h-screen pb-20 lg:pb-0">
-        <div className="mx-auto flex w-full max-w-[88rem] items-start gap-8 px-6 lg:px-12">
-          <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 py-6 outline-none">
+      <div
+        className={cn(
+          "text-app-fg flex flex-1 pb-20 lg:pb-0",
+          forumMode ? "forum-canvas" : "bg-app-canvas",
+        )}
+      >
+        <div
+          className={cn(
+            "mx-auto flex w-full flex-1 items-stretch gap-8",
+            forumMode ? "max-w-none px-0" : "max-w-[88rem] px-6 lg:px-12",
+          )}
+        >
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className={cn(
+              "flex min-w-0 flex-1 flex-col outline-none",
+              forumMode ? "py-4 sm:py-6" : "py-6",
+            )}
+          >
             {children}
           </main>
           {hasRail ? (
             <aside
               aria-label="Context rail"
-              className="border-app-border-strong sticky top-16 hidden max-h-[calc(100vh-4rem)] w-72 shrink-0 overflow-y-auto border-l py-6 pl-6 xl:block"
+              className="border-app-border-strong sticky top-16 hidden max-h-[calc(100vh-4rem)] w-72 shrink-0 self-start overflow-y-auto border-l py-6 pl-6 xl:block"
             >
               {rail}
             </aside>

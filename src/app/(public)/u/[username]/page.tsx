@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Chip } from "@/components/layout";
 import { resolveTimezone } from "@/lib/locale";
 import {
+  getPublicForumThreads,
   getPublicProfileByUsername,
   getPublishedBuildsForUser,
 } from "@/lib/public-profile";
@@ -54,9 +55,10 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
   const profile = await getPublicProfileByUsername(username);
   if (!profile) notFound();
 
-  const [builds, recognition] = await Promise.all([
+  const [builds, recognition, threads] = await Promise.all([
     getPublishedBuildsForUser(profile.id),
     getBadgesForUser(profile.id, resolveTimezone(profile.timezone)),
+    getPublicForumThreads(profile.id),
   ]);
   const name = displayName(profile.fullName, profile.username);
   const { badges, stats } = recognition;
@@ -187,6 +189,32 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
           <p className="text-app-body mt-5 text-body-sm leading-6">
             No badges yet. Publish, get attested, and keep a real build log.
           </p>
+        )}
+      </section>
+
+      <section>
+        <h2 className="font-serif text-3xl font-light">Forum</h2>
+        {threads.length ? (
+          <ul className="border-app-divider mt-5 divide-y border">
+            {threads.map((thread) => (
+              <li key={thread.id} className="bg-app-paper px-5 py-5">
+                <Link href={`/forum/${thread.board.slug}/${thread.id}`} className="group block">
+                  <p className="text-app-meta font-mono text-chip tracking-meta uppercase">
+                    {thread.board.title}
+                  </p>
+                  <h3 className="mt-1 font-serif text-2xl font-light group-hover:underline">
+                    {thread.title}
+                  </h3>
+                  <p className="text-app-meta mt-2 font-mono text-chip tracking-meta uppercase">
+                    {thread.replyCount} {thread.replyCount === 1 ? "reply" : "replies"}
+                    {thread.tags.length ? ` · ${thread.tags.join(" · ")}` : ""}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-app-body mt-5 text-body-sm leading-6">No forum threads yet.</p>
         )}
       </section>
 

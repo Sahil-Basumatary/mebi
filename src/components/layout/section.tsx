@@ -23,20 +23,20 @@ export function Section({
   const hasHeader = Boolean(eyebrow || title || description || action);
 
   return (
-    <section id={id} className={cn("flex flex-col gap-6", className)}>
+    <section id={id} className={cn("flex flex-col gap-4", className)}>
       {hasHeader ? (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
             {eyebrow ? (
-              <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+              <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
                 {eyebrow}
               </p>
             ) : null}
             {title ? (
-              <h2 className="text-app-ink font-serif text-3xl font-light">{title}</h2>
+              <h2 className="text-app-ink font-serif text-2xl font-light">{title}</h2>
             ) : null}
             {description ? (
-              <p className="text-app-body max-w-2xl text-body-sm leading-6">{description}</p>
+              <p className="text-app-body text-body-sm max-w-2xl leading-6">{description}</p>
             ) : null}
           </div>
           {action}

@@ -22,38 +22,38 @@ export function PageHeader({
     return (
       <header
         className={cn(
-          "border-app-divider bg-app-divider grid gap-px xl:grid-cols-[1.2fr_0.8fr]",
+          "border-app-divider bg-app-divider grid gap-px xl:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.45fr)]",
           className,
         )}
       >
-        <div className="bg-app-paper flex flex-col justify-between p-8 lg:p-10">
+        <div className="bg-app-paper flex flex-col justify-between p-5 sm:p-6">
           <div>
-            <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+            <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               {eyebrow}
             </p>
-            <h1 className="text-app-ink mt-5 max-w-3xl font-serif text-display leading-[0.98] font-light tracking-display">
+            <h1 className="text-app-ink mt-2 max-w-3xl font-serif text-4xl leading-none font-light tracking-[-0.035em] sm:text-5xl">
               {title}
             </h1>
           </div>
           {children}
           {description ? (
-            <p className="text-app-body mt-6 max-w-2xl text-body-sm leading-7">{description}</p>
+            <p className="text-app-body mt-4 max-w-2xl text-base leading-6">{description}</p>
           ) : null}
         </div>
-        <div className="bg-app-chip flex flex-col justify-between p-8 lg:p-10">{aside}</div>
+        <div className="bg-app-chip flex flex-col justify-between p-5 sm:p-6">{aside}</div>
       </header>
     );
   }
 
   return (
-    <header className={cn("space-y-3", className)}>
-      <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">{eyebrow}</p>
-      <h1 className="text-app-ink max-w-3xl font-serif text-display leading-[0.98] font-light tracking-display">
+    <header className={cn("space-y-2", className)}>
+      <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">{eyebrow}</p>
+      <h1 className="text-app-ink max-w-3xl font-serif text-4xl leading-none font-light tracking-[-0.035em] sm:text-5xl">
         {title}
       </h1>
       {children}
       {description ? (
-        <p className="text-app-body max-w-2xl text-body leading-7">{description}</p>
+        <p className="text-app-body max-w-2xl text-base leading-6">{description}</p>
       ) : null}
     </header>
   );
