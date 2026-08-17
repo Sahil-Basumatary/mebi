@@ -3,6 +3,7 @@
 import { Check, X } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { sendProjectRequest, type SendRequestState } from "@/app/(app)/inbox/actions";
+import { AppButton } from "@/components/ui/app-button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 type JoinTarget = {
@@ -64,13 +65,9 @@ export function JoinRequestDialog({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
-      >
+      <AppButton type="button" onClick={() => setOpen(true)} size="sm">
         {triggerLabel}
-      </button>
+      </AppButton>
 
       {open ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 px-4">
@@ -93,14 +90,16 @@ export function JoinRequestDialog({
                   Ask to join {projectName}
                 </h3>
               </div>
-              <button
+              <AppButton
                 type="button"
                 onClick={() => setOpen(false)}
-                className="border-app-divider text-app-label hover:border-app-ink hover:text-app-ink shrink-0 rounded-full border p-1.5 transition-colors"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 shrink-0 p-0"
                 aria-label="Close"
               >
                 <X size={16} strokeWidth={2} />
-              </button>
+              </AppButton>
             </div>
 
             <form action={formAction} className="grid gap-5 p-6">
@@ -164,26 +163,21 @@ export function JoinRequestDialog({
               </div>
 
               {state.error ? (
-                <p role="alert" className="border-app-divider bg-app-wash text-app-ink border p-3 text-sm">
+                <p
+                  role="alert"
+                  className="border-app-divider bg-app-wash text-app-ink border p-3 text-sm"
+                >
                   {state.error}
                 </p>
               ) : null}
 
               <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="border-app-divider text-app-label hover:border-app-ink hover:text-app-ink inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium"
-                >
+                <AppButton type="button" onClick={() => setOpen(false)} variant="secondary">
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-6 text-sm font-medium disabled:opacity-50"
-                >
+                </AppButton>
+                <AppButton type="submit" disabled={isPending}>
                   {isPending ? "Sending..." : "Send request"}
-                </button>
+                </AppButton>
               </div>
             </form>
           </div>

@@ -3,6 +3,7 @@
 import { Check, X } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { sendProjectRequest, type SendRequestState } from "@/app/(app)/inbox/actions";
+import { AppButton } from "@/components/ui/app-button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 type ViewerProject = {
@@ -60,7 +61,7 @@ export function PartnerRequestDialog({
       <span
         role="status"
         aria-live="polite"
-        className="border-app-ink text-app-ink inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium"
+        className="border-app-ink text-app-ink inline-flex h-9 items-center gap-2 border px-4 text-sm font-medium"
       >
         <Check size={16} strokeWidth={2.5} aria-hidden />
         Invite sent
@@ -76,13 +77,9 @@ export function PartnerRequestDialog({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
-      >
+      <AppButton type="button" onClick={() => setOpen(true)} size="sm">
         {triggerLabel}
-      </button>
+      </AppButton>
 
       {open ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 px-4">
@@ -98,7 +95,10 @@ export function PartnerRequestDialog({
                 <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
                   Build invite
                 </p>
-                <h3 id="partner-request-title" className="mt-2 font-serif text-3xl leading-tight font-light">
+                <h3
+                  id="partner-request-title"
+                  className="mt-2 font-serif text-3xl leading-tight font-light"
+                >
                   Invite {toName}
                   {fixedProject ? ` to ${fixedProject.name}` : " onto a project"}
                 </h3>
@@ -139,7 +139,10 @@ export function PartnerRequestDialog({
                 <input type="hidden" name="projectId" value={fixedProject.id} />
               ) : (
                 <div className="grid gap-2">
-                  <label htmlFor="projectId" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                  <label
+                    htmlFor="projectId"
+                    className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+                  >
                     Project
                   </label>
                   <select
@@ -147,7 +150,7 @@ export function PartnerRequestDialog({
                     name="projectId"
                     required
                     defaultValue={projectOptions[0]?.id ?? ""}
-                    className="border-app-divider bg-app-wash text-app-ink focus:border-app-ink border px-3 py-3 text-sm outline-none transition-colors"
+                    className="border-app-divider bg-app-wash text-app-ink focus:border-app-ink border px-3 py-3 text-sm transition-colors outline-none"
                   >
                     {projectOptions.map((project) => (
                       <option key={project.id} value={project.id}>
@@ -159,7 +162,10 @@ export function PartnerRequestDialog({
               )}
 
               <div className="grid gap-2">
-                <label htmlFor="message" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                <label
+                  htmlFor="message"
+                  className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+                >
                   Message
                 </label>
                 <textarea
@@ -169,12 +175,15 @@ export function PartnerRequestDialog({
                   maxLength={1000}
                   required
                   placeholder={`Hi ${toName}, want to work on this together?`}
-                  className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink resize-none border px-3 py-3 text-sm leading-6 outline-none transition-colors"
+                  className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink resize-none border px-3 py-3 text-sm leading-6 transition-colors outline-none"
                 />
               </div>
 
               <div className="grid gap-2">
-                <label htmlFor="note" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                <label
+                  htmlFor="note"
+                  className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+                >
                   Role you need (optional)
                 </label>
                 <input
@@ -182,31 +191,26 @@ export function PartnerRequestDialog({
                   name="note"
                   maxLength={200}
                   placeholder="Frontend, infra, design systems..."
-                  className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink border px-3 py-3 text-sm outline-none transition-colors"
+                  className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink border px-3 py-3 text-sm transition-colors outline-none"
                 />
               </div>
 
               {state.error ? (
-                <p role="alert" className="border-app-divider bg-app-wash text-app-ink border p-3 text-sm">
+                <p
+                  role="alert"
+                  className="border-app-divider bg-app-wash text-app-ink border p-3 text-sm"
+                >
                   {state.error}
                 </p>
               ) : null}
 
               <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="border-app-divider text-app-label hover:border-app-ink hover:text-app-ink inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
-                >
+                <AppButton type="button" onClick={() => setOpen(false)} variant="secondary">
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-6 text-sm font-medium transition-colors disabled:opacity-50"
-                >
+                </AppButton>
+                <AppButton type="submit" disabled={isPending}>
                   {isPending ? "Sending..." : "Send invite"}
-                </button>
+                </AppButton>
               </div>
             </form>
           </div>

@@ -3,6 +3,7 @@
 import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppButton } from "@/components/ui/app-button";
 import { cn } from "@/lib/utils";
 
 type PartnerFiltersProps = {
@@ -134,14 +135,10 @@ export function PartnerFilters({
       {hasFilters ? (
         <div className="border-app-divider flex items-center justify-between border-t px-3 py-2">
           <p className="text-app-label text-xs">Filters applied</p>
-          <button
-            type="button"
-            onClick={clearAll}
-            className="text-app-ink inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-60"
-          >
+          <AppButton type="button" onClick={clearAll} variant="ghost" size="sm">
             <X size={13} strokeWidth={2} />
             Clear all
-          </button>
+          </AppButton>
         </div>
       ) : null}
     </div>

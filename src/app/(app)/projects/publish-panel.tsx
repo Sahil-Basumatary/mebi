@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import {
-  publishProject,
-  unpublishProject,
-  type PublishState,
-} from "./actions";
+import { AppButton } from "@/components/ui/app-button";
+import { publishProject, unpublishProject, type PublishState } from "./actions";
 
 type PublishPanelProps = {
   projectId: string;
@@ -31,10 +28,7 @@ export function PublishPanel({
   canPublish,
   blockReason,
 }: PublishPanelProps) {
-  const [publishState, publishAction, publishing] = useActionState(
-    publishProject,
-    initialState,
-  );
+  const [publishState, publishAction, publishing] = useActionState(publishProject, initialState);
   const [unpublishState, unpublishAction, unpublishing] = useActionState(
     unpublishProject,
     initialState,
@@ -65,22 +59,15 @@ export function PublishPanel({
           <>
             <p className="text-app-ink text-sm leading-6">
               Live at{" "}
-              <Link
-                href={`/b/${liveSlug}`}
-                className="border-app-ink border-b pb-0.5 font-medium"
-              >
+              <Link href={`/b/${liveSlug}`} className="border-app-ink border-b pb-0.5 font-medium">
                 /b/{liveSlug}
               </Link>
             </p>
             <form action={unpublishAction}>
               <input type="hidden" name="projectId" value={projectId} />
-              <button
-                type="submit"
-                disabled={unpublishing}
-                className="border-app-divider text-app-ink hover:bg-app-wash inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors disabled:opacity-50"
-              >
+              <AppButton type="submit" disabled={unpublishing} variant="secondary">
                 {unpublishing ? "Unpublishing..." : "Unpublish"}
-              </button>
+              </AppButton>
             </form>
           </>
         ) : canPublish ? (
@@ -96,16 +83,12 @@ export function PublishPanel({
                 maxLength={280}
                 defaultValue={summary ?? ""}
                 placeholder="One short line about what you shipped."
-                className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink w-full resize-none border px-3 py-3 text-sm leading-6 outline-none transition-colors"
+                className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink w-full resize-none border px-3 py-3 text-sm leading-6 transition-colors outline-none"
               />
             </label>
-            <button
-              type="submit"
-              disabled={publishing}
-              className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors disabled:opacity-50"
-            >
+            <AppButton type="submit" disabled={publishing}>
               {publishing ? "Publishing..." : "Publish proof"}
-            </button>
+            </AppButton>
           </form>
         ) : (
           <p className="text-app-body text-body-sm leading-6">

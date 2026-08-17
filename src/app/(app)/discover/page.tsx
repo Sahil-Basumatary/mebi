@@ -1,91 +1,173 @@
+import type { Prisma } from "@prisma/client";
 import Link from "next/link";
-import { Chip, EmptyState, HairlineGrid, PageHeader, Section, UserRow } from "@/components/layout";
+import { Suspense } from "react";
+import {
+  Chip,
+  DataList,
+  DataRow,
+  EmptyState,
+  MetaLine,
+  PageHeader,
+  ProgressBar,
+  Section,
+  UserRow,
+} from "@/components/layout";
+import { AppButton } from "@/components/ui/app-button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { displayName } from "@/lib/user-display";
+import { DiscoverFilters } from "./discover-filters";
 import { JoinRequestDialog } from "./join-request-dialog";
 
-export default async function DiscoverPage() {
-  const user = await requireOnboardedUser();
+function first(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
 
-  const [openBuilds, myMemberships] = await Promise.all([
-    prisma.project.findMany({
-      where: {
-        status: "ACTIVE",
-        visibility: "PUBLIC",
-        owner: { onboarded: true, profilePrivate: false },
-      },
-      orderBy: { updatedAt: "desc" },
-      take: 40,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        techStack: true,
-        estimatedTime: true,
-        progress: true,
-        members: {
-          orderBy: { joinedAt: "asc" },
-          select: {
-            role: true,
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                username: true,
-                imageUrl: true,
-                role: true,
-                profilePrivate: true,
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+export default async function DiscoverPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const user = await requireOnboardedUser();
+  const params = await searchParams;
+  const query = first(params.q).trim();
+  const stack = first(params.stack).trim();
+  const sort = first(params.sort);
+
+  const directoryWhere: Prisma.ProjectWhereInput = {
+    status: "ACTIVE",
+    visibility: "PUBLIC",
+    owner: { onboarded: true, profilePrivate: false },
+    members: { none: { userId: user.id } },
+  };
+  const filteredWhere: Prisma.ProjectWhereInput = {
+    ...directoryWhere,
+    ...(stack ? { techStack: { has: stack } } : {}),
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { description: { contains: query, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+  const orderBy: Prisma.ProjectOrderByWithRelationInput =
+    sort === "progress"
+      ? { progress: "desc" }
+      : sort === "team"
+        ? { members: { _count: "desc" } }
+        : { updatedAt: "desc" };
+
+  const [builds, stackRows, projectCount, builderCount, updateCount, resultCount, pendingRequests] =
+    await Promise.all([
+      prisma.project.findMany({
+        where: filteredWhere,
+        orderBy,
+        take: 100,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          techStack: true,
+          estimatedTime: true,
+          progress: true,
+          updatedAt: true,
+          members: {
+            orderBy: { joinedAt: "asc" },
+            select: {
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  username: true,
+                  imageUrl: true,
+                  role: true,
+                  profilePrivate: true,
+                },
               },
             },
           },
+          updates: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { createdAt: true },
+          },
+          _count: { select: { updates: true } },
         },
-      },
-    }),
-    prisma.projectMember.findMany({
-      where: { userId: user.id },
-      select: { projectId: true },
-    }),
-  ]);
+      }),
+      prisma.project.findMany({
+        where: directoryWhere,
+        take: 500,
+        select: { techStack: true },
+      }),
+      prisma.project.count({ where: directoryWhere }),
+      prisma.projectMember.count({ where: { project: directoryWhere } }),
+      prisma.projectUpdate.count({ where: { project: directoryWhere } }),
+      prisma.project.count({ where: filteredWhere }),
+      prisma.projectRequest.findMany({
+        where: {
+          fromUserId: user.id,
+          kind: "JOIN",
+          status: "PENDING",
+        },
+        select: { projectId: true },
+      }),
+    ]);
 
-  const myProjectIds = new Set(myMemberships.map((row) => row.projectId));
-  const builds = openBuilds.filter((project) => !myProjectIds.has(project.id));
+  const pendingProjectIds = new Set(pendingRequests.map((request) => request.projectId));
+  const stacks = [
+    ...new Set(stackRows.flatMap((project) => project.techStack.map((tag) => tag.trim()))),
+  ]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-1 flex-col gap-4">
       <PageHeader
-        eyebrow="Discover"
-        title="Open builds looking for teammates."
-        description="Public active projects you can ask to join."
-        aside={
-          <div>
-            <p className="text-app-label text-eyebrow tracking-eyebrow font-semibold uppercase">
-              Looking for people?
-            </p>
-            <p className="text-app-body text-body-sm mt-3 leading-6">
-              Keep your brief public, then invite from Partners, or post in Looking for partners.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/projects#new-project"
-                className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center px-4 text-sm font-medium transition-colors"
-              >
-                Start a brief
-              </Link>
-              <Link
-                href="/forum/looking-for-partners"
-                className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center border px-4 text-sm font-medium transition-colors"
-              >
-                Forum
-              </Link>
-            </div>
-          </div>
-        }
+        eyebrow="Open projects"
+        title="Discover"
+        description="Public projects accepting join requests."
       />
 
-      <Section eyebrow="Open" title="Active public builds">
+      <dl className="border-app-divider bg-app-paper grid grid-cols-3 divide-x border">
+        <DiscoverStat label="Projects" value={projectCount} />
+        <DiscoverStat label="Builders" value={builderCount} />
+        <DiscoverStat label="Updates" value={updateCount} />
+      </dl>
+
+      <Suspense fallback={<div className="border-app-divider bg-app-paper h-10 border" />}>
+        <DiscoverFilters stacks={stacks} />
+      </Suspense>
+
+      <Section
+        eyebrow={query || stack ? "Filtered" : "Directory"}
+        title="Open projects"
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-app-meta mr-2 text-sm tabular-nums">
+              {resultCount} result{resultCount === 1 ? "" : "s"}
+            </span>
+            <AppButton asChild variant="secondary" size="sm">
+              <Link href="/forum/looking-for-partners">Partner forum</Link>
+            </AppButton>
+            <AppButton asChild size="sm">
+              <Link href="/projects#new-project">New project</Link>
+            </AppButton>
+          </div>
+        }
+      >
         {builds.length ? (
-          <HairlineGrid>
+          <DataList ariaLabel="Open projects">
             {builds.map((project) => {
               const owner = project.members.find((member) => member.role === "OWNER")?.user;
               const askTargets = project.members
@@ -96,71 +178,99 @@ export default async function DiscoverPage() {
                 }));
 
               return (
-                <article key={project.id} className="bg-app-paper flex flex-col gap-4 p-6">
-                  <div>
-                    <p className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
-                      {project.progress}% · {project.members.length} builder
-                      {project.members.length === 1 ? "" : "s"}
-                    </p>
-                    <h3 className="text-app-ink mt-2 font-serif text-3xl font-light">
-                      {project.name}
-                    </h3>
-                    <p className="text-app-body text-body-sm mt-3 max-w-2xl leading-6">
-                      {project.description.slice(0, 220)}
-                      {project.description.length > 220 ? "…" : ""}
-                    </p>
-                  </div>
-                  {project.techStack.length ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {project.techStack.slice(0, 6).map((tag) => (
-                        <Chip key={tag}>{tag}</Chip>
-                      ))}
+                <DataRow
+                  key={project.id}
+                  className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_10rem_11rem] lg:items-center"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-app-ink text-base font-semibold">{project.name}</h3>
+                      {pendingProjectIds.has(project.id) ? <Chip tone="ink">requested</Chip> : null}
                     </div>
-                  ) : null}
-                  {owner ? (
-                    <UserRow
-                      fullName={owner.fullName}
-                      username={owner.username}
-                      imageUrl={owner.imageUrl}
-                      role={owner.role}
-                      meta={
-                        <p className="text-app-meta text-chip tracking-meta mt-1 font-mono uppercase">
-                          Owner
-                          {project.estimatedTime ? ` · ${project.estimatedTime}` : ""}
-                        </p>
-                      }
-                    />
-                  ) : null}
-                  {!user.profilePrivate && askTargets.length ? (
-                    <JoinRequestDialog
-                      projectId={project.id}
-                      projectName={project.name}
-                      members={askTargets}
-                    />
-                  ) : user.profilePrivate ? (
-                    <p className="text-app-meta text-sm">
-                      Turn off private profile to ask to join.
+                    <p className="text-app-body mt-1 line-clamp-2 max-w-3xl text-sm leading-5">
+                      {project.description}
                     </p>
-                  ) : null}
-                </article>
+                    <MetaLine className="mt-2">
+                      <span>
+                        {project.members.length} builder
+                        {project.members.length === 1 ? "" : "s"}
+                      </span>
+                      <span aria-hidden>·</span>
+                      <span>{project._count.updates} updates</span>
+                      <span aria-hidden>·</span>
+                      <span>{formatDate(project.updates[0]?.createdAt ?? project.updatedAt)}</span>
+                      {project.estimatedTime ? (
+                        <>
+                          <span aria-hidden>·</span>
+                          <span>{project.estimatedTime}</span>
+                        </>
+                      ) : null}
+                    </MetaLine>
+                    {project.techStack.length ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {project.techStack.slice(0, 6).map((tag) => (
+                          <Chip key={tag}>{tag}</Chip>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    {owner ? (
+                      <UserRow
+                        fullName={owner.fullName}
+                        username={owner.username}
+                        imageUrl={owner.imageUrl}
+                        role={owner.role}
+                        meta={<p className="text-app-meta mt-1 text-xs">Owner</p>}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col gap-3 lg:items-end">
+                    <ProgressBar value={project.progress} className="w-full" />
+                    {pendingProjectIds.has(project.id) ? (
+                      <span className="text-app-meta text-xs">Request pending</span>
+                    ) : !user.profilePrivate && askTargets.length ? (
+                      <JoinRequestDialog
+                        projectId={project.id}
+                        projectName={project.name}
+                        members={askTargets}
+                      />
+                    ) : user.profilePrivate ? (
+                      <span className="text-app-meta text-xs">Private profile</span>
+                    ) : null}
+                  </div>
+                </DataRow>
               );
             })}
-          </HairlineGrid>
+          </DataList>
         ) : (
           <EmptyState
-            eyebrow="Quiet board"
-            title="No open public builds right now."
+            fill
+            eyebrow={query || stack ? "No matches" : "Quiet board"}
+            title={
+              query || stack
+                ? "No projects match these filters."
+                : "No open public projects right now."
+            }
             action={
-              <Link
-                href="/projects#new-project"
-                className="border-app-ink text-app-ink border-b pb-0.5 text-sm font-medium"
-              >
-                Create one
-              </Link>
+              <AppButton asChild>
+                <Link href="/projects#new-project">Create project</Link>
+              </AppButton>
             }
           />
         )}
       </Section>
+    </div>
+  );
+}
+
+function DiscoverStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="px-4 py-3">
+      <dt className="text-app-meta text-xs">{label}</dt>
+      <dd className="text-app-ink mt-1 text-xl font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }

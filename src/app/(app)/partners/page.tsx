@@ -2,14 +2,9 @@ import type { UserRole } from "@prisma/client";
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import {
-  Chip,
-  EmptyState,
-  HairlineGrid,
-  PageHeader,
-  Section,
-} from "@/components/layout";
+import { Chip, DataList, DataRow, EmptyState, PageHeader, Section } from "@/components/layout";
 import { SocialIcon } from "@/components/social-icon";
+import { AppButton } from "@/components/ui/app-button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch, type MatchBreakdown } from "@/lib/match";
 import { memberProjectWhere } from "@/lib/project-access";
@@ -78,7 +73,7 @@ function PartnerAction({
 
   if (relationship === "partnered") {
     return (
-      <span className="border-app-ink bg-app-ink text-app-paper inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium">
+      <span className="border-app-ink bg-app-ink text-app-paper inline-flex h-8 items-center gap-2 border px-3 text-xs font-medium">
         <Check size={16} strokeWidth={2.5} />
         On a build
       </span>
@@ -87,18 +82,15 @@ function PartnerAction({
 
   if (relationship === "incoming") {
     return (
-      <Link
-        href="/inbox"
-        className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
-      >
-        Respond in inbox
-      </Link>
+      <AppButton asChild variant="secondary" size="sm">
+        <Link href="/inbox">Respond</Link>
+      </AppButton>
     );
   }
 
   if (relationship === "outgoing") {
     return (
-      <span className="border-app-divider text-app-label inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium">
+      <span className="border-app-divider text-app-label inline-flex h-8 items-center gap-2 border px-3 text-xs font-medium">
         <Check size={16} strokeWidth={2} />
         Request sent
       </span>
@@ -134,9 +126,9 @@ function PartnerRow({
   const interestTags = user.interests.slice(0, 4);
 
   return (
-    <div className="bg-app-paper grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-start">
-      <div className="flex gap-4">
-        <div className="border-app-divider bg-app-wash text-app-label flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold">
+    <DataRow className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div className="flex min-w-0 gap-3">
+        <div className="border-app-divider bg-app-wash text-app-label flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-xs font-semibold">
           {user.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={user.imageUrl} alt={name} className="h-full w-full object-cover" />
@@ -146,7 +138,7 @@ function PartnerRow({
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-app-ink font-semibold">{name}</p>
+            <p className="text-app-ink text-[15px] font-semibold">{name}</p>
             {user.username ? <span className="text-app-meta text-sm">@{user.username}</span> : null}
             {user.pronouns ? <span className="text-app-meta text-sm">{user.pronouns}</span> : null}
             {user.githubUsername && user.showGithub ? (
@@ -179,10 +171,12 @@ function PartnerRow({
             {user.role ? <Chip>{ROLE_LABEL[user.role]}</Chip> : null}
           </div>
           {user.bio ? (
-            <p className="text-app-body mt-2 line-clamp-2 max-w-2xl text-body leading-6">{user.bio}</p>
+            <p className="text-app-body mt-1 line-clamp-2 max-w-3xl text-sm leading-5">
+              {user.bio}
+            </p>
           ) : null}
           {skillTags.length || interestTags.length ? (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {skillTags.map((skill) => (
                 <Chip
                   key={`s-${skill}`}
@@ -203,14 +197,27 @@ function PartnerRow({
           ) : null}
         </div>
       </div>
-      <div className="flex shrink-0 flex-col items-start gap-3 lg:items-end">
+      <div className="flex shrink-0 items-center gap-3 lg:justify-end">
         {breakdown.score > 0 ? (
-          <span className="text-app-label font-mono text-chip tracking-chip">
-            {breakdown.sharedSkills.length + breakdown.sharedInterests.length} SHARED
+          <span className="text-app-meta font-mono text-[10px] tracking-[0.08em] uppercase">
+            {breakdown.sharedSkills.length + breakdown.sharedInterests.length} shared
           </span>
         ) : null}
-        <PartnerAction ranked={ranked} relationship={relationship} viewerProjects={viewerProjects} />
+        <PartnerAction
+          ranked={ranked}
+          relationship={relationship}
+          viewerProjects={viewerProjects}
+        />
       </div>
+    </DataRow>
+  );
+}
+
+function DirectoryStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="px-4 py-3">
+      <dt className="text-app-meta text-xs">{label}</dt>
+      <dd className="text-app-ink mt-1 text-xl font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -291,7 +298,10 @@ export default async function PartnersPage({
 
   const filtered = pool.filter((user) => {
     if (roleFilter && user.role !== roleFilter) return false;
-    if (skillFilter && !user.skills.some((skill) => skill.toLowerCase() === skillFilter.toLowerCase())) {
+    if (
+      skillFilter &&
+      !user.skills.some((skill) => skill.toLowerCase() === skillFilter.toLowerCase())
+    ) {
       return false;
     }
     if (
@@ -316,36 +326,38 @@ export default async function PartnersPage({
 
   const { skills, interests } = partnerFacets(pool);
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-4">
       <PageHeader
-        eyebrow="Invite to build"
-        title="Find a builder for your project."
+        eyebrow="Network"
+        title="Partners"
+        description="Find builders for active projects."
       />
 
       {pool.length === 0 ? (
         <EmptyState
+          fill
           eyebrow="Early network"
           title="No other builders yet."
           description="Builders will appear here after they join mebi."
           action={
             <div className="flex flex-wrap gap-3">
-              <Link
-                href="/projects"
-                className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
-              >
-                Start a build
-              </Link>
-              <Link
-                href="/forum/looking-for-partners"
-                className="border-app-ink text-app-ink hover:bg-app-ink hover:text-app-paper inline-flex h-9 items-center rounded-full border px-5 text-sm font-medium transition-colors"
-              >
-                Post on the forum
-              </Link>
+              <AppButton asChild>
+                <Link href="/projects">Start a build</Link>
+              </AppButton>
+              <AppButton asChild variant="secondary">
+                <Link href="/forum/looking-for-partners">Open partner forum</Link>
+              </AppButton>
             </div>
           }
         />
       ) : (
         <>
+          <dl className="border-app-divider bg-app-paper grid grid-cols-3 divide-x border">
+            <DirectoryStat label="Builders" value={pool.length} />
+            <DirectoryStat label="Collaborators" value={partneredIds.size} />
+            <DirectoryStat label="Active projects" value={viewerProjects.length} />
+          </dl>
+
           {/* The rail only exists from xl up, so the same filters render inline
               below it. display:none keeps the unused copy out of the a11y tree. */}
           <Suspense fallback={null}>
@@ -353,15 +365,16 @@ export default async function PartnersPage({
           </Suspense>
 
           <Section
-            eyebrow={filtersActive ? "Search results" : "Who can join a build"}
-            title={
-              viewerProjects.length
-                ? `Invite into ${viewerProjects[0].name}${viewerProjects.length > 1 ? " or another active build" : ""}`
-                : "Start a build, then invite"
+            eyebrow={filtersActive ? "Filtered" : "Directory"}
+            title="Builders"
+            action={
+              <span className="text-app-meta text-sm tabular-nums">
+                {ranked.length} result{ranked.length === 1 ? "" : "s"}
+              </span>
             }
           >
             {ranked.length ? (
-              <HairlineGrid>
+              <DataList ariaLabel="Builders">
                 {ranked.map((item) => (
                   <PartnerRow
                     key={item.user.id}
@@ -370,9 +383,10 @@ export default async function PartnersPage({
                     viewerProjects={viewerProjects}
                   />
                 ))}
-              </HairlineGrid>
+              </DataList>
             ) : (
               <EmptyState
+                fill
                 eyebrow="No matches"
                 title="No builders match these filters"
                 description="Try widening the role or clearing a tag."

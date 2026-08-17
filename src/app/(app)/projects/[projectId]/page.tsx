@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ProjectRole } from "@prisma/client";
-import { Chip, PageHeader, UserRow } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Chip, MetaLine, ProgressBar, UserRow } from "@/components/layout";
+import { AppButton } from "@/components/ui/app-button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
 import { requireProjectMember } from "@/lib/project-access";
@@ -206,84 +207,101 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Button
-          asChild
-          variant="secondary"
-          className="border-app-divider bg-app-paper text-app-ink hover:bg-app-chip rounded-full border px-5"
-        >
-          <Link href="/projects">Back to projects</Link>
-        </Button>
-      </div>
-
-      <PageHeader
-        eyebrow="Shared build"
-        title={project.name}
-        description={project.description}
-        aside={
-          <>
-            <p className="text-app-label text-eyebrow tracking-eyebrow font-semibold uppercase">
-              Status
-            </p>
-            <p className="text-app-ink mt-4 font-serif text-5xl font-light">{project.progress}%</p>
-            <div className="bg-app-divider mt-5 h-2">
-              <div className="bg-app-ink h-full" style={{ width: `${project.progress}%` }} />
-            </div>
-            <div className="mt-8 flex flex-wrap gap-2">
-              <Chip>{project.visibility.toLowerCase()}</Chip>
-              <Chip tone={isCompleted ? "ink" : "wash"}>{project.status.toLowerCase()}</Chip>
-              {verified ? <Chip tone="ink">verified</Chip> : null}
-              {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
-            </div>
-            <dl className="text-app-body mt-8 grid gap-4 text-sm">
-              <div>
-                <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
-                  Estimated time
-                </dt>
-                <dd className="mt-1">{project.estimatedTime || "Not set"}</dd>
-              </div>
-              <div>
-                <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
-                  Finished
-                </dt>
-                <dd className="mt-1">{formatDate(project.completedAt)}</dd>
-              </div>
-              <div>
-                <dt className="text-app-label text-[10px] font-semibold tracking-[0.16em] uppercase">
-                  On the roster
-                </dt>
-                <dd className="mt-1">
-                  {members.length} member{members.length === 1 ? "" : "s"}
-                </dd>
-              </div>
-            </dl>
-          </>
-        }
-      >
-        {project.techStack.length ? (
-          <div className="mt-6 flex flex-wrap gap-1.5">
-            {project.techStack.map((tag) => (
-              <Chip key={tag}>{tag}</Chip>
-            ))}
+    <div className="flex flex-1 flex-col gap-4">
+      <header className="border-app-divider bg-app-paper border">
+        <div className="border-app-divider flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2">
+          <AppButton asChild variant="ghost" size="sm">
+            <Link href="/projects">
+              <ArrowLeft size={14} strokeWidth={2} aria-hidden />
+              Projects
+            </Link>
+          </AppButton>
+          <div className="flex flex-wrap gap-1.5">
+            <Chip>{project.visibility.toLowerCase()}</Chip>
+            <Chip tone={isCompleted ? "ink" : "wash"}>{project.status.toLowerCase()}</Chip>
+            {verified ? <Chip tone="ink">verified</Chip> : null}
+            {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
           </div>
-        ) : null}
-      </PageHeader>
+        </div>
+        <div className="px-5 py-5">
+          <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
+            Project workspace
+          </p>
+          <h1 className="text-app-ink mt-1 font-serif text-4xl leading-tight font-light sm:text-5xl">
+            {project.name}
+          </h1>
+          <p className="text-app-body mt-3 max-w-4xl text-base leading-6">{project.description}</p>
+          <MetaLine className="mt-3">
+            <span>{project.estimatedTime || "No estimate"}</span>
+            <span aria-hidden>·</span>
+            <span>
+              {isCompleted ? `Finished ${formatDate(project.completedAt)}` : "In progress"}
+            </span>
+            <span aria-hidden>·</span>
+            <span>{isOwner ? "Owner" : "Member"}</span>
+          </MetaLine>
+          {project.techStack.length ? (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {project.techStack.map((tag) => (
+                <Chip key={tag}>{tag}</Chip>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <dl className="border-app-divider grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
+          <div className="p-4">
+            <dt className="text-app-meta text-xs">Progress</dt>
+            <dd className="mt-2">
+              <ProgressBar value={project.progress} />
+            </dd>
+          </div>
+          <ProjectMetric
+            label="Team"
+            value={`${members.length} member${members.length === 1 ? "" : "s"}`}
+          />
+          <ProjectMetric
+            label="Build log"
+            value={`${authorUpdates.length} update${authorUpdates.length === 1 ? "" : "s"}`}
+          />
+          <ProjectMetric label="Verification" value={verified ? "Verified" : "In progress"} />
+        </dl>
+        <nav
+          aria-label="Project sections"
+          className="border-app-divider flex flex-wrap gap-1 border-t px-4 py-2"
+        >
+          <AppButton asChild variant="ghost" size="sm">
+            <a href="#build-log">Build log</a>
+          </AppButton>
+          <AppButton asChild variant="ghost" size="sm">
+            <a href="#roster">Roster</a>
+          </AppButton>
+          <AppButton asChild variant="ghost" size="sm">
+            <a href="#verification">Verification</a>
+          </AppButton>
+          <AppButton asChild variant="ghost" size="sm">
+            <a href="#project-settings">Settings</a>
+          </AppButton>
+        </nav>
+      </header>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_20rem]">
         <div className="flex min-w-0 flex-col gap-6">
           <UpdateForm projectId={project.id} progress={project.progress} disabled={isCompleted} />
 
-          <section className="border-app-divider bg-app-paper border">
-            <div className="border-app-divider border-b px-6 py-5">
-              <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
-                Build log
-              </p>
+          <section id="build-log" className="border-app-divider bg-app-paper scroll-mt-20 border">
+            <div className="border-app-divider flex items-center justify-between border-b px-4 py-3">
+              <div>
+                <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
+                  Activity
+                </p>
+                <h2 className="text-app-ink mt-1 text-lg font-semibold">Build log</h2>
+              </div>
+              <span className="text-app-meta text-sm tabular-nums">{authorUpdates.length}</span>
             </div>
             {updates.length ? (
               <ul className="divide-app-divider divide-y">
                 {updates.map((update) => (
-                  <li key={update.id} className="px-6 py-5">
+                  <li key={update.id} className="px-4 py-4">
                     <UserRow
                       fullName={update.author.fullName}
                       username={update.author.username}
@@ -294,13 +312,13 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                           <p className="text-app-meta mt-1 text-xs">
                             {formatStamp(update.createdAt)}
                           </p>
-                          <p className="text-app-body text-body mt-3 max-w-3xl leading-6">
+                          <p className="text-app-body mt-3 max-w-3xl text-sm leading-6">
                             {update.body}
                           </p>
                           {update.progress !== null ? (
-                            <p className="text-app-label text-chip tracking-meta mt-3 font-mono uppercase">
-                              Progress → {update.progress}%
-                            </p>
+                            <MetaLine className="mt-3">
+                              <span>Progress updated to {update.progress}%</span>
+                            </MetaLine>
                           ) : null}
                         </>
                       }
@@ -309,21 +327,21 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 ))}
               </ul>
             ) : (
-              <p className="text-app-body text-body-sm px-6 py-8 leading-6">
-                No updates yet. Post the first one above.
-              </p>
+              <p className="text-app-body px-4 py-8 text-sm leading-6">No updates yet.</p>
             )}
           </section>
         </div>
 
         <aside className="flex flex-col gap-6">
-          <SignaturePanel
-            projectId={project.id}
-            verified={verified}
-            teammates={teammates}
-            signaturesReceived={attestedMembers}
-            memberCount={memberIdList.length}
-          />
+          <div id="verification" className="scroll-mt-20">
+            <SignaturePanel
+              projectId={project.id}
+              verified={verified}
+              teammates={teammates}
+              signaturesReceived={attestedMembers}
+              memberCount={memberIdList.length}
+            />
+          </div>
 
           {isOwner ? (
             <PublishPanel
@@ -336,7 +354,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             />
           ) : null}
 
-          <section className="border-app-divider bg-app-paper border">
+          <section id="roster" className="border-app-divider bg-app-paper scroll-mt-20 border">
             <div className="border-app-divider border-b px-5 py-4">
               <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
                 Roster
@@ -472,23 +490,34 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             <ProjectCompletionPanel projectId={project.id} disabled={isCompleted} />
           ) : null}
 
-          <ProjectManagePanel
-            projectId={project.id}
-            isOwner={isOwner}
-            isCompleted={isCompleted}
-            name={project.name}
-            description={project.description}
-            techStack={project.techStack}
-            estimatedTime={project.estimatedTime}
-            visibility={project.visibility}
-            members={members.map((member) => ({
-              userId: member.user.id,
-              name: displayName(member.user.fullName, member.user.username),
-              role: member.role,
-            }))}
-          />
+          <div id="project-settings" className="scroll-mt-20">
+            <ProjectManagePanel
+              projectId={project.id}
+              isOwner={isOwner}
+              isCompleted={isCompleted}
+              name={project.name}
+              description={project.description}
+              techStack={project.techStack}
+              estimatedTime={project.estimatedTime}
+              visibility={project.visibility}
+              members={members.map((member) => ({
+                userId: member.user.id,
+                name: displayName(member.user.fullName, member.user.username),
+                role: member.role,
+              }))}
+            />
+          </div>
         </aside>
       </section>
+    </div>
+  );
+}
+
+function ProjectMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="p-4">
+      <dt className="text-app-meta text-xs">{label}</dt>
+      <dd className="text-app-ink mt-1 text-base font-semibold">{value}</dd>
     </div>
   );
 }

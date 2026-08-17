@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/ui/app-button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { markProjectComplete, type CompleteProjectState } from "./actions";
 
@@ -94,9 +94,9 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
       </p>
       <form action={formAction} className="mt-6">
         <input type="hidden" name="projectId" value={projectId} />
-        <Button disabled={disabled || isPending} className="bg-app-ink text-app-paper hover:bg-app-accent-hover rounded-full px-6">
+        <AppButton disabled={disabled || isPending}>
           {disabled ? "Project completed" : isPending ? "Completing..." : "Mark as complete"}
-        </Button>
+        </AppButton>
       </form>
       {state.error ? (
         <p role="alert" className="text-app-ink mt-4 text-sm">
@@ -116,20 +116,19 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
             <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
               Project finished
             </p>
-            <h3 id="project-complete-title" className="mt-4 font-serif text-4xl leading-tight font-light">
+            <h3
+              id="project-complete-title"
+              className="mt-4 font-serif text-4xl leading-tight font-light"
+            >
               Project finished!
             </h3>
             <p className="text-app-body mt-4 text-[16px] leading-6">
               You can publish it from the project page.
             </p>
             <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setDialogOpen(false)}
-                className="bg-app-ink text-app-paper rounded-full px-5 py-2 text-sm font-medium"
-              >
+              <AppButton type="button" onClick={() => setDialogOpen(false)}>
                 Continue
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>

@@ -1,11 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  revokeProofSignature,
-  signProofContribution,
-  type SignatureState,
-} from "./actions";
+import { AppButton } from "@/components/ui/app-button";
+import { revokeProofSignature, signProofContribution, type SignatureState } from "./actions";
 
 type Teammate = {
   id: string;
@@ -62,7 +59,7 @@ function SignForm({
           className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink resize-none border px-3 py-3 text-sm leading-5 outline-none"
         />
       </div>
-      <label className="text-app-body flex items-start gap-2 text-body-sm leading-5">
+      <label className="text-app-body text-body-sm flex items-start gap-2 leading-5">
         <input
           type="checkbox"
           name="consent"
@@ -85,13 +82,9 @@ function SignForm({
           Signed.
         </p>
       ) : (
-        <button
-          type="submit"
-          disabled={isPending}
-          className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors disabled:opacity-50"
-        >
+        <AppButton type="submit" disabled={isPending} size="sm">
           {isPending ? "Signing..." : `Sign for ${name}`}
-        </button>
+        </AppButton>
       )}
     </form>
   );
@@ -132,7 +125,7 @@ export function SignaturePanel({
         <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
           Verification
         </p>
-        <p className="text-app-body mt-3 text-body-sm leading-6">
+        <p className="text-app-body text-body-sm mt-3 leading-6">
           Peer signatures need at least two people on the roster. Invite a partner, then sign each
           other after sustained build-log work.
         </p>
@@ -149,7 +142,7 @@ export function SignaturePanel({
         <p className="text-app-ink mt-2 font-serif text-2xl font-light">
           {verified ? "Verified build" : "Awaiting peer signatures"}
         </p>
-        <p className="text-app-body mt-2 text-body-sm leading-5">
+        <p className="text-app-body text-body-sm mt-2 leading-5">
           {verified
             ? "Every member has a non-revoked signature from a teammate."
             : `${signaturesReceived} of ${memberCount} members attested. Signatures require two days of substantive posts.`}
@@ -161,7 +154,7 @@ export function SignaturePanel({
             <p className="text-app-ink text-sm font-medium">{teammate.name}</p>
             {teammate.alreadySigned && teammate.signatureId ? (
               <>
-                <p className="text-app-label mt-1 font-mono text-chip tracking-meta uppercase">
+                <p className="text-app-label text-chip tracking-meta mt-1 font-mono uppercase">
                   You signed them
                 </p>
                 <RevokeForm signatureId={teammate.signatureId} />
@@ -169,7 +162,7 @@ export function SignaturePanel({
             ) : teammate.canSign ? (
               <SignForm projectId={projectId} subjectId={teammate.id} name={teammate.name} />
             ) : (
-              <p className="text-app-meta mt-2 text-body-sm leading-5">
+              <p className="text-app-meta text-body-sm mt-2 leading-5">
                 {teammate.reason ?? "Not ready to sign."}
               </p>
             )}

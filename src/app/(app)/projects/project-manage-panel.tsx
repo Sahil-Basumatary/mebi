@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/ui/app-button";
 import {
   deleteProject,
   leaveProject,
@@ -46,18 +46,21 @@ export function ProjectManagePanel({
   const transferable = members.filter((member) => member.role === "MEMBER");
 
   return (
-    <section className="border-app-divider bg-app-paper border">
-      <div className="border-app-divider border-b px-5 py-4">
-        <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
-          Manage
-        </p>
-      </div>
+    <details className="border-app-divider bg-app-paper group border">
+      <summary className="text-app-ink flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold">
+        Project settings
+        <span className="text-app-meta text-xs font-normal group-open:hidden">Open</span>
+        <span className="text-app-meta hidden text-xs font-normal group-open:inline">Close</span>
+      </summary>
       <div className="space-y-6 p-5">
         {isOwner && !isCompleted ? (
           <form action={editAction} className="grid gap-4">
             <input type="hidden" name="projectId" value={projectId} />
             <div className="grid gap-2">
-              <label htmlFor="edit-name" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+              <label
+                htmlFor="edit-name"
+                className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+              >
                 Project name
               </label>
               <input
@@ -70,7 +73,10 @@ export function ProjectManagePanel({
               />
             </div>
             <div className="grid gap-2">
-              <label htmlFor="edit-description" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+              <label
+                htmlFor="edit-description"
+                className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+              >
                 Brief
               </label>
               <textarea
@@ -85,7 +91,10 @@ export function ProjectManagePanel({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <label htmlFor="edit-tech" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                <label
+                  htmlFor="edit-tech"
+                  className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+                >
                   Tech stack
                 </label>
                 <input
@@ -96,7 +105,10 @@ export function ProjectManagePanel({
                 />
               </div>
               <div className="grid gap-2">
-                <label htmlFor="edit-time" className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase">
+                <label
+                  htmlFor="edit-time"
+                  className="text-app-label text-[11px] font-semibold tracking-[0.2em] uppercase"
+                >
                   Estimated time
                 </label>
                 <input
@@ -145,12 +157,7 @@ export function ProjectManagePanel({
                 Brief saved.
               </p>
             ) : null}
-            <Button
-              disabled={editPending}
-              className="bg-app-ink text-app-paper hover:bg-app-accent-hover rounded-full px-6"
-            >
-              {editPending ? "Saving..." : "Save brief"}
-            </Button>
+            <AppButton disabled={editPending}>{editPending ? "Saving..." : "Save brief"}</AppButton>
           </form>
         ) : null}
 
@@ -180,13 +187,9 @@ export function ProjectManagePanel({
                 {transferState.error}
               </p>
             ) : null}
-            <Button
-              disabled={transferPending}
-              variant="secondary"
-              className="border-app-divider rounded-full border px-6"
-            >
+            <AppButton disabled={transferPending} variant="secondary">
               {transferPending ? "Transferring..." : "Transfer ownership"}
-            </Button>
+            </AppButton>
           </form>
         ) : null}
 
@@ -203,7 +206,11 @@ export function ProjectManagePanel({
               disabled={leavePending}
               className="text-app-label hover:text-app-ink text-sm font-medium underline underline-offset-2 disabled:opacity-50"
             >
-              {leavePending ? "Leaving..." : isOwner ? "Leave / delete solo project" : "Leave project"}
+              {leavePending
+                ? "Leaving..."
+                : isOwner
+                  ? "Leave / delete solo project"
+                  : "Leave project"}
             </button>
           </form>
 
@@ -226,6 +233,6 @@ export function ProjectManagePanel({
           ) : null}
         </div>
       </div>
-    </section>
+    </details>
   );
 }
