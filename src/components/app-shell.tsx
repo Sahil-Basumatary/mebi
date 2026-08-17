@@ -327,7 +327,7 @@ function AppShellChrome({
 
       <div
         className={cn(
-          "text-app-fg flex flex-1 pb-20 lg:pb-0",
+          "text-app-fg flex flex-1 pb-16 lg:pb-0",
           forumMode ? "forum-canvas" : "bg-app-canvas",
         )}
       >
@@ -360,7 +360,7 @@ function AppShellChrome({
 
       <nav
         aria-label="Mobile primary"
-        className="border-app-chrome-border bg-app-chrome text-app-chrome-muted fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t px-2 py-2 lg:hidden"
+        className="border-app-chrome-border bg-app-chrome text-app-chrome-muted fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t px-2 py-1 lg:hidden"
       >
         {MOBILE_NAV.map((item) => {
           const Icon = item.icon;
@@ -371,7 +371,7 @@ function AppShellChrome({
               aria-current={isActive(item.href) ? "page" : undefined}
               aria-label={navLabel(item, unreadRequests)}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-1 px-2 py-2 text-[10px] transition-colors",
+                "relative flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 text-[10px] transition-colors",
                 isActive(item.href) ? "text-app-chrome-fg" : "hover:text-app-chrome-fg",
               )}
             >

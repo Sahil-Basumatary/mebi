@@ -3,14 +3,15 @@ import { BuildHeatmap } from "@/components/dashboard/build-heatmap";
 import { BuildPath, type BuildStage } from "@/components/dashboard/build-path";
 import {
   Chip,
+  DataList,
+  DataRow,
   EmptyState,
-  HairlineGrid,
-  PageHeader,
+  MetaLine,
   ProgressBar,
   Section,
   UserRow,
 } from "@/components/layout";
-import { CubeField } from "@/components/three/cube-field";
+import { AppButton } from "@/components/ui/app-button";
 import type { BuildEvent } from "@/lib/build-activity";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
@@ -24,6 +25,13 @@ function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
 export default async function HomePage() {
   const user = await requireOnboardedUser();
   const [
@@ -32,6 +40,8 @@ export default async function HomePage() {
     partnerPool,
     updateEvents,
     briefCount,
+    activeCount,
+    teamUpdateCount,
     loggedCount,
     witnessCount,
   ] = await Promise.all([
@@ -47,6 +57,12 @@ export default async function HomePage() {
             },
           },
         },
+        updates: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
+        _count: { select: { updates: true } },
       },
     }),
     prisma.project.count({
@@ -78,6 +94,12 @@ export default async function HomePage() {
       take: 500,
     }),
     prisma.project.count({ where: memberProjectWhere(user.id) }),
+    prisma.project.count({
+      where: { ...memberProjectWhere(user.id), status: "ACTIVE" },
+    }),
+    prisma.projectUpdate.count({
+      where: { project: memberProjectWhere(user.id) },
+    }),
     prisma.projectUpdate.count({
       where: {
         authorId: user.id,
@@ -150,103 +172,90 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="border-app-divider bg-app-paper border p-8 lg:p-10">
-        <div className="grid items-stretch gap-10 lg:grid-cols-[1fr_auto]">
-          <div className="min-w-0">
-            <PageHeader
-              eyebrow="Home"
-              title="Build together. Show what shipped."
-              description="Invite teammates, log the work, and publish the result."
-            />
-            <BuildPath stages={buildStages} />
-            {publishedCount > 0 && user.username ? (
-              <p className="text-app-body text-body-sm mt-6">
-                <Link
-                  href={`/u/${user.username}`}
-                  className="border-app-ink text-app-ink border-b pb-0.5 font-medium"
-                >
-                  View public profile
-                </Link>
-              </p>
-            ) : null}
-          </div>
-          <div className="relative hidden min-h-72 w-[24rem] shrink-0 justify-self-end lg:block xl:min-h-80 xl:w-[28rem]">
-            <CubeField className="absolute inset-0" />
-            <div aria-hidden className="pointer-events-none absolute top-0 left-0">
-              <span className="bg-app-ink text-app-paper text-meta tracking-meta inline-block px-3 py-1.5 font-mono">
-                $ git init
-              </span>
-              <svg
-                viewBox="0 0 120 70"
-                fill="none"
-                className="text-app-ink ml-3 h-[70px] w-[120px]"
-              >
-                <path
-                  className="line-draw"
-                  pathLength="100"
-                  d="M1 0 v46 h96"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </div>
-            <span className="text-app-meta text-meta tracking-meta pointer-events-none absolute right-0 bottom-1 font-mono">
-              # tap a cube to commit it
-            </span>
-          </div>
+    <div className="flex flex-1 flex-col gap-5">
+      <header className="border-app-divider bg-app-paper flex flex-col gap-4 border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
+            Workspace
+          </p>
+          <h1 className="text-app-ink mt-1 font-serif text-4xl leading-none font-light">Home</h1>
+          <p className="text-app-body mt-2 text-sm">{displayName(user.fullName, user.username)}</p>
         </div>
-      </section>
+        <div className="flex flex-wrap gap-2">
+          {publishedCount > 0 && user.username ? (
+            <AppButton asChild variant="secondary">
+              <Link href={`/u/${user.username}`}>Public profile</Link>
+            </AppButton>
+          ) : null}
+          <AppButton asChild>
+            <Link href="/projects#new-project">New project</Link>
+          </AppButton>
+        </div>
+      </header>
+
+      <dl className="border-app-divider bg-app-paper grid grid-cols-2 divide-x divide-y border sm:grid-cols-4 sm:divide-y-0">
+        <HomeStat label="Projects" value={briefCount} />
+        <HomeStat label="Active" value={activeCount} />
+        <HomeStat label="Updates" value={teamUpdateCount} />
+        <HomeStat label="Published" value={publishedCount} />
+      </dl>
+
+      <Section eyebrow="Proof path" title="Build status">
+        <BuildPath stages={buildStages} />
+      </Section>
 
       <Section
-        eyebrow="Active builds"
-        title="What you are shipping"
+        eyebrow="Projects"
+        title="Current work"
         action={
-          <Link
-            href="/projects"
-            className="border-app-ink text-app-ink shrink-0 border-b pb-0.5 text-sm font-medium transition-opacity hover:opacity-60"
-          >
-            Open pipeline
-          </Link>
+          <AppButton asChild variant="secondary" size="sm">
+            <Link href="/projects">All projects</Link>
+          </AppButton>
         }
       >
         {projects.length ? (
-          <HairlineGrid>
-            {projects.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.id}`}
-                className="bg-app-paper hover:bg-app-wash grid gap-4 p-5 transition-colors md:grid-cols-[1fr_10rem] md:items-center"
-              >
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-app-ink font-semibold">{project.name}</p>
-                    <Chip>{project.status.toLowerCase()}</Chip>
-                    {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
-                  </div>
-                  <p className="text-app-body text-body mt-2 line-clamp-1">{project.description}</p>
-                  <p className="text-app-meta text-chip tracking-meta mt-3 font-mono uppercase">
-                    {project.members
-                      .map((member) => displayName(member.user.fullName, member.user.username))
-                      .join(" · ")}
-                  </p>
-                </div>
-                <ProgressBar value={project.progress} />
-              </Link>
-            ))}
-          </HairlineGrid>
+          <DataList ariaLabel="Current projects">
+            {projects.map((project) => {
+              const lastActivity = project.updates[0]?.createdAt ?? project.updatedAt;
+              return (
+                <DataRow key={project.id} className="p-0">
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="hover:bg-app-wash grid gap-4 px-4 py-4 transition-colors md:grid-cols-[minmax(0,1fr)_10rem] md:items-center"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-app-ink text-base font-semibold">{project.name}</h2>
+                        <Chip tone={project.status === "COMPLETED" ? "ink" : "wash"}>
+                          {project.status.toLowerCase()}
+                        </Chip>
+                        {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
+                      </div>
+                      <p className="text-app-body mt-1 line-clamp-1 text-sm">
+                        {project.description}
+                      </p>
+                      <MetaLine className="mt-2">
+                        <span>{plural(project.members.length, "member")}</span>
+                        <span aria-hidden>·</span>
+                        <span>{plural(project._count.updates, "update")}</span>
+                        <span aria-hidden>·</span>
+                        <span>{formatDate(lastActivity)}</span>
+                      </MetaLine>
+                    </div>
+                    <ProgressBar value={project.progress} />
+                  </Link>
+                </DataRow>
+              );
+            })}
+          </DataList>
         ) : (
           <EmptyState
             eyebrow="Empty pipeline"
             title="No builds yet."
-            description="Create a brief as the first task"
             action={
-              <Link
-                href="/projects"
-                className="border-app-ink text-app-ink border-b pb-0.5 text-sm font-medium"
-              >
-                Start a build
-              </Link>
+              <AppButton asChild>
+                <Link href="/projects#new-project">Create project</Link>
+              </AppButton>
             }
           />
         )}
@@ -266,14 +275,17 @@ export default async function HomePage() {
           }
         >
           {inviteSuggestions.length ? (
-            <HairlineGrid>
+            <DataList ariaLabel="Suggested partners">
               {inviteSuggestions.map(({ candidate, breakdown }) => {
                 const shared = [...breakdown.sharedSkills, ...breakdown.sharedInterests].slice(
                   0,
                   4,
                 );
                 return (
-                  <div key={candidate.id} className="bg-app-paper space-y-4 p-5">
+                  <DataRow
+                    key={candidate.id}
+                    className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <UserRow
                       fullName={candidate.fullName}
                       username={candidate.username}
@@ -300,30 +312,38 @@ export default async function HomePage() {
                       fixedProject={fixedProject}
                       triggerLabel="Invite to build"
                     />
-                  </div>
+                  </DataRow>
                 );
               })}
-            </HairlineGrid>
+            </DataList>
           ) : (
             <EmptyState
               eyebrow="No overlap yet"
               title="No matching builders yet."
               action={
-                <Link
-                  href="/partners"
-                  className="border-app-ink text-app-ink border-b pb-0.5 text-sm font-medium"
-                >
-                  Browse partners
-                </Link>
+                <AppButton asChild variant="secondary">
+                  <Link href="/partners">Browse partners</Link>
+                </AppButton>
               }
             />
           )}
         </Section>
       ) : null}
 
-      <div className="bg-app-paper border-app-divider border p-6 lg:p-8">
-        <BuildHeatmap events={buildEvents} />
-      </div>
+      <Section eyebrow="Activity" title="Build history">
+        <div className="bg-app-paper border-app-divider border p-4 lg:p-5">
+          <BuildHeatmap events={buildEvents} />
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+function HomeStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="p-4">
+      <dt className="text-app-meta text-xs">{label}</dt>
+      <dd className="text-app-ink mt-1 text-2xl font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }
