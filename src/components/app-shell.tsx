@@ -15,6 +15,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { AccountMenu } from "@/components/account-menu";
+import { BrandMark } from "@/components/brand-mark";
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
@@ -48,7 +49,7 @@ const MOBILE_NAV = ["/home", "/projects", "/forum", "/partners", "/inbox"].map((
   allNavItems.find((item) => item.href === href)!,
 );
 
-const railRoutes = new Set(["/projects", "/partners", "/inbox"]);
+const railRoutes = new Set(["/projects", "/inbox"]);
 
 type AppShellProps = {
   children: ReactNode;
@@ -186,11 +187,8 @@ function AppShellChrome({
       <header className="border-app-chrome-border bg-app-chrome text-app-chrome-fg sticky top-0 z-50 border-b">
         <div className="mx-auto flex h-16 w-full max-w-[88rem] items-center justify-between gap-6 px-6 lg:px-12">
           <div className="flex min-w-0 flex-1 items-center gap-8">
-            <Link
-              href="/home"
-              className="border-app-chrome-fg hover:bg-app-chrome-fg hover:text-app-chrome flex h-10 shrink-0 items-center border px-3 font-[family-name:var(--font-newsreader)] text-[1.4rem] leading-none font-light tracking-[-0.04em] transition-colors"
-            >
-              mebi
+            <Link href="/home" className="flex h-10 shrink-0 items-center">
+              <BrandMark variant="white" className="h-8" />
             </Link>
             <div ref={navSlotRef} className="relative hidden min-w-0 flex-1 lg:block">
               <div
@@ -244,7 +242,7 @@ function AppShellChrome({
                     <span
                       aria-hidden
                       className={cn(
-                        "bg-app-chrome-fg absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 transition-all duration-300 ease-out",
+                        "bg-app-accent absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 transition-all duration-300 ease-out",
                         isActive(item.href) ? "w-full" : "w-0 group-hover:w-full",
                       )}
                     />

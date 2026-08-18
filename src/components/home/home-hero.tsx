@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/brand-mark";
 import { KineticLine } from "@/components/home/kinetic-line";
 import { ArrowCircle } from "@/components/ui/arrow-circle";
 
@@ -19,22 +20,18 @@ export function HomeHero() {
         alt="KCL students building hardware together"
         className="absolute inset-0 h-full w-full object-cover"
       />
-    
-      <div className="pointer-events-none absolute inset-0 bg-[#000000]/40" />
 
+      <div className="pointer-events-none absolute inset-0 bg-[#000000]/40" />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-[#000000]/80 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#000000]/92 via-[#000000]/45 to-transparent" />
-    
+
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_42%,transparent_56%,rgba(0,0,0,0.45)_100%)]" />
 
       <div className="relative z-10 flex flex-1 flex-col">
         <div className="mx-auto flex w-full max-w-[88rem] items-center justify-between gap-8 px-6 pt-16 pb-6 lg:px-20">
-          <Link
-            href="/"
-            className="flex h-[4.5rem] items-center border border-[#ffffff] px-5 font-[family-name:var(--font-newsreader)] text-[2.5rem] leading-none font-light tracking-[-0.04em] text-[#ffffff] transition-colors hover:bg-[#ffffff] hover:text-[#000000]"
-          >
-            Hackollab
+          <Link href="/" aria-label="Hackollab home" className="shrink-0">
+            <BrandMark variant="white" className="h-12 lg:h-14" />
           </Link>
           <div className="flex items-center gap-10 xl:gap-12">
             <nav
@@ -67,12 +64,12 @@ export function HomeHero() {
           <KineticLine
             as="h1"
             variant="headline"
-            className="font-[family-name:var(--font-newsreader)] text-[clamp(3rem,7vw,6rem)] leading-[0.98] font-light tracking-[-0.02em] text-[#ffffff] [text-shadow:0_2px_28px_rgba(0,0,0,0.55)]"
+            className="font-sans text-[clamp(3rem,7vw,6rem)] leading-[0.98] font-medium text-[#ffffff] [text-shadow:0_2px_28px_rgba(0,0,0,0.55)]"
           >
             <span className="block text-[0.82em]">
               <span className="font-semibold">Build</span> <span className="font-normal">with</span>
             </span>
-            <span className="block font-light ml-[0.8em]">Hackollab</span>
+            <span className="ml-[0.8em] block font-medium">Hackollab</span>
           </KineticLine>
           <div className="lg:-mb-12">
             <KineticLine
@@ -80,8 +77,8 @@ export function HomeHero() {
               as="p"
               className="max-w-sm text-[21px] leading-8 text-[#f2f2f2] [text-shadow:0_1px_16px_rgba(0,0,0,0.65)]"
             >
-              Hackollab is the <span className="text-[#ffffff]">#1</span> place to build an exceptional portfolio
-              for UK university students.
+              Hackollab is the <span className="text-[#ffffff]">#1</span> place to build an
+              exceptional portfolio for UK university students.
             </KineticLine>
             <KineticLine delay={180} className="mt-6 flex flex-wrap items-center gap-6">
               <Link
