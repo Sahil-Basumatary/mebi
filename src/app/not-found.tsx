@@ -9,7 +9,7 @@ export default function NotFound() {
         className="w-full max-w-xl"
         eyebrow="404"
         title="Page not found."
-        description="That URL does not exist on mebi."
+        description="That URL does not exist on Hackollab."
         action={
           <>
             <Link

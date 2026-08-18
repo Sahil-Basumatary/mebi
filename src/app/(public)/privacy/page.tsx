@@ -13,39 +13,37 @@ export default function PrivacyPolicyPage() {
   return (
     <article className="text-app-body max-w-3xl">
       <header className="border-app-divider border-b pb-8">
-        <p className="text-app-label text-eyebrow font-semibold tracking-eyebrow uppercase">
+        <p className="text-app-label text-eyebrow tracking-eyebrow font-semibold uppercase">
           Legal
         </p>
-        <h1 className="text-app-ink mt-3 font-serif text-4xl font-light tracking-tight sm:text-5xl">
+        <h1 className="text-app-ink mt-3 text-4xl font-medium tracking-tight sm:text-5xl">
           Privacy Policy
         </h1>
         <p className="text-app-meta mt-4 text-sm">
-          Last updated: {UPDATED}. This policy applies to Hackollab (including the product
-          interface that may appear as “mebi” while we finish rebranding) at{" "}
+          Last updated: {UPDATED}. This policy applies to Hackollab at{" "}
           <span className="text-app-ink">hackollab.com</span> and related app surfaces.
         </p>
       </header>
 
-      <div className="prose-legal mt-10 space-y-10 text-body-sm leading-7">
+      <div className="prose-legal text-body-sm mt-10 space-y-10 leading-7">
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">1. Who we are</h2>
+          <h2 className="text-app-ink text-2xl font-medium">1. Who we are</h2>
           <p>
-            Hackollab (“Hackollab”, “we”, “us”, “our”) is a UK student collaboration product
-            that helps university builders find partners, ship projects, and publish
-            peer-verified proof of work.
+            Hackollab (“Hackollab”, “we”, “us”, “our”) is a UK student collaboration product that
+            helps university builders find partners, ship projects, and publish peer-verified proof
+            of work.
           </p>
           <p>
-            Hackollab is operated by its founders: Maahir Shah (CEO) and Sahil Basumatary
-            (CTO). For privacy purposes, the primary contact is Sahil Basumatary. Until a UK
-            limited company is incorporated and named in an updated version of this policy, the
-            founders of Hackollab are the data controllers for personal data processed through the
-            service.
+            Hackollab is operated by its founders: Maahir Shah (CEO) and Sahil Basumatary (CTO). For
+            privacy purposes, the primary contact is Sahil Basumatary. Until a UK limited company is
+            incorporated and named in an updated version of this policy, the founders of Hackollab
+            are the data controllers for personal data processed through the service.
           </p>
           <p>
             Privacy contact:{" "}
             <a
               href="mailto:sahil@sahilbasumatary.dev"
-              className="text-app-ink font-medium underline underline-offset-2"
+              className="text-app-link font-medium underline underline-offset-2"
             >
               sahil@sahilbasumatary.dev
             </a>
@@ -54,7 +52,7 @@ export default function PrivacyPolicyPage() {
             Website:{" "}
             <a
               href="https://hackollab.com"
-              className="text-app-ink font-medium underline underline-offset-2"
+              className="text-app-link font-medium underline underline-offset-2"
             >
               https://hackollab.com
             </a>
@@ -62,27 +60,27 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">2. Scope</h2>
+          <h2 className="text-app-ink text-2xl font-medium">2. Scope</h2>
           <p>This policy covers personal data we process when you:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>visit our marketing or product websites;</li>
             <li>create an account or sign in;</li>
             <li>complete onboarding or edit your profile;</li>
-            <li>use projects, partner discovery, forum, requests, proof, leaderboards, or settings;</li>
+            <li>
+              use projects, partner discovery, forum, requests, proof, leaderboards, or settings;
+            </li>
             <li>publish or view public profiles and public proof pages;</li>
             <li>contact us about privacy or support.</li>
           </ul>
           <p>
             The service is currently intended for UK university students (in particular King’s
-            College London users with eligible institutional email addresses). Access may be
-            limited by email allowlists or similar controls.
+            College London users with eligible institutional email addresses). Access may be limited
+            by email allowlists or similar controls.
           </p>
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">
-            3. Personal data we collect
-          </h2>
+          <h2 className="text-app-ink text-2xl font-medium">3. Personal data we collect</h2>
           <p>We collect the categories below. Exact fields depend on what you choose to provide.</p>
 
           <h3 className="text-app-ink pt-2 text-base font-semibold">3.1 Account and identity</h3>
@@ -90,38 +88,49 @@ export default function PrivacyPolicyPage() {
             <li>name and email address;</li>
             <li>authentication identifiers from our auth provider (Clerk), including user ID;</li>
             <li>username and profile photo (if provided);</li>
-            <li>sign-in and security settings you manage through Clerk (for example password,
-              passkeys, or multi-factor authentication where enabled).</li>
+            <li>
+              sign-in and security settings you manage through Clerk (for example password,
+              passkeys, or multi-factor authentication where enabled).
+            </li>
           </ul>
 
           <h3 className="text-app-ink pt-2 text-base font-semibold">3.2 Profile and connections</h3>
           <ul className="list-disc space-y-1 pl-5">
             <li>bio, pronouns, role, skills, interests, and solo/team preferences;</li>
-            <li>optional linked profiles or booking links (for example GitHub, LinkedIn, Discord,
-              calendar URLs) and whether you choose to show them publicly;</li>
+            <li>
+              optional linked profiles or booking links (for example GitHub, LinkedIn, Discord,
+              calendar URLs) and whether you choose to show them publicly;
+            </li>
             <li>other social links you add;</li>
             <li>profile visibility settings (including private profile).</li>
           </ul>
 
           <h3 className="text-app-ink pt-2 text-base font-semibold">3.3 Product activity</h3>
           <ul className="list-disc space-y-1 pl-5">
-            <li>projects you create or join (name, description, stack, status, progress,
-              visibility);</li>
+            <li>
+              projects you create or join (name, description, stack, status, progress, visibility);
+            </li>
             <li>build-log updates and contribution notes;</li>
             <li>forum threads, posts, tags, votes, and related in-app notifications;</li>
             <li>invites, join requests, messages, and related request status;</li>
             <li>peer signatures / attestations and related statements;</li>
-            <li>published proof pages (slug, summary, publish time, and related public content);</li>
+            <li>
+              published proof pages (slug, summary, publish time, and related public content);
+            </li>
             <li>leaderboard-relevant activity derived from published and attested work;</li>
             <li>in-app notifications and notification preferences;</li>
             <li>product preferences (theme, timezone, language, startup page, shortcuts);</li>
             <li>cookie preference choices.</li>
           </ul>
 
-          <h3 className="text-app-ink pt-2 text-base font-semibold">3.4 Technical and usage data</h3>
+          <h3 className="text-app-ink pt-2 text-base font-semibold">
+            3.4 Technical and usage data
+          </h3>
           <ul className="list-disc space-y-1 pl-5">
-            <li>IP address, device/browser information, and approximate location derived from
-              network data;</li>
+            <li>
+              IP address, device/browser information, and approximate location derived from network
+              data;
+            </li>
             <li>pages visited, timestamps, referrers, and diagnostic logs;</li>
             <li>cookies and similar technologies as described in section 8.</li>
           </ul>
@@ -130,8 +139,8 @@ export default function PrivacyPolicyPage() {
           <ul className="list-disc space-y-1 pl-5">
             <li>
               <span className="text-app-ink font-medium">Clerk</span> provides authentication and
-              account security. When you sign up or sign in, Clerk processes identity data and
-              may send us account events (for example create/update/delete) via secured webhooks.
+              account security. When you sign up or sign in, Clerk processes identity data and may
+              send us account events (for example create/update/delete) via secured webhooks.
             </li>
             <li>
               If you later connect social accounts through verified OAuth (for example Discord or
@@ -139,8 +148,8 @@ export default function PrivacyPolicyPage() {
               those providers release with your consent.
             </li>
             <li>
-              Hosting, database, and file storage providers process technical data as our
-              processors (see section 6).
+              Hosting, database, and file storage providers process technical data as our processors
+              (see section 6).
             </li>
           </ul>
 
@@ -152,7 +161,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">
+          <h2 className="text-app-ink text-2xl font-medium">
             4. Why we use your data (purposes and lawful bases)
           </h2>
           <p>
@@ -219,7 +228,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">5. Public information</h2>
+          <h2 className="text-app-ink text-2xl font-medium">5. Public information</h2>
           <p>
             Some content is designed to be public when you publish or when your profile is not set
             to private. That can include your display name, username, bio, selected skills, badges,
@@ -237,9 +246,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">
-            6. Who we share data with
-          </h2>
+          <h2 className="text-app-ink text-2xl font-medium">6. Who we share data with</h2>
           <p>
             We do not sell your personal data. We share data only as needed to run Hackollab, with
             your direction, or where the law requires.
@@ -295,9 +302,9 @@ export default function PrivacyPolicyPage() {
               security.
             </li>
             <li>
-              <span className="text-app-ink font-medium">Successors</span> — if Hackollab is involved
-              in a reorganisation, incorporation, financing, or transfer of assets, personal data
-              may transfer under appropriate safeguards and notice where required.
+              <span className="text-app-ink font-medium">Successors</span> — if Hackollab is
+              involved in a reorganisation, incorporation, financing, or transfer of assets,
+              personal data may transfer under appropriate safeguards and notice where required.
             </li>
           </ul>
           <p>
@@ -308,9 +315,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">
-            7. International transfers
-          </h2>
+          <h2 className="text-app-ink text-2xl font-medium">7. International transfers</h2>
           <p>
             Some providers may process data outside the UK (for example in the EEA or United
             States). Where that happens, we rely on appropriate transfer mechanisms available to
@@ -320,7 +325,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">8. Cookies</h2>
+          <h2 className="text-app-ink text-2xl font-medium">8. Cookies</h2>
           <p>We use cookies and similar technologies in these groups:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
@@ -340,14 +345,14 @@ export default function PrivacyPolicyPage() {
             </li>
           </ul>
           <p>
-            You can review or change non-essential cookie choices in product settings (Preferences
-            → cookies) or through the cookie banner where shown. Browser controls can also block
+            You can review or change non-essential cookie choices in product settings (Preferences →
+            cookies) or through the cookie banner where shown. Browser controls can also block
             cookies, but necessary cookies may be required for sign-in to work.
           </p>
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">9. Retention</h2>
+          <h2 className="text-app-ink text-2xl font-medium">9. Retention</h2>
           <p>We keep personal data only as long as needed for the purposes above:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
@@ -378,7 +383,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">10. Security</h2>
+          <h2 className="text-app-ink text-2xl font-medium">10. Security</h2>
           <p>
             We use technical and organisational measures appropriate to a student collaboration
             product, including encrypted transport (HTTPS), access-controlled cloud infrastructure,
@@ -389,7 +394,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">11. Your rights</h2>
+          <h2 className="text-app-ink text-2xl font-medium">11. Your rights</h2>
           <p>Under UK GDPR you may have the right to:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>access your personal data;</li>
@@ -404,7 +409,7 @@ export default function PrivacyPolicyPage() {
             To exercise these rights, email{" "}
             <a
               href="mailto:sahil@sahilbasumatary.dev"
-              className="text-app-ink font-medium underline underline-offset-2"
+              className="text-app-link font-medium underline underline-offset-2"
             >
               sahil@sahilbasumatary.dev
             </a>
@@ -425,7 +430,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">12. Children</h2>
+          <h2 className="text-app-ink text-2xl font-medium">12. Children</h2>
           <p>
             Hackollab is aimed at university students in the UK. It is not directed at children
             under 13, and we do not knowingly collect personal data from children under 13. If you
@@ -435,19 +440,17 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">
-            13. Automated decision-making
-          </h2>
+          <h2 className="text-app-ink text-2xl font-medium">13. Automated decision-making</h2>
           <p>
-            We use product logic such as match scoring and leaderboard ranking based on activity
-            you generate in the service. These features help surface relevant partners or rankings.
-            They are not used to make legal or similarly significant decisions about you without
-            human involvement.
+            We use product logic such as match scoring and leaderboard ranking based on activity you
+            generate in the service. These features help surface relevant partners or rankings. They
+            are not used to make legal or similarly significant decisions about you without human
+            involvement.
           </p>
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">14. Changes to this policy</h2>
+          <h2 className="text-app-ink text-2xl font-medium">14. Changes to this policy</h2>
           <p>
             We may update this policy as Hackollab evolves (for example when we incorporate a
             company, add OAuth connections, or expand beyond the UK). We will change the “Last
@@ -457,7 +460,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-app-ink font-serif text-2xl font-light">15. Contact</h2>
+          <h2 className="text-app-ink text-2xl font-medium">15. Contact</h2>
           <p>
             Questions about this policy or your personal data:
             <br />
@@ -466,7 +469,7 @@ export default function PrivacyPolicyPage() {
             Email:{" "}
             <a
               href="mailto:sahil@sahilbasumatary.dev"
-              className="text-app-ink font-medium underline underline-offset-2"
+              className="text-app-link font-medium underline underline-offset-2"
             >
               sahil@sahilbasumatary.dev
             </a>
@@ -474,7 +477,7 @@ export default function PrivacyPolicyPage() {
             Web:{" "}
             <a
               href="https://hackollab.com"
-              className="text-app-ink font-medium underline underline-offset-2"
+              className="text-app-link font-medium underline underline-offset-2"
             >
               https://hackollab.com
             </a>

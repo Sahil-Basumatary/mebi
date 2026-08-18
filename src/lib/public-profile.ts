@@ -145,10 +145,15 @@ export const getPublishedBuildsForUser = cache(async (userId: string) => {
       techStack: true,
       members: {
         select: {
+          userId: true,
           user: {
             select: { fullName: true, username: true },
           },
         },
+      },
+      signatures: {
+        where: { revokedAt: null },
+        select: { signerId: true, subjectId: true, revokedAt: true },
       },
     },
   });

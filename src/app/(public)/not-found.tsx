@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RouteState } from "@/components/layout";
+import { AppButton } from "@/components/ui/app-button";
 
 export default function PublicNotFound() {
   return (
@@ -9,18 +10,12 @@ export default function PublicNotFound() {
       description="This public page is missing or no longer published."
       action={
         <>
-          <Link
-            href="/"
-            className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-10 items-center rounded-full px-5 text-sm font-medium transition-colors"
-          >
-            Back home
-          </Link>
-          <Link
-            href="/sign-up"
-            className="border-app-divider text-app-ink hover:bg-app-wash inline-flex h-10 items-center border px-5 text-sm font-medium transition-colors"
-          >
-            Build with us
-          </Link>
+          <AppButton asChild>
+            <Link href="/">Back home</Link>
+          </AppButton>
+          <AppButton asChild variant="secondary">
+            <Link href="/sign-up">Build with us</Link>
+          </AppButton>
         </>
       }
     />

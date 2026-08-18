@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { RouteState } from "@/components/layout/route-state";
+import { AppButton } from "@/components/ui/app-button";
 
 type PublicErrorProps = {
   error: Error & { digest?: string };
@@ -21,19 +22,12 @@ export default function PublicError({ error, reset }: PublicErrorProps) {
       description="Try again in a moment."
       action={
         <>
-          <button
-            type="button"
-            onClick={reset}
-            className="bg-app-ink text-app-paper hover:bg-app-accent-hover inline-flex h-10 items-center rounded-full px-5 text-sm font-medium transition-colors"
-          >
+          <AppButton type="button" onClick={reset}>
             Try again
-          </button>
-          <Link
-            href="/"
-            className="border-app-divider text-app-ink hover:bg-app-wash inline-flex h-10 items-center border px-5 text-sm font-medium transition-colors"
-          >
-            Back home
-          </Link>
+          </AppButton>
+          <AppButton asChild variant="secondary">
+            <Link href="/">Back home</Link>
+          </AppButton>
         </>
       }
     />
