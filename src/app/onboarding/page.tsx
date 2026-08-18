@@ -1,7 +1,9 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { OnboardingForm } from "./onboarding-form";
+import { BrandMark } from "@/components/brand-mark";
+import { SkipLink } from "@/components/layout/skip-link";
 import { prisma } from "@/lib/prisma";
+import { OnboardingForm } from "./onboarding-form";
 
 export default async function OnboardingPage() {
   const { userId } = await auth();
@@ -34,43 +36,43 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#000000] text-[#ffffff]">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 px-6 py-8 lg:grid-cols-[18rem_1fr] lg:px-10">
+    <main className="bg-app-canvas text-app-ink min-h-screen">
+      <SkipLink />
+      <div className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[16rem_1fr] lg:px-10">
         <aside className="lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]">
-          <div className="flex h-full flex-col justify-between border border-[#262626] bg-[#050505] p-5">
+          <div className="border-app-divider bg-app-paper flex h-full flex-col justify-between border p-5">
             <div>
-              <p className="text-sm font-semibold tracking-[-0.02em]">mebi</p>
-              <p className="mt-1 text-xs text-[#d8d8d8]">Profile setup</p>
-              <div className="mt-8 space-y-2 text-sm">
+              <BrandMark className="h-7" />
+              <p className="text-app-meta mt-2 text-xs">Profile setup</p>
+              <ol className="mt-8 space-y-2 text-sm">
                 {["Identity", "Skills", "Role", "Preference"].map((item, index) => (
-                  <div key={item} className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[#d8d8d8]">
-                    <span className="flex h-5 w-5 items-center justify-center rounded border border-[#333333] text-[11px]">
+                  <li key={item} className="text-app-body flex items-center gap-3 px-1 py-1">
+                    <span className="border-app-divider text-app-meta flex h-5 w-5 items-center justify-center border text-[11px]">
                       {index + 1}
                     </span>
                     {item}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </div>
-            <p className="text-xs leading-6 text-[#d8d8d8]">
-              This setup turns your profile into useful matching signal for KCL project work.
+            <p className="text-app-meta text-xs leading-5">
+              These fields power matching and your public profile.
             </p>
           </div>
         </aside>
         <section className="pb-16">
-          <header className="border-b border-[#262626] pb-10 pt-8">
-            <p className="text-[12px] font-semibold tracking-[0.3em] text-[#8f8f8f] uppercase">
+          <header className="border-app-divider bg-app-paper border px-5 py-5">
+            <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               Onboarding
             </p>
-            <h1 className="mt-5 max-w-3xl font-serif text-[clamp(2.8rem,6vw,5rem)] leading-[1.02] font-light tracking-[-0.04em]">
-              Create the profile your future teammates can trust.
+            <h1 className="text-app-ink mt-2 text-4xl leading-tight font-medium sm:text-5xl">
+              Set up your builder profile
             </h1>
-            <p className="mt-6 max-w-2xl text-[17px] leading-7 text-[#d8d8d8]">
-              Tell us your role, skills, and interests so mebi can make project discovery feel like
-              a focused workspace, not another noisy feed.
+            <p className="text-app-body mt-3 max-w-2xl text-sm leading-6">
+              Role, skills, and interests are used to match you with projects and teammates.
             </p>
           </header>
-          <div className="mt-10">
+          <div className="mt-6">
             <OnboardingForm
               initialValues={{
                 fullName: dbUser.fullName ?? clerkUser?.fullName ?? "",

@@ -9,7 +9,7 @@ export function FeaturedStories() {
         <div className="flex items-end justify-between pb-10">
           <KineticLine
             variant="headline"
-            className="font-[family-name:var(--font-newsreader)] text-[clamp(1.7rem,2.6vw,2.4rem)] font-light tracking-[-0.015em] text-[#ffffff]"
+            className="font-sans text-[clamp(1.7rem,2.6vw,2.4rem)] font-medium text-[#ffffff]"
           >
             Featured stories
           </KineticLine>
@@ -44,7 +44,7 @@ export function FeaturedStories() {
                   as="h3"
                   delay={index * 70 + 40}
                   variant="headline"
-                  className="font-[family-name:var(--font-newsreader)] text-[1.6rem] leading-[1.18] font-light text-[#ffffff]"
+                  className="font-sans text-[1.6rem] leading-[1.18] font-medium text-[#ffffff]"
                 >
                   {story.title}
                 </KineticLine>

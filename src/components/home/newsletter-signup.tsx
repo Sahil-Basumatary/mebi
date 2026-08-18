@@ -7,7 +7,7 @@ export function NewsletterSignup() {
     <section className="bg-[#ffffff] text-[#000000]">
       <div className="mx-auto grid w-full max-w-[88rem] gap-16 px-6 py-28 lg:grid-cols-[0.85fr_1.15fr] lg:px-12 lg:py-40">
         <div>
-          <KineticLine className="flex items-end gap-7 text-[14px] font-semibold tracking-[0.3em] text-[#303030] uppercase leading-none">
+          <KineticLine className="flex items-end gap-7 text-[14px] leading-none font-semibold tracking-[0.3em] text-[#303030] uppercase">
             <span>Stay up to date</span>
             <span className="h-0.5 w-14 bg-[#000000]" />
           </KineticLine>
@@ -15,7 +15,7 @@ export function NewsletterSignup() {
             as="p"
             delay={50}
             variant="headline"
-            className="mt-14 max-w-xl font-[family-name:var(--font-newsreader)] text-[clamp(2.35rem,4.4vw,5rem)] leading-[1.03] font-light tracking-[-0.025em]"
+            className="mt-14 max-w-xl font-sans text-[clamp(2.35rem,4.4vw,5rem)] leading-[1.03] font-medium"
           >
             Sign up for early access and the occasional note on what we are building.
           </KineticLine>
@@ -56,7 +56,7 @@ export function NewsletterSignup() {
       </div>
       <div className="border-t border-[#d8d8d8]">
         <div className="mx-auto flex w-full max-w-[88rem] flex-col justify-between gap-3 px-6 py-8 text-[12px] tracking-[0.04em] text-[#555555] sm:flex-row lg:px-12">
-          <span>mebi — built for KCL student builders</span>
+          <span>Hackollab — built for KCL student builders</span>
           <span>Find serious project partners before the idea dies</span>
         </div>
       </div>

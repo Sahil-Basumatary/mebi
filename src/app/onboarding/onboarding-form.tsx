@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/ui/app-button";
 import { TagCombobox } from "@/components/ui/tag-combobox";
 import { INTEREST_OPTIONS, SKILL_OPTIONS } from "@/lib/expertise-options";
 import { completeOnboarding, type OnboardingState } from "./actions";
@@ -26,32 +26,25 @@ function roleCardLabel(role: "BUILDER" | "SPECIALIST" | "LEARNER"): string {
 }
 
 function roleCardDescription(role: "BUILDER" | "SPECIALIST" | "LEARNER"): string {
-  if (role === "BUILDER") return "I want to build portfolio projects with reliable teammates.";
-  if (role === "SPECIALIST") return "I want to apply a strong technical niche to focused projects.";
-  return "I am still learning and want beginner-friendly project partners.";
+  if (role === "BUILDER") return "I want to ship projects with reliable teammates.";
+  if (role === "SPECIALIST") return "I want to apply a technical niche to focused work.";
+  return "I am still learning and want beginner-friendly partners.";
 }
+
+const fieldClass =
+  "border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-accent border px-3 py-3 text-sm outline-none";
 
 export function OnboardingForm({ initialValues }: OnboardingFormProps) {
   const initialState: OnboardingState = { error: null };
   const [state, formAction, isPending] = useActionState(completeOnboarding, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
-      <section className="border border-[#262626] bg-[#0b0b0b] p-6">
-        <div className="mb-6 flex items-center justify-between border-b border-[#1f1f1f] pb-4">
-          <div>
-            <p className="text-[12px] font-semibold tracking-[0.24em] text-[#8f8f8f] uppercase">
-              Identity
-            </p>
-            <p className="mt-1 text-[17px] text-[#d8d8d8]">The public face of your project profile.</p>
-          </div>
-          <span className="hidden rounded-full border border-[#262626] px-3 py-1 text-xs text-[#d8d8d8] sm:inline-flex">
-            Required
-          </span>
-        </div>
-        <div className="grid gap-5 sm:grid-cols-2">
+    <form action={formAction} className="flex flex-col gap-4">
+      <section className="border-app-divider bg-app-paper border p-5">
+        <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">Identity</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
+            <span className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               Name *
             </span>
             <input
@@ -59,24 +52,24 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
               defaultValue={initialValues.fullName}
               required
               maxLength={120}
-              className="border-b border-[#262626] bg-transparent px-1 py-3 text-[#ffffff] outline-none placeholder:text-[#606060] focus:border-[#ffffff]"
+              className={fieldClass}
               placeholder="Sahil Basumatary"
             />
           </label>
           <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
+            <span className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               Nickname
             </span>
             <input
               name="username"
               defaultValue={initialValues.username}
               maxLength={40}
-              className="border-b border-[#262626] bg-transparent px-1 py-3 text-[#ffffff] outline-none placeholder:text-[#606060] focus:border-[#ffffff]"
+              className={fieldClass}
               placeholder="sahil"
             />
           </label>
           <label className="flex flex-col gap-2 text-sm sm:col-span-2">
-            <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
+            <span className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               Profile picture URL
             </span>
             <input
@@ -84,12 +77,12 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
               type="url"
               defaultValue={initialValues.imageUrl}
               maxLength={500}
-              className="border-b border-[#262626] bg-transparent px-1 py-3 text-[#ffffff] outline-none placeholder:text-[#606060] focus:border-[#ffffff]"
+              className={fieldClass}
               placeholder="https://..."
             />
           </label>
           <label className="flex flex-col gap-2 text-sm sm:col-span-2">
-            <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
+            <span className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               Bio
             </span>
             <textarea
@@ -97,23 +90,20 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
               defaultValue={initialValues.bio}
               maxLength={400}
               rows={4}
-              className="resize-none border border-[#262626] bg-[#000000] px-4 py-3 text-[#ffffff] outline-none placeholder:text-[#606060] focus:border-[#ffffff]"
-              placeholder="What are you building and what kind of teammate are you looking for?"
+              className={`${fieldClass} resize-none leading-6`}
+              placeholder="What you are building and who you want to work with."
             />
           </label>
         </div>
       </section>
 
-      <section className="border border-[#262626] bg-[#0b0b0b] p-6">
-        <div className="mb-6 border-b border-[#1f1f1f] pb-4">
-          <p className="text-[12px] font-semibold tracking-[0.24em] text-[#8f8f8f] uppercase">
-            Skills and interests
-          </p>
-          <p className="mt-1 text-[17px] text-[#d8d8d8]">Tags make matching precise and browsable.</p>
-        </div>
-        <div className="grid gap-5 sm:grid-cols-2">
+      <section className="border-app-divider bg-app-paper border p-5">
+        <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
+          Skills and interests
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2 text-sm">
-            <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
+            <span className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               Skills
             </span>
             <TagCombobox
@@ -121,13 +111,12 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
               label="Skills"
               options={SKILL_OPTIONS}
               defaultValue={initialValues.skills}
-              placeholder="Type to search skills…"
+              placeholder="Search skills"
               hint="Search the list, or choose Other to add your own."
-              tone="onboarding"
             />
           </div>
           <div className="flex flex-col gap-2 text-sm">
-            <span className="text-xs font-semibold tracking-[0.18em] text-[#8f8f8f] uppercase">
+            <span className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
               Interests
             </span>
             <TagCombobox
@@ -135,22 +124,18 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
               label="Interests"
               options={INTEREST_OPTIONS}
               defaultValue={initialValues.interests}
-              placeholder="Type to search interests…"
+              placeholder="Search interests"
               hint="Search the list, or choose Other to add your own."
-              tone="onboarding"
             />
           </div>
         </div>
       </section>
 
-      <section className="border border-[#262626] bg-[#0b0b0b] p-6">
-        <div className="mb-6 border-b border-[#1f1f1f] pb-4">
-          <p className="text-[12px] font-semibold tracking-[0.24em] text-[#8f8f8f] uppercase">
-            Your role
-          </p>
-          <p className="mt-1 text-[17px] text-[#d8d8d8]">Choose the default lens for your workspace.</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+      <section className="border-app-divider bg-app-paper border p-5">
+        <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
+          Your role
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {(["BUILDER", "SPECIALIST", "LEARNER"] as const).map((role) => (
             <label key={role}>
               <input
@@ -160,42 +145,43 @@ export function OnboardingForm({ initialValues }: OnboardingFormProps) {
                 defaultChecked={initialValues.role === role}
                 className="peer sr-only"
               />
-              <div className="h-full border border-[#262626] bg-[#000000] p-4 transition-colors hover:bg-[#050505] peer-checked:border-[#ffffff] peer-checked:bg-[#050505]">
+              <div className="border-app-divider bg-app-wash hover:border-app-accent peer-checked:border-app-accent peer-checked:bg-app-paper h-full border p-4 transition-colors">
                 <p className="text-sm font-semibold">{roleCardLabel(role)}</p>
-                <p className="mt-2 text-[17px] leading-relaxed text-[#d8d8d8]">
-                  {roleCardDescription(role)}
-                </p>
+                <p className="text-app-body mt-2 text-sm leading-5">{roleCardDescription(role)}</p>
               </div>
             </label>
           ))}
         </div>
       </section>
 
-      <section className="border border-[#262626] bg-[#0b0b0b] p-6">
-        <p className="mb-4 text-[12px] font-semibold tracking-[0.24em] text-[#8f8f8f] uppercase">
+      <section className="border-app-divider bg-app-paper border p-5">
+        <p className="text-app-label mb-3 text-xs font-semibold tracking-[0.14em] uppercase">
           Partnering preference
         </p>
-        <label className="flex items-center gap-3 text-sm">
+        <label className="text-app-body flex items-center gap-3 text-sm">
           <input
             name="prefersSolo"
             type="checkbox"
             defaultChecked={initialValues.prefersSolo}
-            className="h-4 w-4 rounded border-[#262626]"
+            className="accent-app-accent h-4 w-4"
           />
           <span>I plan to focus on solo projects for now</span>
         </label>
       </section>
 
       {state.error ? (
-        <p className="border border-notification/30 bg-notification/10 px-3 py-2 text-sm text-notification">
+        <p
+          role="alert"
+          className="border-app-signal/30 bg-app-signal/10 text-app-signal border px-3 py-2 text-sm"
+        >
           {state.error}
         </p>
       ) : null}
 
       <div className="flex items-center justify-end">
-        <Button type="submit" size="lg" disabled={isPending} className="rounded-full px-7">
+        <AppButton type="submit" disabled={isPending}>
           {isPending ? "Saving profile..." : "Complete onboarding"}
-        </Button>
+        </AppButton>
       </div>
     </form>
   );

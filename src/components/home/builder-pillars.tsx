@@ -18,7 +18,7 @@ export function BuilderPillars() {
   return (
     <section id="builders" className="bg-[#000000] text-[#ffffff]">
       <div className="mx-auto w-full max-w-[88rem] px-6 pt-28 pb-32 lg:px-20 lg:pt-40 lg:pb-45">
-        <KineticLine className="flex items-end gap-7 text-[17px] font-medium tracking-[0.04em] text-[#ffffff] uppercase leading-none">
+        <KineticLine className="flex items-end gap-7 text-[17px] leading-none font-medium tracking-[0.04em] text-[#ffffff] uppercase">
           <span>For builders</span>
           <span className="h-0.5 w-14 bg-[#ffffff]" />
         </KineticLine>
@@ -28,7 +28,7 @@ export function BuilderPillars() {
             <KineticLine
               as="h2"
               variant="headline"
-              className="max-w-lg font-[family-name:var(--font-newsreader)] text-[clamp(2.2rem,4vw,4.2rem)] leading-[1.05] font-light tracking-[-0.04em] text-[#ffffff]"
+              className="max-w-lg font-sans text-[clamp(2.2rem,4vw,4.2rem)] leading-[1.05] font-medium text-[#ffffff]"
             >
               Exceptional career growth for individual students
             </KineticLine>
@@ -37,7 +37,8 @@ export function BuilderPillars() {
               as="p"
               className="mt-8 max-w-sm text-[19px] leading-8 text-[#ffffff] lg:ml-16"
             >
-              Hackollab teams partner with firms and sponsors to drive exceptional career growth for students.
+              Hackollab teams partner with firms and sponsors to drive exceptional career growth for
+              students.
             </KineticLine>
             <KineticLine delay={120} className="mt-12">
               <Link
@@ -63,7 +64,9 @@ export function BuilderPillars() {
                     </p>
                     <ArrowCircle tone="onDark" />
                   </button>
-                  {index < pillars.length - 1 ? <div className="h-0.5 w-full bg-[#d8d8d8]" /> : null}
+                  {index < pillars.length - 1 ? (
+                    <div className="h-0.5 w-full bg-[#d8d8d8]" />
+                  ) : null}
                 </div>
               ))}
             </div>

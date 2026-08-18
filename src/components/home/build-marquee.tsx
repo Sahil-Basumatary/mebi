@@ -8,7 +8,15 @@ type BuildMarqueeProps = {
   className?: string;
 };
 
-function MarqueeGroup({ text, repeat, hidden }: { text: string; repeat: number; hidden?: boolean }) {
+function MarqueeGroup({
+  text,
+  repeat,
+  hidden,
+}: {
+  text: string;
+  repeat: number;
+  hidden?: boolean;
+}) {
   const [firstWord, ...restWords] = text.trim().split(/\s+/);
   const restText = restWords.join(" ");
 
@@ -16,7 +24,7 @@ function MarqueeGroup({ text, repeat, hidden }: { text: string; repeat: number; 
     <div className="flex shrink-0 items-center" aria-hidden={hidden || undefined}>
       {Array.from({ length: repeat }).map((_, index) => (
         <div key={index} className="flex shrink-0 items-center">
-          <span className="whitespace-nowrap font-[family-name:var(--font-newsreader)] text-[clamp(11rem,11vw,18rem)] leading-none font-normal tracking-[-0.02em] text-[#f2f2f2]">
+          <span className="font-sans text-[clamp(11rem,11vw,18rem)] leading-none font-medium whitespace-nowrap text-[#f2f2f2]">
             <span className="font-semibold">{firstWord}</span>
             {restText ? ` ${restText}` : ""}
           </span>
@@ -38,7 +46,7 @@ export function BuildMarquee({
       className={cn("relative w-full overflow-hidden", className)}
       style={{ "--marquee-duration": `${durationSeconds}s` } as CSSProperties}
     >
-      <div className="flex w-max animate-marquee-x">
+      <div className="animate-marquee-x flex w-max">
         <MarqueeGroup text={text} repeat={repeat} />
         <MarqueeGroup text={text} repeat={repeat} hidden />
       </div>
