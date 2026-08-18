@@ -1,7 +1,18 @@
 "use client";
 
 import { useClerk, useUser } from "@clerk/nextjs";
-import { Bell, FolderKanban, Home, LogOut, MessagesSquare, Moon, Settings, Sun, Users } from "lucide-react";
+import {
+  Bell,
+  FolderKanban,
+  Home,
+  LogOut,
+  MessagesSquare,
+  Moon,
+  Settings,
+  Sun,
+  UserRound,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -76,7 +87,7 @@ export function AccountMenu() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
             role="menu"
-            className="border-app-border bg-app-canvas absolute top-11 right-0 z-50 w-64 border py-1 shadow-[0_24px_70px_rgba(0,0,0,0.35)]"
+            className="border-app-border bg-app-paper absolute top-11 right-0 z-50 w-64 border py-1 shadow-[0_24px_70px_rgba(0,0,0,0.35)]"
           >
             <button
               type="button"
@@ -101,6 +112,18 @@ export function AccountMenu() {
             </button>
 
             <div className="bg-app-border my-1 h-px" />
+
+            {user?.username ? (
+              <Link
+                href={`/u/${user.username}`}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="text-app-muted hover:bg-app-hover hover:text-app-fg flex items-center gap-3 px-4 py-2 text-sm transition-colors"
+              >
+                <UserRound size={16} strokeWidth={1.75} />
+                Public profile
+              </Link>
+            ) : null}
 
             {menuLinks.map((item) => {
               const Icon = item.icon;

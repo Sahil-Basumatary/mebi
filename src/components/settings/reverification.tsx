@@ -53,9 +53,7 @@ export function ReverificationProvider({ children }: { children: ReactNode }) {
   return (
     <ReverificationContext.Provider value={value}>
       {children}
-      {request ? (
-        <ReverificationModal request={request} onDone={() => setRequest(null)} />
-      ) : null}
+      {request ? <ReverificationModal request={request} onDone={() => setRequest(null)} /> : null}
     </ReverificationContext.Provider>
   );
 }
@@ -120,7 +118,7 @@ function ReverificationModal({
         role="dialog"
         aria-modal="true"
         aria-label="Verify your identity"
-        className="border-app-border bg-app-canvas relative z-10 w-[400px] max-w-[92vw] rounded-xl border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
+        className="border-app-border bg-app-canvas relative z-10 w-[400px] max-w-[92vw] rounded-none border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
       >
         <button
           type="button"
@@ -159,7 +157,7 @@ function ReverificationModal({
                 if (event.key === "Enter") submit();
               }}
               placeholder="Enter your password"
-              className="bg-app-surface text-app-fg placeholder:text-app-muted-2 h-8 w-full rounded-md border border-transparent px-2.5 pr-8 text-sm outline-none transition-colors focus:border-[#2783de]"
+              className="bg-app-surface text-app-fg placeholder:text-app-muted-2 focus:border-app-accent h-8 w-full rounded-md border border-transparent px-2.5 pr-8 text-sm transition-colors outline-none"
             />
             <button
               type="button"
@@ -167,18 +165,22 @@ function ReverificationModal({
               aria-label={reveal ? "Hide password" : "Show password"}
               className="text-app-muted hover:text-app-fg absolute top-1/2 right-2 flex -translate-y-1/2 items-center"
             >
-              {reveal ? <EyeOff size={15} strokeWidth={1.75} /> : <Eye size={15} strokeWidth={1.75} />}
+              {reveal ? (
+                <EyeOff size={15} strokeWidth={1.75} />
+              ) : (
+                <Eye size={15} strokeWidth={1.75} />
+              )}
             </button>
           </div>
         </div>
 
-        {error ? <p className="mt-3 text-[13px] text-[#e56458]">{error}</p> : null}
+        {error ? <p className="text-app-signal mt-3 text-[13px]">{error}</p> : null}
 
         <button
           type="button"
           onClick={submit}
           disabled={!password || busy}
-          className="mt-5 flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-[#2783de] text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="bg-app-accent mt-5 flex h-8 w-full items-center justify-center gap-1.5 rounded-md text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {busy ? <Loader2 size={14} className="animate-spin" /> : null}
           Continue

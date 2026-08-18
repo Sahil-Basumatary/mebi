@@ -42,7 +42,7 @@ const SECTIONS = [
   {
     id: "preferences",
     title: "Preferences",
-    description: "Choose how you want mebi to look and behave.",
+    description: "Choose how you want Hackollab to look and behave.",
   },
   {
     id: "notifications",
@@ -200,9 +200,7 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
 
   return (
     <SettingsModalStoreContext.Provider value={store}>
-      <SettingsModalContext.Provider value={{ open }}>
-        {children}
-      </SettingsModalContext.Provider>
+      <SettingsModalContext.Provider value={{ open }}>{children}</SettingsModalContext.Provider>
     </SettingsModalStoreContext.Provider>
   );
 }
@@ -255,7 +253,7 @@ export function SettingsModalHost() {
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        className="border-app-border bg-app-canvas relative z-10 flex h-[min(720px,88vh)] w-[min(1040px,94vw)] flex-col overflow-hidden rounded-xl border shadow-[0_24px_48px_rgba(0,0,0,0.28),0_4px_12px_rgba(0,0,0,0.16)] sm:flex-row"
+        className="border-app-border bg-app-canvas relative z-10 flex h-[min(720px,88vh)] w-[min(1040px,94vw)] flex-col overflow-hidden rounded-none border shadow-[0_24px_48px_rgba(0,0,0,0.28),0_4px_12px_rgba(0,0,0,0.16)] sm:flex-row"
       >
         <button
           type="button"
@@ -305,12 +303,7 @@ export function SettingsModalHost() {
           </div>
 
           <div className="border-app-border ml-1 flex shrink-0 items-center gap-1 border-l pl-1 sm:mt-auto sm:ml-0 sm:flex-col sm:items-stretch sm:gap-0.5 sm:border-t sm:border-l-0 sm:p-3 sm:pt-2">
-            <a
-              href={SUPPORT_URL}
-              target="_blank"
-              rel="noreferrer"
-              className={navItemClass(false)}
-            >
+            <a href={SUPPORT_URL} target="_blank" rel="noreferrer" className={navItemClass(false)}>
               <CircleHelp size={16} strokeWidth={1.75} />
               Get support
             </a>
@@ -338,9 +331,7 @@ export function SettingsModalHost() {
                   <h2 className="text-app-fg text-[26px] leading-8 font-semibold tracking-[-0.01em]">
                     {activeSection.title}
                   </h2>
-                  <p className="text-app-muted mt-1.5 text-base">
-                    {activeSection.description}
-                  </p>
+                  <p className="text-app-muted mt-1.5 text-base">{activeSection.description}</p>
                 </div>
 
                 {loading || !data ? (
@@ -358,7 +349,7 @@ export function SettingsModalHost() {
                         {showSaved ? (
                           <div
                             role="status"
-                            className="pointer-events-none fixed bottom-8 left-1/2 z-[130] flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#1a7f4b]/25 bg-[#1a7f4b] px-3.5 py-2 text-sm font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
+                            className="pointer-events-none fixed bottom-8 left-1/2 z-[130] flex -translate-x-1/2 items-center gap-1.5 border border-[#1a7f4b]/25 bg-[#1a7f4b] px-3.5 py-2 text-sm font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
                           >
                             <Check size={14} strokeWidth={2.5} />
                             Saved

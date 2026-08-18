@@ -40,7 +40,7 @@ export function ThemeControl({ initial }: { initial: ThemePreference }) {
         <div className="min-w-0">
           <p className="text-app-fg text-sm font-medium">Theme</p>
           <p className="text-app-muted text-[13px] leading-[18px]">
-            Choose a theme for mebi on this device
+            Choose a theme for Hackollab on this device
           </p>
         </div>
         <div className="relative shrink-0">

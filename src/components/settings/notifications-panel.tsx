@@ -31,7 +31,7 @@ export function NotificationsPanel({ initial }: { initial: NotificationPrefs }) 
 
   return (
     <div className="space-y-10">
-      <PrefSection title="In mebi">
+      <PrefSection title="In Hackollab">
         <PrefRow
           label="Inbox requests"
           hint="Notify me when someone invites me or asks to join a build."
@@ -67,7 +67,7 @@ export function NotificationsPanel({ initial }: { initial: NotificationPrefs }) 
         </PrefRow>
         <PrefRow
           label="Product updates"
-          hint="Occasional notes about new mebi features. Never sold to third parties."
+          hint="Occasional notes about new Hackollab features. Never sold to third parties."
         >
           <PrefToggle
             checked={prefs.notifyMarketing}

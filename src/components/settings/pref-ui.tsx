@@ -41,7 +41,7 @@ export function PrefToggle({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-6 w-10 shrink-0 rounded-full transition-colors",
-        checked ? "bg-app-fg" : "bg-app-border",
+        checked ? "bg-app-accent" : "bg-app-border",
       )}
     >
       <span

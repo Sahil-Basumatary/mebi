@@ -11,7 +11,7 @@ type ClerkUser = NonNullable<ReturnType<typeof useUser>["user"]>;
 type EmailResource = ClerkUser["emailAddresses"][number];
 
 const primaryButton =
-  "flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-[#2783de] px-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50";
+  "flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-app-accent px-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50";
 const outlineButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors disabled:opacity-50";
 const textButton =
@@ -46,13 +46,7 @@ export function EmailRow({ onManage }: { onManage: () => void }) {
   );
 }
 
-export function EmailsPane({
-  sectionLabel,
-  onBack,
-}: {
-  sectionLabel: string;
-  onBack: () => void;
-}) {
+export function EmailsPane({ sectionLabel, onBack }: { sectionLabel: string; onBack: () => void }) {
   const { user, isLoaded } = useUser();
   const [, refresh] = useReducer((count: number) => count + 1, 0);
 
@@ -145,11 +139,7 @@ export function EmailsPane({
   return (
     <div>
       <nav className="text-app-muted flex items-center gap-1 text-sm">
-        <button
-          type="button"
-          onClick={onBack}
-          className="hover:text-app-fg transition-colors"
-        >
+        <button type="button" onClick={onBack} className="hover:text-app-fg transition-colors">
           {sectionLabel}
         </button>
         <ChevronRight size={14} strokeWidth={1.75} className="text-app-muted-2" />
@@ -161,13 +151,13 @@ export function EmailsPane({
           Manage emails
         </h2>
         <p className="text-app-muted mt-1.5 text-base">
-          Log into mebi with multiple email addresses, managed under one account
+          Log into Hackollab with multiple email addresses, managed under one account
         </p>
       </div>
 
-      <div className="mt-6 flex items-start gap-2 rounded-lg bg-[#2783de]/10 p-4">
-        <Info size={16} strokeWidth={2} className="mt-0.5 shrink-0 text-[#387dc9]" />
-        <p className="text-sm font-medium text-[#387dc9]">
+      <div className="bg-app-accent/10 mt-6 flex items-start gap-2 rounded-lg p-4">
+        <Info size={16} strokeWidth={2} className="text-app-accent mt-0.5 shrink-0" />
+        <p className="text-app-accent text-sm font-medium">
           Customer support and other in-product emails will be sent only to your primary email
           address
         </p>
@@ -240,7 +230,7 @@ export function EmailsPane({
           </div>
         ) : null}
 
-        {error ? <p className="mt-2 text-[13px] text-[#e56458]">{error}</p> : null}
+        {error ? <p className="text-app-signal mt-2 text-[13px]">{error}</p> : null}
       </div>
 
       <ul className="border-app-border mt-6 border-t">
@@ -255,15 +245,11 @@ export function EmailsPane({
               <span className="flex min-w-0 items-center gap-2 text-sm">
                 <span className="text-app-fg truncate">{item.emailAddress}</span>
                 {isPrimary ? <span className="text-app-muted">(primary)</span> : null}
-                {!verified ? <span className="text-[#e56458]">Unverified</span> : null}
+                {!verified ? <span className="text-app-signal">Unverified</span> : null}
               </span>
               <span className="flex shrink-0 items-center gap-3">
                 {verified && !isPrimary ? (
-                  <button
-                    type="button"
-                    onClick={() => makePrimary(item.id)}
-                    className={textButton}
-                  >
+                  <button type="button" onClick={() => makePrimary(item.id)} className={textButton}>
                     Set as primary
                   </button>
                 ) : null}
@@ -271,7 +257,7 @@ export function EmailsPane({
                   <button
                     type="button"
                     onClick={() => remove(item)}
-                    className="text-[13px] text-[#e56458] transition-opacity hover:opacity-80"
+                    className="text-app-signal text-[13px] transition-opacity hover:opacity-80"
                   >
                     Remove
                   </button>

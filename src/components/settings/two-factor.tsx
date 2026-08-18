@@ -23,7 +23,7 @@ type PhoneResource = ClerkUser["phoneNumbers"][number];
 type Step = "menu" | "totp" | "phone-add" | "phone-verify" | "backup" | "success" | "manage";
 
 const blueButton =
-  "flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-[#2783de] text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
+  "flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-app-accent text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
 const outlineRowButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors";
 
@@ -81,7 +81,7 @@ function CodeInput({
               refs.current[Math.min(pasted.length, length - 1)]?.focus();
             }
           }}
-          className="border-app-border bg-app-surface text-app-fg focus:border-[#2783de] h-12 w-11 rounded-md border text-center text-lg outline-none transition-colors"
+          className="border-app-border bg-app-surface text-app-fg focus:border-app-accent h-12 w-11 rounded-md border text-center text-lg transition-colors outline-none"
         />
       ))}
     </div>
@@ -328,7 +328,7 @@ export function TwoFactorControl() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "mebi-backup-codes.txt";
+    anchor.download = "hackollab-backup-codes.txt";
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -384,7 +384,8 @@ export function TwoFactorControl() {
                       Add authenticator
                     </h2>
                     <p className="text-app-muted mt-2 text-[14px] leading-5">
-                      Scan the QR code with your authenticator app, then enter the code it generates.
+                      Scan the QR code with your authenticator app, then enter the code it
+                      generates.
                     </p>
                     {totp ? (
                       <div className="mt-4 rounded-lg bg-white p-3">
@@ -399,7 +400,7 @@ export function TwoFactorControl() {
                     <div className="mt-4 w-full">
                       <CodeInput value={code} onChange={setCode} />
                     </div>
-                    {error ? <p className="mt-3 text-[13px] text-[#e56458]">{error}</p> : null}
+                    {error ? <p className="text-app-signal mt-3 text-[13px]">{error}</p> : null}
                     <button
                       type="button"
                       onClick={confirmTOTP}
@@ -428,9 +429,9 @@ export function TwoFactorControl() {
                       value={phoneNumber}
                       onChange={(event) => setPhoneNumber(event.target.value)}
                       placeholder="+44 7700 900000"
-                      className="border-app-border bg-app-surface text-app-fg placeholder:text-app-muted-2 focus:border-[#2783de] mt-4 h-9 w-full rounded-md border px-2.5 text-sm outline-none transition-colors"
+                      className="border-app-border bg-app-surface text-app-fg placeholder:text-app-muted-2 focus:border-app-accent mt-4 h-9 w-full rounded-md border px-2.5 text-sm transition-colors outline-none"
                     />
-                    {error ? <p className="mt-3 text-[13px] text-[#e56458]">{error}</p> : null}
+                    {error ? <p className="text-app-signal mt-3 text-[13px]">{error}</p> : null}
                     <button
                       type="button"
                       onClick={startPhone}
@@ -449,12 +450,12 @@ export function TwoFactorControl() {
                       Verify phone number
                     </h2>
                     <p className="text-app-muted mt-2 text-[14px] leading-5">
-                      Enter the code sent to <span className="text-app-fg">{phone?.phoneNumber}</span>{" "}
-                      to complete setup.{" "}
+                      Enter the code sent to{" "}
+                      <span className="text-app-fg">{phone?.phoneNumber}</span> to complete setup.{" "}
                       <button
                         type="button"
                         onClick={resendPhone}
-                        className="text-[#2783de] hover:opacity-80"
+                        className="text-app-accent hover:opacity-80"
                       >
                         Resend
                       </button>
@@ -462,7 +463,7 @@ export function TwoFactorControl() {
                     <div className="mt-5 w-full">
                       <CodeInput value={code} onChange={setCode} />
                     </div>
-                    {error ? <p className="mt-3 text-[13px] text-[#e56458]">{error}</p> : null}
+                    {error ? <p className="text-app-signal mt-3 text-[13px]">{error}</p> : null}
                     <button
                       type="button"
                       onClick={confirmPhone}
@@ -482,8 +483,8 @@ export function TwoFactorControl() {
                       Save your backup codes
                     </h2>
                     <p className="text-app-muted mt-2 text-[14px] leading-5">
-                      You can only see this once, so be sure to keep them to avoid getting locked out
-                      of your account.
+                      You can only see this once, so be sure to keep them to avoid getting locked
+                      out of your account.
                     </p>
                     <div className="bg-app-surface mt-4 grid w-full grid-cols-2 gap-x-8 gap-y-2 rounded-lg p-4 font-mono text-[13px] text-[#c98a3a]">
                       {backupCodes.map((backupCode) => (
@@ -516,8 +517,8 @@ export function TwoFactorControl() {
                       2-step verification with {successMethod} is turned on
                     </h2>
                     <p className="text-app-muted mt-2 text-[14px] leading-5">
-                      Every time you enter your password, mebi will ask you for a verification code
-                      to confirm your identity.
+                      Every time you enter your password, Hackollab will ask you for a verification
+                      code to confirm your identity.
                     </p>
                     <button
                       type="button"
@@ -537,7 +538,8 @@ export function TwoFactorControl() {
                         2-step verification
                       </h2>
                       <p className="text-app-muted mt-2 text-[14px] leading-5">
-                        Confirm it&apos;s you after using a password by providing a verification code.
+                        Confirm it&apos;s you after using a password by providing a verification
+                        code.
                       </p>
                     </div>
 
@@ -592,13 +594,13 @@ export function TwoFactorControl() {
                       />
                     </div>
 
-                    {error ? <p className="mt-3 text-[13px] text-[#e56458]">{error}</p> : null}
+                    {error ? <p className="text-app-signal mt-3 text-[13px]">{error}</p> : null}
 
                     {twoFactorEnabled ? (
                       <button
                         type="button"
                         onClick={turnOff}
-                        className="mt-5 flex h-9 w-full items-center justify-center rounded-md text-sm font-medium text-[#e56458] transition-colors hover:bg-[#e56458]/10"
+                        className="text-app-signal hover:bg-app-signal/10 mt-5 flex h-9 w-full items-center justify-center rounded-md text-sm font-medium transition-colors"
                       >
                         Turn off 2-step verification
                       </button>
@@ -628,7 +630,7 @@ function ModalCard({
       role="dialog"
       aria-modal="true"
       aria-label="Two-step verification"
-      className="border-app-border bg-app-canvas relative z-10 w-[400px] max-w-[92vw] rounded-xl border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
+      className="border-app-border bg-app-canvas relative z-10 w-[400px] max-w-[92vw] rounded-none border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
     >
       {onBack ? (
         <button
@@ -688,7 +690,7 @@ function MethodRow({
               <button
                 type="button"
                 onClick={onDelete}
-                className="hover:bg-app-hover flex h-7 w-full items-center rounded-md px-2 text-sm text-[#e56458] transition-colors"
+                className="hover:bg-app-hover text-app-signal flex h-7 w-full items-center rounded-md px-2 text-sm transition-colors"
               >
                 Delete
               </button>

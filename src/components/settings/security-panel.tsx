@@ -14,7 +14,7 @@ const outlineButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors";
 // Notion's destructive actions are borderless red text buttons (rgb(229,100,88)).
 const dangerButton =
-  "flex h-7 shrink-0 items-center rounded-md px-2 text-sm font-medium text-[#e56458] transition-colors hover:bg-[#e56458]/10 disabled:opacity-50";
+  "flex h-7 shrink-0 items-center rounded-md px-2 text-sm font-medium text-app-signal transition-colors hover:bg-app-signal/10 disabled:opacity-50";
 
 // Derive Clerk's session-activity shape from the user resource so we stay typed
 // without importing @clerk/types directly.
@@ -128,7 +128,7 @@ function DeviceSessions() {
             <span className="text-app-fg flex min-w-0 items-center gap-2 truncate">
               <span className="truncate">{deviceLabel(row.latestActivity)}</span>
               {current ? (
-                <span className="text-[#2783de]" aria-label="Current device">
+                <span className="text-app-accent" aria-label="Current device">
                   This device
                 </span>
               ) : null}
@@ -231,17 +231,17 @@ function DeleteAccount({ confirmHandle }: { confirmHandle: string }) {
                 role="dialog"
                 aria-modal="true"
                 aria-label="Delete account confirmation"
-                className="border-app-border bg-app-canvas relative z-10 w-[420px] max-w-[92vw] rounded-xl border p-5 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
+                className="border-app-border bg-app-canvas relative z-10 w-[420px] max-w-[92vw] rounded-none border p-5 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
               >
                 <div className="flex flex-col items-center text-center">
-                  <CircleAlert size={36} strokeWidth={1.75} className="text-[#e56458]" />
+                  <CircleAlert size={36} strokeWidth={1.75} className="text-app-signal" />
                   <h2 className="text-app-fg mt-2.5 text-[17px] leading-[22px] font-semibold">
                     Delete your entire account permanently?
                   </h2>
                   <p className="text-app-muted mt-2 text-[14px] leading-5">
                     This action cannot be undone. Your entire account will be permanently deleted,
-                    including your profile, projects, build requests, memberships, and any
-                    proof you have logged.
+                    including your profile, projects, build requests, memberships, and any proof you
+                    have logged.
                   </p>
                 </div>
 
@@ -262,13 +262,13 @@ function DeleteAccount({ confirmHandle }: { confirmHandle: string }) {
                   placeholder={phrase}
                   className="border-app-border bg-app-surface text-app-fg placeholder:text-app-muted-2 focus:border-app-border-strong mt-3 h-9 w-full rounded-md border px-2.5 text-[14px] outline-none"
                 />
-                {error ? <p className="mt-2 text-[13px] text-[#e56458]">{error}</p> : null}
+                {error ? <p className="text-app-signal mt-2 text-[13px]">{error}</p> : null}
 
                 <button
                   type="button"
                   onClick={confirmDelete}
                   disabled={!canDelete}
-                  className="mt-6 flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-[#e56458] text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="bg-app-signal mt-6 flex h-8 w-full items-center justify-center gap-1.5 rounded-md text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {pending ? <Loader2 size={14} className="animate-spin" /> : null}
                   Permanently delete account

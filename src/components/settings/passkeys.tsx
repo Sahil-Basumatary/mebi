@@ -12,7 +12,7 @@ type PasskeyResource = ClerkUser["passkeys"][number];
 const outlineRowButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors";
 const blueButton =
-  "flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-[#2783de] text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
+  "flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-app-accent text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
 
 function errorMessage(error: unknown): string {
   if (error && typeof error === "object" && "errors" in error) {
@@ -83,7 +83,7 @@ function PasskeyRow({
               <button
                 type="button"
                 onClick={onDelete}
-                className="hover:bg-app-hover flex h-7 w-full items-center rounded-md px-2 text-sm text-[#e56458] transition-colors"
+                className="hover:bg-app-hover text-app-signal flex h-7 w-full items-center rounded-md px-2 text-sm transition-colors"
               >
                 Delete
               </button>
@@ -205,7 +205,7 @@ export function PasskeysControl() {
                 role="dialog"
                 aria-modal="true"
                 aria-label="Manage passkeys"
-                className="border-app-border bg-app-canvas relative z-10 w-[400px] max-w-[92vw] rounded-xl border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
+                className="border-app-border bg-app-canvas relative z-10 w-[400px] max-w-[92vw] rounded-none border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
               >
                 <button
                   type="button"
@@ -222,8 +222,8 @@ export function PasskeysControl() {
                     Manage passkeys
                   </h2>
                   <p className="text-app-muted mt-2 text-[14px] leading-5">
-                    Use your device&apos;s built-in security features like Face ID to sign in instead
-                    of remembering passwords.
+                    Use your device&apos;s built-in security features like Face ID to sign in
+                    instead of remembering passwords.
                   </p>
                 </div>
 
@@ -254,7 +254,7 @@ export function PasskeysControl() {
                                 if (event.key === "Escape") setEditingId(null);
                               }}
                               placeholder="Passkey name"
-                              className="bg-app-surface text-app-fg placeholder:text-app-muted-2 focus:border-[#2783de] h-8 w-full rounded-md border border-transparent px-2.5 text-sm outline-none transition-colors"
+                              className="bg-app-surface text-app-fg placeholder:text-app-muted-2 focus:border-app-accent h-8 w-full rounded-md border border-transparent px-2.5 text-sm transition-colors outline-none"
                             />
                           </div>
                         ) : (
@@ -276,9 +276,14 @@ export function PasskeysControl() {
                   </>
                 ) : null}
 
-                {error ? <p className="mt-3 text-[13px] text-[#e56458]">{error}</p> : null}
+                {error ? <p className="text-app-signal mt-3 text-[13px]">{error}</p> : null}
 
-                <button type="button" onClick={add} disabled={busy} className={`${blueButton} mt-5`}>
+                <button
+                  type="button"
+                  onClick={add}
+                  disabled={busy}
+                  className={`${blueButton} mt-5`}
+                >
                   {busy ? (
                     <Loader2 size={14} className="animate-spin" />
                   ) : (

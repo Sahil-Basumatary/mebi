@@ -1,14 +1,7 @@
 "use client";
 
 import { Check, ChevronDown } from "lucide-react";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { useLocalePrefs } from "@/components/locale-provider";
 import { useCookieConsent } from "@/components/cookie-consent-provider";
 import { useKeyboardShortcuts } from "@/components/keyboard-shortcuts-provider";
@@ -19,10 +12,7 @@ import {
   listTimezones,
   SPELLCHECKER_LANGUAGES,
 } from "@/lib/locale";
-import {
-  startupLabel,
-  type StartupPreferenceValue,
-} from "@/lib/startup";
+import { startupLabel, type StartupPreferenceValue } from "@/lib/startup";
 import {
   updateProfileDiscoverability,
   updateSpellcheckerLanguage,
@@ -260,7 +250,7 @@ export function PreferencesPanel({
                   value={tzQuery}
                   onChange={(event) => setTzQuery(event.target.value)}
                   placeholder="Search cities…"
-                  className="bg-app-surface text-app-fg placeholder:text-app-muted-2 h-7 w-full rounded-md border border-transparent px-2 text-sm outline-none focus:border-[#2783de]"
+                  className="bg-app-surface text-app-fg placeholder:text-app-muted-2 focus:border-app-accent h-7 w-full rounded-md border border-transparent px-2 text-sm outline-none"
                 />
               </div>
               <MenuItem active={storedTimezone === "auto"} onClick={() => chooseTimezone("auto")}>

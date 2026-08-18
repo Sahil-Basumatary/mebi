@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 const outlineButton =
   "border-app-border text-app-fg hover:bg-app-hover flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors";
 const fieldInput =
-  "bg-app-surface text-app-fg placeholder:text-app-muted-2 h-8 w-full rounded-md border border-transparent px-2.5 text-sm outline-none transition-colors focus:border-[#2783de]";
+  "bg-app-surface text-app-fg placeholder:text-app-muted-2 h-8 w-full rounded-md border border-transparent px-2.5 text-sm outline-none transition-colors focus:border-app-accent";
 
 function errorMessage(error: unknown): string {
   if (error && typeof error === "object" && "errors" in error) {
@@ -125,7 +125,7 @@ export function ChangePasswordControl() {
                 role="dialog"
                 aria-modal="true"
                 aria-label="Change password"
-                className="border-app-border bg-app-canvas relative z-10 w-[350px] max-w-[92vw] rounded-xl border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
+                className="border-app-border bg-app-canvas relative z-10 w-[350px] max-w-[92vw] rounded-none border p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14)]"
               >
                 <button
                   type="button"
@@ -137,11 +137,7 @@ export function ChangePasswordControl() {
                 </button>
 
                 <div className="flex flex-col items-center text-center">
-                  <RectangleEllipsis
-                    size={20}
-                    strokeWidth={1.75}
-                    className="text-app-muted-2"
-                  />
+                  <RectangleEllipsis size={20} strokeWidth={1.75} className="text-app-muted-2" />
                   <h2 className="text-app-fg mt-2 text-[17px] leading-[22px] font-semibold">
                     Change password
                   </h2>
@@ -175,13 +171,13 @@ export function ChangePasswordControl() {
                   />
                 </div>
 
-                {error ? <p className="mt-3 text-[13px] text-[#e56458]">{error}</p> : null}
+                {error ? <p className="text-app-signal mt-3 text-[13px]">{error}</p> : null}
 
                 <button
                   type="button"
                   onClick={submit}
                   disabled={!canSubmit}
-                  className="mt-5 flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-[#2783de] text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="bg-app-accent mt-5 flex h-8 w-full items-center justify-center gap-1.5 rounded-md text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {busy ? <Loader2 size={14} className="animate-spin" /> : null}
                   Change password

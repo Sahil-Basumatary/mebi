@@ -10,10 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import {
-  getCookieConsent,
-  updateCookieConsent,
-} from "@/components/settings/actions";
+import { getCookieConsent, updateCookieConsent } from "@/components/settings/actions";
 import {
   acceptAllConsent,
   canUseCategory,
@@ -66,7 +63,7 @@ function Toggle({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-6 w-10 shrink-0 rounded-full transition-colors",
-        checked ? "bg-app-fg" : "bg-app-border",
+        checked ? "bg-app-accent" : "bg-app-border",
         disabled && "cursor-not-allowed opacity-60",
       )}
     >
@@ -97,25 +94,27 @@ function CookieCustomizeModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/40 px-4 sm:items-center">
-      <button type="button" className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        aria-label="Close"
+        onClick={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Cookie settings"
-        className="border-app-border bg-app-canvas relative z-[161] mb-4 flex max-h-[min(720px,86vh)] w-full max-w-lg flex-col overflow-hidden rounded-[12px] border shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:mb-0"
+        className="border-app-border bg-app-canvas relative z-[161] mb-4 flex max-h-[min(720px,86vh)] w-full max-w-lg flex-col overflow-hidden rounded-none border shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:mb-0"
       >
         <div className="border-app-border border-b px-5 py-4">
-          <h2 className="text-app-fg text-lg font-semibold tracking-[-0.01em]">
-            Cookie settings
-          </h2>
+          <h2 className="text-app-fg text-lg font-semibold tracking-[-0.01em]">Cookie settings</h2>
           <p className="text-app-muted mt-1 text-[13px] leading-[18px]">
-            Choose which optional cookies mebi can use. Necessary cookies stay on.
+            Choose which optional cookies Hackollab can use. Necessary cookies stay on.
           </p>
         </div>
         <div className="flex-1 space-y-1 overflow-y-auto px-5 py-4">
           {COOKIE_CATEGORIES.map((category) => {
-            const checked =
-              category.id === "necessary" ? true : draft[category.id];
+            const checked = category.id === "necessary" ? true : draft[category.id];
             return (
               <div
                 key={category.id}
@@ -151,7 +150,7 @@ function CookieCustomizeModal({
           <button
             type="button"
             onClick={onSave}
-            className="bg-app-fg text-app-canvas hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity"
+            className="bg-app-accent text-app-accent-fg hover:bg-app-accent-hover px-3 py-1.5 text-sm font-medium transition-colors"
           >
             Save
           </button>
@@ -215,8 +214,7 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
     () => ({
       consent,
       openCustomize,
-      canUse: (category: Exclude<CookieCategory, "necessary">) =>
-        canUseCategory(consent, category),
+      canUse: (category: Exclude<CookieCategory, "necessary">) => canUseCategory(consent, category),
     }),
     [consent, openCustomize],
   );
@@ -229,11 +227,11 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
       {showBanner ? (
         <div className="border-app-border bg-app-canvas fixed inset-x-0 bottom-0 z-[140] border-t p-4 shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:p-5">
           <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0 max-w-2xl">
+            <div className="max-w-2xl min-w-0">
               <p className="text-app-fg text-sm font-medium">We use cookies</p>
               <p className="text-app-muted mt-1 text-[13px] leading-[18px]">
-                Necessary cookies keep mebi signed in and secure. Optional cookies
-                help with preferences, analytics, and marketing — you choose.
+                Necessary cookies keep Hackollab signed in and secure. Optional cookies help with
+                preferences, analytics, and marketing — you choose.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -254,7 +252,7 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => void persist(acceptAllConsent())}
-                className="bg-app-fg text-app-canvas hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity"
+                className="bg-app-accent text-app-accent-fg hover:bg-app-accent-hover px-3 py-1.5 text-sm font-medium transition-colors"
               >
                 Accept all
               </button>

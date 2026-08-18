@@ -117,12 +117,17 @@ function CommandPalette({
 
   return createPortal(
     <div className="fixed inset-0 z-[140] flex items-start justify-center bg-black/35 px-4 pt-[12vh]">
-      <button type="button" className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        aria-label="Close"
+        onClick={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Search"
-        className="border-app-border bg-app-canvas relative z-[141] w-full max-w-xl overflow-hidden rounded-[12px] border shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
+        className="border-app-border bg-app-canvas relative z-[141] w-full max-w-xl overflow-hidden rounded-none border shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
       >
         <input
           ref={inputRef}
@@ -185,8 +190,7 @@ function ComboChips({ combo }: { combo: string }) {
       </span>
     );
   }
-  const isApple =
-    typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+  const isApple = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
   const parts = combo.split("+").map((part) => {
     if (part === "meta") return isApple ? "⌘" : "Ctrl";
     if (part === "ctrl") return isApple ? "⌃" : "Ctrl";
@@ -282,12 +286,17 @@ function CustomizeShortcutsModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 px-4">
-      <button type="button" className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        aria-label="Close"
+        onClick={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
-        className="border-app-border bg-app-canvas relative z-[151] flex max-h-[min(720px,86vh)] w-full max-w-lg flex-col overflow-hidden rounded-[12px] border shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
+        className="border-app-border bg-app-canvas relative z-[151] flex max-h-[min(720px,86vh)] w-full max-w-lg flex-col overflow-hidden rounded-none border shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
       >
         <div className="border-app-border flex items-start justify-between gap-4 border-b px-5 py-4">
           <div>
@@ -295,8 +304,8 @@ function CustomizeShortcutsModal({
               Keyboard shortcuts
             </h2>
             <p className="text-app-muted mt-1 text-[13px] leading-[18px]">
-              Click a shortcut, then press the new keys. Letter pairs like G then H
-              work as sequences. Esc cancels capture.
+              Click a shortcut, then press the new keys. Letter pairs like G then H work as
+              sequences. Esc cancels capture.
             </p>
           </div>
           <button
@@ -313,7 +322,7 @@ function CustomizeShortcutsModal({
             onChange={(event) => setQuery(event.target.value)}
             aria-label="Filter shortcuts"
             placeholder="Filter shortcuts…"
-            className="bg-app-surface text-app-fg placeholder:text-app-muted-2 border-app-border h-8 w-full rounded-md border px-3 text-sm outline-none focus:border-[#2783de]"
+            className="bg-app-surface text-app-fg placeholder:text-app-muted-2 border-app-border focus:border-app-accent h-8 w-full rounded-md border px-3 text-sm outline-none"
           />
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -343,7 +352,7 @@ function CustomizeShortcutsModal({
                         <div className="min-w-0">
                           <p className="text-app-fg text-sm">{item.label}</p>
                           {conflict ? (
-                            <p className="text-[12px] text-[#c4554a]">
+                            <p className="text-app-signal text-[12px]">
                               Conflicts with{" "}
                               {SHORTCUT_DEFINITIONS.find((entry) => entry.id === conflict)?.label}
                             </p>
@@ -358,8 +367,8 @@ function CustomizeShortcutsModal({
                           }}
                           className={cn(
                             "border-app-border text-app-fg hover:bg-app-hover min-w-[6.5rem] rounded-md border px-2.5 py-1.5 transition-colors",
-                            listening === item.id && "border-[#2783de] ring-2 ring-[#2783de]/20",
-                            conflict && "border-[#c4554a]/50",
+                            listening === item.id && "border-app-accent ring-app-accent/20 ring-2",
+                            conflict && "border-app-signal/50",
                           )}
                         >
                           {listening === item.id ? (
@@ -379,7 +388,7 @@ function CustomizeShortcutsModal({
               </section>
             );
           })}
-          {error ? <p className="text-[13px] text-[#c4554a]">{error}</p> : null}
+          {error ? <p className="text-app-signal text-[13px]">{error}</p> : null}
         </div>
         <div className="border-app-border flex items-center justify-between border-t px-5 py-3">
           <button
@@ -396,7 +405,7 @@ function CustomizeShortcutsModal({
           <button
             type="button"
             onClick={onClose}
-            className="bg-app-fg text-app-canvas hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity"
+            className="bg-app-fg text-app-canvas rounded-md px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
           >
             Done
           </button>
@@ -493,9 +502,7 @@ export function KeyboardShortcutsProvider({ children }: { children: ReactNode })
       const pending = sequenceRef.current;
       if (pending && pending.expires > now) {
         const combo = `${pending.prefix}+${(event.key || "").toLowerCase()}`;
-        const match = (Object.keys(bindings) as ShortcutId[]).find(
-          (id) => bindings[id] === combo,
-        );
+        const match = (Object.keys(bindings) as ShortcutId[]).find((id) => bindings[id] === combo);
         sequenceRef.current = null;
         if (match) {
           event.preventDefault();

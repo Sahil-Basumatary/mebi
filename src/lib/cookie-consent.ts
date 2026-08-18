@@ -31,7 +31,7 @@ export const COOKIE_CATEGORIES: {
   {
     id: "analytics",
     label: "Analytics",
-    description: "Helps us understand product usage so we can improve mebi.",
+    description: "Helps us understand product usage so we can improve Hackollab.",
   },
   {
     id: "marketing",
@@ -98,7 +98,9 @@ export function serializeCookieConsent(state: CookieConsentState): string {
   );
 }
 
-export function parseCookieConsentHeader(cookieHeader: string | null | undefined): CookieConsentState {
+export function parseCookieConsentHeader(
+  cookieHeader: string | null | undefined,
+): CookieConsentState {
   if (!cookieHeader) return { ...DEFAULT_COOKIE_CONSENT };
   const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${COOKIE_CONSENT_COOKIE}=([^;]*)`));
   if (!match?.[1]) return { ...DEFAULT_COOKIE_CONSENT };

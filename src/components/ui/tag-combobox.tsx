@@ -18,7 +18,6 @@ type TagComboboxProps = {
   defaultValue?: string;
   placeholder?: string;
   hint?: string;
-  tone?: "app" | "onboarding";
 };
 
 export function TagCombobox({
@@ -29,7 +28,6 @@ export function TagCombobox({
   defaultValue = "",
   placeholder = "Search and select…",
   hint,
-  tone = "app",
 }: TagComboboxProps) {
   const generatedId = useId();
   const listId = useId();
@@ -68,7 +66,10 @@ export function TagCombobox({
       (option) => ({ kind: "option" as const, label: option }),
     );
     items.push({ kind: "other", label: OTHER_OPTION });
-    if (canAddQuery && !filtered.some((option) => option.toLowerCase() === query.trim().toLowerCase())) {
+    if (
+      canAddQuery &&
+      !filtered.some((option) => option.toLowerCase() === query.trim().toLowerCase())
+    ) {
       items.unshift({ kind: "add", label: query.trim() });
     }
     return items;
@@ -143,12 +144,11 @@ export function TagCombobox({
   }
 
   const atLimit = selected.length >= MAX_EXPERTISE_TAGS;
-  const isApp = tone === "app";
 
   return (
     <div ref={rootRef} className="flex flex-col gap-2">
       <input type="hidden" name={name} value={selected.join(", ")} />
-      <label htmlFor={inputId} className={isApp ? "sr-only" : "sr-only"}>
+      <label htmlFor={inputId} className="sr-only">
         {label}
       </label>
 
@@ -157,22 +157,14 @@ export function TagCombobox({
           {selected.map((tag) => (
             <li
               key={tag}
-              className={
-                isApp
-                  ? "border-app-border bg-app-surface text-app-fg inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-xs"
-                  : "inline-flex max-w-full items-center gap-1 rounded-full border border-[#262626] bg-[#050505] px-2.5 py-1 text-xs text-[#ffffff]"
-              }
+              className="border-app-border bg-app-surface text-app-fg inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-xs"
             >
               <span className="truncate">{tag}</span>
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
                 aria-label={`Remove ${tag}`}
-                className={
-                  isApp
-                    ? "text-app-muted hover:text-app-fg rounded-full p-0.5"
-                    : "rounded-full p-0.5 text-[#8f8f8f] hover:text-[#ffffff]"
-                }
+                className="text-app-muted hover:text-app-fg rounded-full p-0.5"
               >
                 <X size={12} strokeWidth={2} aria-hidden />
               </button>
@@ -182,13 +174,7 @@ export function TagCombobox({
       ) : null}
 
       <div className="relative">
-        <div
-          className={
-            isApp
-              ? "border-app-border bg-app-canvas focus-within:border-app-accent flex items-center gap-2 rounded-md border px-3"
-              : "flex items-center gap-2 border-b border-[#262626] focus-within:border-[#ffffff]"
-          }
-        >
+        <div className="border-app-border bg-app-canvas focus-within:border-app-accent flex items-center gap-2 rounded-md border px-3">
           <input
             ref={inputRef}
             id={inputId}
@@ -214,11 +200,7 @@ export function TagCombobox({
             }}
             onKeyDown={onKeyDown}
             placeholder={atLimit ? `Maximum ${MAX_EXPERTISE_TAGS} selected` : placeholder}
-            className={
-              isApp
-                ? "text-app-fg placeholder:text-app-muted-2 min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none"
-                : "min-w-0 flex-1 bg-transparent py-3 text-[#ffffff] outline-none placeholder:text-[#606060]"
-            }
+            className="text-app-fg placeholder:text-app-muted-2 min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none"
           />
           <button
             type="button"
@@ -226,7 +208,6 @@ export function TagCombobox({
             aria-label={`Toggle ${label.toLowerCase()} options`}
             disabled={atLimit}
             onMouseDown={(event) => {
-              // Keep focus on the input without letting focus handlers reopen the menu.
               event.preventDefault();
             }}
             onClick={() => {
@@ -239,7 +220,7 @@ export function TagCombobox({
               });
               inputRef.current?.focus();
             }}
-            className={isApp ? "text-app-muted" : "text-[#8f8f8f]"}
+            className="text-app-muted"
           >
             <ChevronDown
               size={16}
@@ -255,11 +236,7 @@ export function TagCombobox({
             id={listId}
             role="listbox"
             aria-label={label}
-            className={
-              isApp
-                ? "border-app-border bg-app-canvas absolute z-30 mt-1 max-h-56 w-full overflow-y-auto border py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
-                : "absolute z-30 mt-1 max-h-56 w-full overflow-y-auto border border-[#262626] bg-[#0b0b0b] py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
-            }
+            className="border-app-border bg-app-canvas absolute z-30 mt-1 max-h-56 w-full overflow-y-auto border py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
           >
             {menuItems.length ? (
               menuItems.map((item, index) => {
@@ -275,20 +252,12 @@ export function TagCombobox({
                       onClick={() => chooseItem(item)}
                       className={cn(
                         "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm",
-                        isApp
-                          ? active
-                            ? "bg-app-hover text-app-fg"
-                            : "text-app-fg hover:bg-app-hover"
-                          : active
-                            ? "bg-[#151515] text-[#ffffff]"
-                            : "text-[#d8d8d8] hover:bg-[#151515]",
+                        active ? "bg-app-hover text-app-fg" : "text-app-fg hover:bg-app-hover",
                       )}
                     >
                       <span className="min-w-0 truncate">
                         {item.kind === "add" ? (
-                          <>
-                            Add “{item.label}”
-                          </>
+                          <>Add “{item.label}”</>
                         ) : item.kind === "other" ? (
                           <>{OTHER_OPTION}…</>
                         ) : (
@@ -296,20 +265,19 @@ export function TagCombobox({
                         )}
                       </span>
                       {item.kind === "option" && active ? (
-                        <Check size={14} strokeWidth={2} aria-hidden className="shrink-0 opacity-60" />
+                        <Check
+                          size={14}
+                          strokeWidth={2}
+                          aria-hidden
+                          className="shrink-0 opacity-60"
+                        />
                       ) : null}
                     </button>
                   </li>
                 );
               })
             ) : (
-              <li
-                className={
-                  isApp
-                    ? "text-app-muted px-3 py-2 text-sm"
-                    : "px-3 py-2 text-sm text-[#8f8f8f]"
-                }
-              >
+              <li className="text-app-muted px-3 py-2 text-sm">
                 No matches. Choose Other to add your own.
               </li>
             )}
@@ -318,21 +286,8 @@ export function TagCombobox({
       </div>
 
       {otherMode ? (
-        <div
-          className={
-            isApp
-              ? "border-app-border bg-app-surface flex flex-col gap-2 rounded-md border p-3"
-              : "flex flex-col gap-2 border border-[#262626] bg-[#050505] p-3"
-          }
-        >
-          <label
-            htmlFor={otherId}
-            className={
-              isApp
-                ? "text-app-muted text-xs font-medium"
-                : "text-xs font-medium text-[#8f8f8f]"
-            }
-          >
+        <div className="border-app-border bg-app-surface flex flex-col gap-2 rounded-md border p-3">
+          <label htmlFor={otherId} className="text-app-muted text-xs font-medium">
             Add a custom {label.toLowerCase().replace(/s$/, "")}
           </label>
           <div className="flex gap-2">
@@ -353,21 +308,13 @@ export function TagCombobox({
               maxLength={MAX_TAG_LENGTH}
               autoFocus
               placeholder={`e.g. ${label === "Skills" ? "FPGA Design" : "Spatial Computing"}`}
-              className={
-                isApp
-                  ? "border-app-border bg-app-canvas text-app-fg placeholder:text-app-muted-2 min-w-0 flex-1 rounded-md border px-3 py-2 text-sm outline-none focus:border-app-accent"
-                  : "min-w-0 flex-1 border border-[#262626] bg-[#000000] px-3 py-2 text-sm text-[#ffffff] outline-none placeholder:text-[#606060] focus:border-[#ffffff]"
-              }
+              className="border-app-border bg-app-canvas text-app-fg placeholder:text-app-muted-2 focus:border-app-accent min-w-0 flex-1 rounded-md border px-3 py-2 text-sm outline-none"
             />
             <button
               type="button"
               onClick={() => addTag(otherValue)}
               disabled={!otherValue.trim()}
-              className={
-                isApp
-                  ? "bg-app-accent text-app-accent-fg hover:bg-app-accent-hover rounded-md px-3 py-2 text-sm font-medium disabled:opacity-40"
-                  : "rounded-md bg-[#ffffff] px-3 py-2 text-sm font-medium text-[#000000] disabled:opacity-40"
-              }
+              className="bg-app-accent text-app-accent-fg hover:bg-app-accent-hover rounded-md px-3 py-2 text-sm font-medium disabled:opacity-40"
             >
               Add
             </button>
@@ -375,9 +322,7 @@ export function TagCombobox({
         </div>
       ) : null}
 
-      {hint ? (
-        <p className={isApp ? "text-app-muted text-xs" : "text-xs text-[#8f8f8f]"}>{hint}</p>
-      ) : null}
+      {hint ? <p className="text-app-muted text-xs">{hint}</p> : null}
     </div>
   );
 }
