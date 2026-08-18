@@ -48,6 +48,7 @@ enum NotificationType {
   REQUEST_RECEIVED
   REQUEST_ACCEPTED
   REQUEST_DECLINED
+  FORUM_REPLY
 }
 
 enum ThemePreference {
@@ -109,6 +110,10 @@ model User {
   receivedRequests ProjectRequest[] @relation("ReceivedProjectRequests")
   notifications    Notification[]
   shortcutBindings UserShortcutBinding[]
+  forumThreads     ForumThread[]        @relation("ForumThreadsAuthored")
+  forumLastPosts   ForumThread[]        @relation("ForumThreadsLastPoster")
+  forumPosts       ForumPost[]          @relation("ForumPostsAuthored")
+  forumVotes       ForumPostVote[]
 }
 
 // One row per remapped action. Missing rows mean "use the product default".
@@ -146,6 +151,7 @@ model Project {
   updates       ProjectUpdate[]
   signatures    ProofSignature[]
   requests      ProjectRequest[]
+  forumThreads  ForumThread[]
 
   @@index([ownerId, status])
   @@index([visibility, status])
@@ -230,9 +236,83 @@ model Notification {
   message   String
   actorName String?
   requestId String?
+  href      String?
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
+}
+
+model ForumBoard {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  description String
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  threads     ForumThread[]
+}
+
+model ForumThread {
+  id               String      @id @default(cuid())
+  boardId          String
+  authorId         String
+  projectId        String?
+  title            String
+  tags             String[]    @default([])
+  locked           Boolean     @default(false)
+  replyCount       Int         @default(0)
+  viewCount        Int         @default(0)
+  lastPostedAt     DateTime    @default(now())
+  lastPostAuthorId String?
+  lastPostId       String?
+  score            Int         @default(0)
+  deletedAt        DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  board            ForumBoard  @relation(fields: [boardId], references: [id], onDelete: Restrict)
+  author           User        @relation("ForumThreadsAuthored", fields: [authorId], references: [id], onDelete: Cascade)
+  lastPostAuthor   User?       @relation("ForumThreadsLastPoster", fields: [lastPostAuthorId], references: [id], onDelete: SetNull)
+  project          Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  posts            ForumPost[]
+
+  @@index([boardId, lastPostedAt])
+  @@index([boardId, createdAt])
+  @@index([authorId, createdAt])
+  @@index([deletedAt, lastPostedAt])
+  @@index([projectId])
+}
+
+model ForumPost {
+  id        String          @id @default(cuid())
+  threadId  String
+  authorId  String
+  parentId  String?
+  body      String
+  score     Int             @default(0)
+  editedAt  DateTime?
+  deletedAt DateTime?
+  createdAt DateTime        @default(now())
+  thread    ForumThread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author    User            @relation("ForumPostsAuthored", fields: [authorId], references: [id], onDelete: Cascade)
+  parent    ForumPost?      @relation("ForumPostReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies   ForumPost[]     @relation("ForumPostReplies")
+  votes     ForumPostVote[]
+
+  @@index([threadId, createdAt])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model ForumPostVote {
+  id        String    @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime  @default(now())
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId])
 }
