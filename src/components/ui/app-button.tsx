@@ -4,16 +4,17 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const appButtonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap border font-medium transition-colors focus-visible:ring-2 focus-visible:ring-app-ink/20 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap border font-medium transition-colors focus-visible:ring-2 focus-visible:ring-app-accent/30 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        primary: "border-app-ink bg-app-ink text-app-paper hover:bg-app-accent-hover",
+        primary: "border-app-accent bg-app-accent text-app-accent-fg hover:bg-app-accent-hover",
         secondary:
-          "border-app-divider bg-app-paper text-app-ink hover:border-app-ink hover:bg-app-wash",
+          "border-app-divider bg-app-paper text-app-ink hover:border-app-accent hover:text-app-link",
         ghost:
           "border-transparent bg-transparent text-app-label hover:bg-app-wash hover:text-app-ink",
-        link: "border-transparent bg-transparent p-0 text-app-ink underline underline-offset-2",
+        link: "border-transparent bg-transparent p-0 text-app-link underline underline-offset-2",
+        danger: "border-app-signal bg-app-signal text-white hover:bg-app-signal/90",
       },
       size: {
         sm: "h-8 px-3 text-xs",

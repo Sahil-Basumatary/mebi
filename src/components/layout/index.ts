@@ -1,8 +1,6 @@
 export { PageHeader } from "./page-header";
 export { Section } from "./section";
-export { HairlineGrid, HairlineCell } from "./hairline-grid";
 export { EmptyState } from "./empty-state";
-export { Stat } from "./stat";
 export { Chip } from "./chip";
 export { ProgressBar } from "./progress-bar";
 export { UserRow } from "./user-row";
@@ -10,4 +8,4 @@ export { RouteState } from "./route-state";
 export { RouteLoading } from "./route-loading";
 export { SkipLink } from "./skip-link";
 export { AppTabs } from "./app-tabs";
-export { DataList, DataRow, MetaLine } from "./data-list";
+export { DataList, DataRow, ListColumns, MetaLine, PanelHeader } from "./data-list";

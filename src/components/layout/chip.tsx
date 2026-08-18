@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 type ChipProps = {
   children: ReactNode;
-  tone?: "wash" | "paper" | "ink";
+  tone?: "wash" | "paper" | "ink" | "signal";
   className?: string;
 };
 
@@ -15,6 +15,7 @@ export function Chip({ children, tone = "wash", className }: ChipProps) {
         tone === "wash" && "bg-app-chip text-app-label",
         tone === "paper" && "bg-app-paper text-app-label",
         tone === "ink" && "bg-app-ink text-app-paper border-app-ink",
+        tone === "signal" && "bg-app-signal text-white border-app-signal",
         className,
       )}
     >

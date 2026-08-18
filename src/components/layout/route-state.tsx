@@ -23,14 +23,14 @@ export function RouteState({
     <div
       className={cn(
         marketing
-          ? "border border-[#262626] bg-[#0a0a0a] p-8 text-[#ffffff]"
-          : "border-app-divider bg-app-wash border p-8",
+          ? "border border-[#262626] bg-[#0a0a0a] px-4 py-8 text-[#ffffff]"
+          : "border-app-divider bg-app-paper border px-4 py-8",
         className,
       )}
     >
       <p
         className={cn(
-          "text-eyebrow font-semibold tracking-eyebrow uppercase",
+          "text-eyebrow tracking-eyebrow font-semibold uppercase",
           marketing ? "text-[#8f8f8f]" : "text-app-label",
         )}
       >
@@ -38,7 +38,7 @@ export function RouteState({
       </p>
       <h1
         className={cn(
-          "mt-3 font-serif text-3xl font-light sm:text-4xl",
+          "mt-1.5 text-lg font-semibold",
           marketing ? "text-[#ffffff]" : "text-app-ink",
         )}
       >
@@ -47,14 +47,14 @@ export function RouteState({
       {description ? (
         <p
           className={cn(
-            "mt-4 max-w-2xl text-body-sm leading-6",
+            "mt-1.5 max-w-xl text-sm leading-5",
             marketing ? "text-[#b3b3b3]" : "text-app-body",
           )}
         >
           {description}
         </p>
       ) : null}
-      {action ? <div className="mt-6 flex flex-wrap items-center gap-3">{action}</div> : null}
+      {action ? <div className="mt-4 flex flex-wrap items-center gap-2">{action}</div> : null}
     </div>
   );
 }

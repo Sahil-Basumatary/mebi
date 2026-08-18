@@ -14,7 +14,7 @@ export function ProgressBar({ value, label = "Progress", className }: ProgressBa
         <span>{clamped}%</span>
       </div>
       <div className="bg-app-divider h-2">
-        <div className="bg-app-ink h-full" style={{ width: `${clamped}%` }} />
+        <div className="bg-app-accent h-full" style={{ width: `${clamped}%` }} />
       </div>
     </div>
   );
