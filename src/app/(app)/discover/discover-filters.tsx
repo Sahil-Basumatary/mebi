@@ -4,8 +4,17 @@ import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppButton } from "@/components/ui/app-button";
+import { cn } from "@/lib/utils";
 
-export function DiscoverFilters({ stacks }: { stacks: string[] }) {
+export function DiscoverFilters({
+  stacks,
+  resultCount,
+  className,
+}: {
+  stacks: string[];
+  resultCount: number;
+  className?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -40,10 +49,10 @@ export function DiscoverFilters({ stacks }: { stacks: string[] }) {
   }
 
   const selectClass =
-    "border-app-divider bg-app-paper text-app-ink focus:border-app-ink h-10 w-full border px-3 text-sm outline-none";
+    "h-10 w-full appearance-none border-0 bg-app-paper px-4 text-sm text-app-ink focus:outline-none";
 
   return (
-    <div className="border-app-divider bg-app-paper border">
+    <div className={cn("bg-app-paper", className)}>
       <div className="bg-app-divider grid gap-px md:grid-cols-[minmax(0,1.6fr)_1fr_1fr]">
         <label className="bg-app-paper relative flex items-center">
           <span className="sr-only">Search projects</span>
@@ -51,13 +60,13 @@ export function DiscoverFilters({ stacks }: { stacks: string[] }) {
             size={16}
             strokeWidth={1.75}
             aria-hidden
-            className="text-app-meta pointer-events-none absolute left-3"
+            className="text-app-meta pointer-events-none absolute left-4"
           />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search projects"
-            className="text-app-ink placeholder:text-app-meta h-10 w-full bg-transparent pr-3 pl-9 text-sm outline-none"
+            className="text-app-ink placeholder:text-app-meta h-10 w-full bg-transparent pr-4 pl-10 text-sm outline-none"
           />
         </label>
         <select
@@ -84,15 +93,17 @@ export function DiscoverFilters({ stacks }: { stacks: string[] }) {
           <option value="team">Largest team</option>
         </select>
       </div>
-      {hasFilters ? (
-        <div className="border-app-divider flex items-center justify-between border-t px-3 py-1.5">
-          <span className="text-app-meta text-xs">Filters applied</span>
+      <div className="border-app-divider flex h-10 items-center justify-between border-y px-4">
+        <span className="text-app-meta text-xs tabular-nums">
+          {resultCount} project{resultCount === 1 ? "" : "s"}
+        </span>
+        {hasFilters ? (
           <AppButton type="button" variant="ghost" size="sm" onClick={clearAll}>
             <X size={13} strokeWidth={2} aria-hidden />
             Clear
           </AppButton>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -6,10 +6,10 @@ import {
   DataList,
   DataRow,
   EmptyState,
+  ListColumns,
   MetaLine,
   PageHeader,
   ProgressBar,
-  Section,
   UserRow,
 } from "@/components/layout";
 import { AppButton } from "@/components/ui/app-button";
@@ -67,62 +67,58 @@ export default async function DiscoverPage({
         ? { members: { _count: "desc" } }
         : { updatedAt: "desc" };
 
-  const [builds, stackRows, projectCount, builderCount, updateCount, resultCount, pendingRequests] =
-    await Promise.all([
-      prisma.project.findMany({
-        where: filteredWhere,
-        orderBy,
-        take: 100,
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          techStack: true,
-          estimatedTime: true,
-          progress: true,
-          updatedAt: true,
-          members: {
-            orderBy: { joinedAt: "asc" },
-            select: {
-              role: true,
-              user: {
-                select: {
-                  id: true,
-                  fullName: true,
-                  username: true,
-                  imageUrl: true,
-                  role: true,
-                  profilePrivate: true,
-                },
+  const [builds, stackRows, resultCount, pendingRequests] = await Promise.all([
+    prisma.project.findMany({
+      where: filteredWhere,
+      orderBy,
+      take: 100,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        techStack: true,
+        estimatedTime: true,
+        progress: true,
+        updatedAt: true,
+        members: {
+          orderBy: { joinedAt: "asc" },
+          select: {
+            role: true,
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                username: true,
+                imageUrl: true,
+                role: true,
+                profilePrivate: true,
               },
             },
           },
-          updates: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
-            select: { createdAt: true },
-          },
-          _count: { select: { updates: true } },
         },
-      }),
-      prisma.project.findMany({
-        where: directoryWhere,
-        take: 500,
-        select: { techStack: true },
-      }),
-      prisma.project.count({ where: directoryWhere }),
-      prisma.projectMember.count({ where: { project: directoryWhere } }),
-      prisma.projectUpdate.count({ where: { project: directoryWhere } }),
-      prisma.project.count({ where: filteredWhere }),
-      prisma.projectRequest.findMany({
-        where: {
-          fromUserId: user.id,
-          kind: "JOIN",
-          status: "PENDING",
+        updates: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
         },
-        select: { projectId: true },
-      }),
-    ]);
+        _count: { select: { updates: true } },
+      },
+    }),
+    prisma.project.findMany({
+      where: directoryWhere,
+      take: 500,
+      select: { techStack: true },
+    }),
+    prisma.project.count({ where: filteredWhere }),
+    prisma.projectRequest.findMany({
+      where: {
+        fromUserId: user.id,
+        kind: "JOIN",
+        status: "PENDING",
+      },
+      select: { projectId: true },
+    }),
+  ]);
 
   const pendingProjectIds = new Set(pendingRequests.map((request) => request.projectId));
   const stacks = [
@@ -132,43 +128,48 @@ export default async function DiscoverPage({
     .sort((a, b) => a.localeCompare(b));
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
+        density="compact"
         eyebrow="Open projects"
         title="Discover"
         description="Public projects accepting join requests."
+        actions={
+          <AppButton asChild variant="secondary">
+            <Link href="/forum/looking-for-partners">Partner forum</Link>
+          </AppButton>
+        }
       />
-
-      <dl className="border-app-divider bg-app-paper grid grid-cols-3 divide-x border">
-        <DiscoverStat label="Projects" value={projectCount} />
-        <DiscoverStat label="Builders" value={builderCount} />
-        <DiscoverStat label="Updates" value={updateCount} />
-      </dl>
-
-      <Suspense fallback={<div className="border-app-divider bg-app-paper h-10 border" />}>
-        <DiscoverFilters stacks={stacks} />
-      </Suspense>
-
-      <Section
-        eyebrow={query || stack ? "Filtered" : "Directory"}
-        title="Open projects"
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-app-meta mr-2 text-sm tabular-nums">
-              {resultCount} result{resultCount === 1 ? "" : "s"}
-            </span>
-            <AppButton asChild variant="secondary" size="sm">
-              <Link href="/forum/looking-for-partners">Partner forum</Link>
-            </AppButton>
-            <AppButton asChild size="sm">
-              <Link href="/projects#new-project">New project</Link>
-            </AppButton>
-          </div>
+      <DataList
+        ariaLabel="Open projects"
+        toolbar={
+          <Suspense fallback={<div className="h-20" />}>
+            <DiscoverFilters stacks={stacks} resultCount={resultCount} />
+          </Suspense>
+        }
+        columns={
+          builds.length ? (
+            <ListColumns className="grid-cols-[minmax(0,1fr)_10rem_11rem]">
+              <span>Project</span>
+              <span>Owner</span>
+              <span className="text-right">Action</span>
+            </ListColumns>
+          ) : null
+        }
+        empty={
+          <EmptyState
+            variant="inline"
+            eyebrow={query || stack ? "No matches" : "Quiet board"}
+            title={
+              query || stack
+                ? "No projects match these filters."
+                : "No open public projects right now."
+            }
+          />
         }
       >
-        {builds.length ? (
-          <DataList ariaLabel="Open projects">
-            {builds.map((project) => {
+        {builds.length
+          ? builds.map((project) => {
               const owner = project.members.find((member) => member.role === "OWNER")?.user;
               const askTargets = project.members
                 .filter((member) => !member.user.profilePrivate)
@@ -180,7 +181,7 @@ export default async function DiscoverPage({
               return (
                 <DataRow
                   key={project.id}
-                  className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_10rem_11rem] lg:items-center"
+                  className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_10rem_11rem] lg:items-center"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -214,7 +215,6 @@ export default async function DiscoverPage({
                       </div>
                     ) : null}
                   </div>
-
                   <div>
                     {owner ? (
                       <UserRow
@@ -226,7 +226,6 @@ export default async function DiscoverPage({
                       />
                     ) : null}
                   </div>
-
                   <div className="flex flex-col gap-3 lg:items-end">
                     <ProgressBar value={project.progress} className="w-full" />
                     {pendingProjectIds.has(project.id) ? (
@@ -243,34 +242,9 @@ export default async function DiscoverPage({
                   </div>
                 </DataRow>
               );
-            })}
-          </DataList>
-        ) : (
-          <EmptyState
-            fill
-            eyebrow={query || stack ? "No matches" : "Quiet board"}
-            title={
-              query || stack
-                ? "No projects match these filters."
-                : "No open public projects right now."
-            }
-            action={
-              <AppButton asChild>
-                <Link href="/projects#new-project">Create project</Link>
-              </AppButton>
-            }
-          />
-        )}
-      </Section>
-    </div>
-  );
-}
-
-function DiscoverStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="px-4 py-3">
-      <dt className="text-app-meta text-xs">{label}</dt>
-      <dd className="text-app-ink mt-1 text-xl font-semibold tabular-nums">{value}</dd>
+            })
+          : null}
+      </DataList>
     </div>
   );
 }

@@ -122,15 +122,52 @@ export default async function InboxPage({
   return (
     <>
       <ReadMarker includeForum={tab === "activity"} />
-      <div className="flex flex-1 flex-col gap-4">
-        <PageHeader eyebrow="Requests" title="Inbox" />
-
-        <AppTabs items={tabs} active={tab} ariaLabel="Inbox folders" className="self-start" />
-
-        {tab === "activity" ? (
-          activity.length ? (
-            <DataList ariaLabel="Activity">
-              {activity.map((item) => {
+      <div className="flex flex-col gap-3">
+        <PageHeader density="compact" eyebrow="Requests" title="Inbox" />
+        <DataList
+          ariaLabel={
+            tab === "activity" ? "Activity" : tab === "sent" ? "Sent requests" : "Received requests"
+          }
+          toolbar={<AppTabs items={tabs} active={tab} ariaLabel="Inbox folders" attached />}
+          empty={
+            tab === "activity" ? (
+              <EmptyState
+                variant="inline"
+                eyebrow="Quiet"
+                title="No activity yet."
+                action={
+                  <AppButton asChild>
+                    <Link href="/forum">Open the forum</Link>
+                  </AppButton>
+                }
+              />
+            ) : tab === "received" ? (
+              <EmptyState
+                variant="inline"
+                eyebrow="Inbox empty"
+                title="No requests yet."
+                action={
+                  <AppButton asChild>
+                    <Link href="/partners">Browse partners</Link>
+                  </AppButton>
+                }
+              />
+            ) : (
+              <EmptyState
+                variant="inline"
+                eyebrow="Nothing sent"
+                title="No sent requests yet."
+                action={
+                  <AppButton asChild>
+                    <Link href="/partners">Find a partner</Link>
+                  </AppButton>
+                }
+              />
+            )
+          }
+        >
+          {tab === "activity" && activity.length
+            ? activity.map((item) => {
                 const href = safeNotificationHref(item.href);
                 return (
                   <DataRow
@@ -143,7 +180,7 @@ export default async function InboxPage({
                         <span>{timeAgo(item.createdAt)}</span>
                         <span aria-hidden>·</span>
                         <span>{item.type === "FORUM_REPLY" ? "Forum" : "Request"}</span>
-                        {!item.read ? <Chip tone="ink">new</Chip> : null}
+                        {!item.read ? <Chip tone="signal">new</Chip> : null}
                       </MetaLine>
                     </div>
                     <AppButton asChild variant="secondary" size="sm">
@@ -151,148 +188,97 @@ export default async function InboxPage({
                     </AppButton>
                   </DataRow>
                 );
-              })}
-            </DataList>
-          ) : (
-            <EmptyState
-              fill
-              eyebrow="Quiet"
-              title="No activity yet."
-              description="Forum replies and request updates will land here."
-              action={
-                <AppButton asChild>
-                  <Link href="/forum">Open the forum</Link>
-                </AppButton>
-              }
-            />
-          )
-        ) : tab === "received" ? (
-          orderedReceived.length ? (
-            <DataList ariaLabel="Received requests">
-              {orderedReceived.map((request) => (
-                <DataRow
-                  key={request.id}
-                  className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
-                >
-                  <UserRow
-                    fullName={request.fromUser.fullName}
-                    username={request.fromUser.username}
-                    imageUrl={request.fromUser.imageUrl}
-                    role={request.fromUser.role}
-                    meta={
-                      <>
-                        <MetaLine className="mt-1.5">
-                          <KindBadge kind={request.kind} />
-                          <span>{timeAgo(request.createdAt)}</span>
-                        </MetaLine>
-                        <p className="text-app-ink mt-2 text-sm">
-                          <Link
-                            href={`/projects/${request.project.id}`}
-                            className="font-semibold underline underline-offset-2"
-                          >
-                            {request.project.name}
-                          </Link>
-                        </p>
-                        <p className="border-app-ink text-app-body mt-2 line-clamp-2 max-w-3xl border-l-2 pl-3 text-sm leading-5">
-                          {request.message}
-                        </p>
-                        {request.note ? (
+              })
+            : tab === "received" && orderedReceived.length
+              ? orderedReceived.map((request) => (
+                  <DataRow
+                    key={request.id}
+                    className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
+                  >
+                    <UserRow
+                      fullName={request.fromUser.fullName}
+                      username={request.fromUser.username}
+                      imageUrl={request.fromUser.imageUrl}
+                      role={request.fromUser.role}
+                      meta={
+                        <>
+                          <MetaLine className="mt-1.5">
+                            <KindBadge kind={request.kind} />
+                            <span>{timeAgo(request.createdAt)}</span>
+                          </MetaLine>
                           <p className="text-app-ink mt-2 text-sm">
-                            <span className="font-semibold">Role note:</span> {request.note}
+                            <Link
+                              href={`/projects/${request.project.id}`}
+                              className="text-app-link font-semibold underline underline-offset-2"
+                            >
+                              {request.project.name}
+                            </Link>
                           </p>
+                          <p className="border-app-accent text-app-body mt-2 line-clamp-2 max-w-3xl border-l-2 pl-3 text-sm leading-5">
+                            {request.message}
+                          </p>
+                          {request.note ? (
+                            <p className="text-app-ink mt-2 text-sm">
+                              <span className="font-semibold">Role note:</span> {request.note}
+                            </p>
+                          ) : null}
+                          <SharedTags
+                            skills={request.sharedSkills}
+                            interests={request.sharedInterests}
+                          />
+                        </>
+                      }
+                    />
+                    <div className="lg:text-right">
+                      {request.status === "PENDING" ? (
+                        <RequestResponse requestId={request.id} />
+                      ) : (
+                        <StatusBadge status={request.status} />
+                      )}
+                    </div>
+                  </DataRow>
+                ))
+              : tab === "sent" && sent.length
+                ? sent.map((request) => (
+                    <DataRow
+                      key={request.id}
+                      className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
+                    >
+                      <UserRow
+                        fullName={request.toUser.fullName}
+                        username={request.toUser.username}
+                        imageUrl={request.toUser.imageUrl}
+                        role={request.toUser.role}
+                        meta={
+                          <>
+                            <MetaLine className="mt-1.5">
+                              <KindBadge kind={request.kind} />
+                              <span>{timeAgo(request.createdAt)}</span>
+                            </MetaLine>
+                            <p className="text-app-ink mt-2 text-sm">
+                              <Link
+                                href={`/projects/${request.project.id}`}
+                                className="text-app-link font-semibold underline underline-offset-2"
+                              >
+                                {request.project.name}
+                              </Link>
+                            </p>
+                            <p className="border-app-divider text-app-body mt-2 line-clamp-2 max-w-3xl border-l-2 pl-3 text-sm leading-5">
+                              {request.message}
+                            </p>
+                          </>
+                        }
+                      />
+                      <div className="flex flex-col items-start gap-3 lg:items-end">
+                        <StatusBadge status={request.status} />
+                        {request.status === "PENDING" ? (
+                          <CancelRequest requestId={request.id} />
                         ) : null}
-                        <SharedTags
-                          skills={request.sharedSkills}
-                          interests={request.sharedInterests}
-                        />
-                      </>
-                    }
-                  />
-                  <div className="lg:text-right">
-                    {request.status === "PENDING" ? (
-                      <RequestResponse requestId={request.id} />
-                    ) : (
-                      <StatusBadge status={request.status} />
-                    )}
-                  </div>
-                </DataRow>
-              ))}
-            </DataList>
-          ) : (
-            <EmptyState
-              fill
-              eyebrow="Inbox empty"
-              title="No requests yet."
-              description="Invites and join requests will appear here."
-              action={
-                <div className="flex flex-wrap gap-3">
-                  <AppButton asChild>
-                    <Link href="/partners">Browse partners</Link>
-                  </AppButton>
-                  <AppButton asChild variant="secondary">
-                    <Link href="/discover">Browse builds</Link>
-                  </AppButton>
-                </div>
-              }
-            />
-          )
-        ) : sent.length ? (
-          <DataList ariaLabel="Sent requests">
-            {sent.map((request) => (
-              <DataRow
-                key={request.id}
-                className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
-              >
-                <UserRow
-                  fullName={request.toUser.fullName}
-                  username={request.toUser.username}
-                  imageUrl={request.toUser.imageUrl}
-                  role={request.toUser.role}
-                  meta={
-                    <>
-                      <MetaLine className="mt-1.5">
-                        <KindBadge kind={request.kind} />
-                        <span>{timeAgo(request.createdAt)}</span>
-                      </MetaLine>
-                      <p className="text-app-ink mt-2 text-sm">
-                        <Link
-                          href={`/projects/${request.project.id}`}
-                          className="font-semibold underline underline-offset-2"
-                        >
-                          {request.project.name}
-                        </Link>
-                      </p>
-                      <p className="border-app-divider text-app-body mt-2 line-clamp-2 max-w-3xl border-l-2 pl-3 text-sm leading-5">
-                        {request.message}
-                      </p>
-                    </>
-                  }
-                />
-                <div className="flex flex-col items-start gap-3 lg:items-end">
-                  <StatusBadge status={request.status} />
-                  {request.status === "PENDING" ? <CancelRequest requestId={request.id} /> : null}
-                </div>
-              </DataRow>
-            ))}
-          </DataList>
-        ) : (
-          <EmptyState
-            fill
-            eyebrow="Nothing sent"
-            title="No sent requests yet."
-            description="Requests you send will appear here."
-            action={
-              <div className="flex flex-wrap gap-3">
-                <AppButton asChild>
-                  <Link href="/partners">Find a partner</Link>
-                </AppButton>
-                <AppButton asChild variant="secondary">
-                  <Link href="/projects">View projects</Link>
-                </AppButton>
-              </div>
-            }
-          />
-        )}
+                      </div>
+                    </DataRow>
+                  ))
+                : null}
+        </DataList>
       </div>
     </>
   );

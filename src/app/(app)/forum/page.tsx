@@ -131,7 +131,6 @@ export default async function ForumIndexPage({
         </>
       ) : (
         <EmptyState
-          fill
           eyebrow={query ? "No matches" : "Quiet"}
           title={query ? "Nothing matched that search." : "No threads yet."}
           action={

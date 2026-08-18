@@ -53,7 +53,7 @@ export function JoinRequestDialog({
       <span
         role="status"
         aria-live="polite"
-        className="border-app-ink text-app-ink inline-flex h-9 items-center gap-2 rounded-full border px-5 text-sm font-medium"
+        className="border-app-accent text-app-ink inline-flex h-8 items-center gap-2 border px-3 text-sm font-medium"
       >
         <Check size={16} strokeWidth={2.5} aria-hidden />
         Request sent
@@ -83,10 +83,7 @@ export function JoinRequestDialog({
                 <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
                   Join request
                 </p>
-                <h3
-                  id="join-request-title"
-                  className="mt-2 font-serif text-3xl leading-tight font-light"
-                >
+                <h3 id="join-request-title" className="mt-2 text-3xl leading-tight font-medium">
                   Ask to join {projectName}
                 </h3>
               </div>

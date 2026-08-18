@@ -2,7 +2,7 @@ import type { UserRole } from "@prisma/client";
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Chip, DataList, DataRow, EmptyState, PageHeader, Section } from "@/components/layout";
+import { Chip, DataList, DataRow, EmptyState, ListColumns, PageHeader } from "@/components/layout";
 import { SocialIcon } from "@/components/social-icon";
 import { AppButton } from "@/components/ui/app-button";
 import { requireOnboardedUser } from "@/lib/current-user";
@@ -126,7 +126,7 @@ function PartnerRow({
   const interestTags = user.interests.slice(0, 4);
 
   return (
-    <DataRow className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <DataRow className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_7rem_9rem] lg:items-center">
       <div className="flex min-w-0 gap-3">
         <div className="border-app-divider bg-app-wash text-app-label flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-xs font-semibold">
           {user.imageUrl ? (
@@ -197,12 +197,12 @@ function PartnerRow({
           ) : null}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-3 lg:justify-end">
-        {breakdown.score > 0 ? (
-          <span className="text-app-meta font-mono text-[10px] tracking-[0.08em] uppercase">
-            {breakdown.sharedSkills.length + breakdown.sharedInterests.length} shared
-          </span>
-        ) : null}
+      <span className="text-app-meta font-mono text-[11px] tracking-[0.08em] uppercase lg:text-right">
+        {breakdown.score > 0
+          ? `${breakdown.sharedSkills.length + breakdown.sharedInterests.length} shared`
+          : "—"}
+      </span>
+      <div className="flex lg:justify-end">
         <PartnerAction
           ranked={ranked}
           relationship={relationship}
@@ -210,15 +210,6 @@ function PartnerRow({
         />
       </div>
     </DataRow>
-  );
-}
-
-function DirectoryStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="px-4 py-3">
-      <dt className="text-app-meta text-xs">{label}</dt>
-      <dd className="text-app-ink mt-1 text-xl font-semibold tabular-nums">{value}</dd>
-    </div>
   );
 }
 
@@ -233,7 +224,6 @@ export default async function PartnersPage({
   const roleFilter = asRole(first(params.role));
   const skillFilter = first(params.skill);
   const interestFilter = first(params.interest);
-  const filtersActive = Boolean(query || roleFilter || skillFilter || interestFilter);
 
   // Early-stage scale: pull the candidate pool once and rank in memory. When the
   // directory grows we move structured filters and pagination into the query.
@@ -326,75 +316,57 @@ export default async function PartnersPage({
 
   const { skills, interests } = partnerFacets(pool);
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
+        density="compact"
         eyebrow="Network"
         title="Partners"
         description="Find builders for active projects."
       />
-
-      {pool.length === 0 ? (
-        <EmptyState
-          fill
-          eyebrow="Early network"
-          title="No other builders yet."
-          description="Builders will appear here after they join mebi."
-          action={
-            <div className="flex flex-wrap gap-3">
-              <AppButton asChild>
-                <Link href="/projects">Start a build</Link>
-              </AppButton>
-              <AppButton asChild variant="secondary">
-                <Link href="/forum/looking-for-partners">Open partner forum</Link>
-              </AppButton>
-            </div>
-          }
-        />
-      ) : (
-        <>
-          <dl className="border-app-divider bg-app-paper grid grid-cols-3 divide-x border">
-            <DirectoryStat label="Builders" value={pool.length} />
-            <DirectoryStat label="Collaborators" value={partneredIds.size} />
-            <DirectoryStat label="Active projects" value={viewerProjects.length} />
-          </dl>
-
-          {/* The rail only exists from xl up, so the same filters render inline
-              below it. display:none keeps the unused copy out of the a11y tree. */}
-          <Suspense fallback={null}>
-            <PartnerFilters skills={skills} interests={interests} className="xl:hidden" />
-          </Suspense>
-
-          <Section
-            eyebrow={filtersActive ? "Filtered" : "Directory"}
-            title="Builders"
+      <DataList
+        ariaLabel="Builders"
+        toolbar={
+          pool.length ? (
+            <Suspense fallback={<div className="h-20" />}>
+              <PartnerFilters skills={skills} interests={interests} resultCount={ranked.length} />
+            </Suspense>
+          ) : null
+        }
+        columns={
+          ranked.length ? (
+            <ListColumns className="grid-cols-[minmax(0,1fr)_7rem_9rem]">
+              <span>Builder</span>
+              <span className="text-right">Shared</span>
+              <span className="text-right">Action</span>
+            </ListColumns>
+          ) : null
+        }
+        empty={
+          <EmptyState
+            variant="inline"
+            eyebrow={pool.length ? "No matches" : "Early network"}
+            title={pool.length ? "No builders match these filters." : "No other builders yet."}
             action={
-              <span className="text-app-meta text-sm tabular-nums">
-                {ranked.length} result{ranked.length === 1 ? "" : "s"}
-              </span>
+              pool.length ? undefined : (
+                <AppButton asChild>
+                  <Link href="/projects">Start a build</Link>
+                </AppButton>
+              )
             }
-          >
-            {ranked.length ? (
-              <DataList ariaLabel="Builders">
-                {ranked.map((item) => (
-                  <PartnerRow
-                    key={item.user.id}
-                    ranked={item}
-                    relationship={relationshipFor(item.user.id)}
-                    viewerProjects={viewerProjects}
-                  />
-                ))}
-              </DataList>
-            ) : (
-              <EmptyState
-                fill
-                eyebrow="No matches"
-                title="No builders match these filters"
-                description="Try widening the role or clearing a tag."
+          />
+        }
+      >
+        {ranked.length
+          ? ranked.map((item) => (
+              <PartnerRow
+                key={item.user.id}
+                ranked={item}
+                relationship={relationshipFor(item.user.id)}
+                viewerProjects={viewerProjects}
               />
-            )}
-          </Section>
-        </>
-      )}
+            ))
+          : null}
+      </DataList>
     </div>
   );
 }

@@ -117,7 +117,6 @@ export default async function ForumBoardPage({
         </>
       ) : (
         <EmptyState
-          fill
           eyebrow={query ? "No matches" : "Empty board"}
           title={query ? "Nothing matched that search." : `No threads in ${board.title} yet.`}
           action={

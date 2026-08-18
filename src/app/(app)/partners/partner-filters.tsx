@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 type PartnerFiltersProps = {
   skills: string[];
   interests: string[];
-  layout?: "bar" | "stack";
+  resultCount: number;
   className?: string;
 };
 
@@ -20,17 +20,11 @@ const ROLE_OPTIONS = [
   { value: "LEARNER", label: "Learner" },
 ];
 
-export function PartnerFilters({
-  skills,
-  interests,
-  layout = "bar",
-  className,
-}: PartnerFiltersProps) {
+export function PartnerFilters({ skills, interests, resultCount, className }: PartnerFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
-  const stacked = layout === "stack";
 
   const hasFilters =
     Boolean(searchParams.get("q")) ||
@@ -65,32 +59,26 @@ export function PartnerFilters({
     router.replace(pathname, { scroll: false });
   }
 
-  const selectClass = cn(
-    "h-10 w-full appearance-none border border-app-divider bg-app-paper px-3 text-sm text-app-ink focus:border-app-ink focus:outline-none",
-  );
+  const selectClass =
+    "h-10 w-full appearance-none border-0 bg-app-paper px-4 text-sm text-app-ink focus:outline-none";
 
   return (
-    <div className={cn("border-app-divider bg-app-paper border", stacked && "border-0", className)}>
-      <div
-        className={cn(
-          "bg-app-divider grid gap-px",
-          stacked ? "grid-cols-1" : "md:grid-cols-[1.6fr_1fr_1fr_1fr]",
-        )}
-      >
+    <div className={cn("bg-app-paper", className)}>
+      <div className="bg-app-divider grid gap-px md:grid-cols-[1.6fr_1fr_1fr_1fr]">
         <label className="bg-app-paper relative flex items-center">
           <span className="sr-only">Search partners</span>
           <Search
             size={16}
             strokeWidth={1.75}
             aria-hidden
-            className="text-app-meta pointer-events-none absolute left-3"
+            className="text-app-meta pointer-events-none absolute left-4"
           />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search name, skill, or interest"
             aria-label="Search partners"
-            className="text-app-ink placeholder:text-app-meta h-10 w-full bg-transparent pr-3 pl-9 text-sm focus:outline-none"
+            className="text-app-ink placeholder:text-app-meta h-10 w-full bg-transparent pr-4 pl-10 text-sm focus:outline-none"
           />
         </label>
         <select
@@ -132,15 +120,17 @@ export function PartnerFilters({
           ))}
         </select>
       </div>
-      {hasFilters ? (
-        <div className="border-app-divider flex items-center justify-between border-t px-3 py-2">
-          <p className="text-app-label text-xs">Filters applied</p>
+      <div className="border-app-divider flex h-10 items-center justify-between border-y px-4">
+        <span className="text-app-meta text-xs tabular-nums">
+          {resultCount} result{resultCount === 1 ? "" : "s"}
+        </span>
+        {hasFilters ? (
           <AppButton type="button" onClick={clearAll} variant="ghost" size="sm">
             <X size={13} strokeWidth={2} />
-            Clear all
+            Clear
           </AppButton>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -95,10 +95,7 @@ export function PartnerRequestDialog({
                 <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
                   Build invite
                 </p>
-                <h3
-                  id="partner-request-title"
-                  className="mt-2 font-serif text-3xl leading-tight font-light"
-                >
+                <h3 id="partner-request-title" className="mt-2 text-3xl leading-tight font-medium">
                   Invite {toName}
                   {fixedProject ? ` to ${fixedProject.name}` : " onto a project"}
                 </h3>
