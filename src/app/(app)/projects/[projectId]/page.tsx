@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ProjectRole } from "@prisma/client";
 import { ArrowLeft } from "lucide-react";
-import { Chip, MetaLine, ProgressBar, UserRow } from "@/components/layout";
+import { Chip, EmptyState, MetaLine, ProgressBar, UserRow } from "@/components/layout";
 import { AppButton } from "@/components/ui/app-button";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { scoreMatch } from "@/lib/match";
@@ -223,14 +223,14 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             {project.publishedAt ? <Chip tone="ink">published</Chip> : null}
           </div>
         </div>
-        <div className="px-5 py-5">
+        <div className="px-4 py-4">
           <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
             Project workspace
           </p>
-          <h1 className="text-app-ink mt-1 font-serif text-4xl leading-tight font-light sm:text-5xl">
+          <h1 className="text-app-ink mt-1 text-[1.75rem] leading-tight font-medium sm:text-[2rem]">
             {project.name}
           </h1>
-          <p className="text-app-body mt-3 max-w-4xl text-base leading-6">{project.description}</p>
+          <p className="text-app-body mt-2 max-w-4xl text-sm leading-6">{project.description}</p>
           <MetaLine className="mt-3">
             <span>{project.estimatedTime || "No estimate"}</span>
             <span aria-hidden>·</span>
@@ -239,7 +239,20 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             </span>
             <span aria-hidden>·</span>
             <span>{isOwner ? "Owner" : "Member"}</span>
+            <span aria-hidden>·</span>
+            <span>
+              {members.length} member{members.length === 1 ? "" : "s"}
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              {authorUpdates.length} update{authorUpdates.length === 1 ? "" : "s"}
+            </span>
           </MetaLine>
+          {!isCompleted ? (
+            <div className="mt-4 max-w-md">
+              <ProgressBar value={project.progress} />
+            </div>
+          ) : null}
           {project.techStack.length ? (
             <div className="mt-4 flex flex-wrap gap-1.5">
               {project.techStack.map((tag) => (
@@ -248,23 +261,6 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             </div>
           ) : null}
         </div>
-        <dl className="border-app-divider grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
-          <div className="p-4">
-            <dt className="text-app-meta text-xs">Progress</dt>
-            <dd className="mt-2">
-              <ProgressBar value={project.progress} />
-            </dd>
-          </div>
-          <ProjectMetric
-            label="Team"
-            value={`${members.length} member${members.length === 1 ? "" : "s"}`}
-          />
-          <ProjectMetric
-            label="Build log"
-            value={`${authorUpdates.length} update${authorUpdates.length === 1 ? "" : "s"}`}
-          />
-          <ProjectMetric label="Verification" value={verified ? "Verified" : "In progress"} />
-        </dl>
         <nav
           aria-label="Project sections"
           className="border-app-divider flex flex-wrap gap-1 border-t px-4 py-2"
@@ -284,8 +280,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         </nav>
       </header>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-        <div className="flex min-w-0 flex-col gap-6">
+      <section className="grid gap-4 xl:grid-cols-[1fr_20rem]">
+        <div className="flex min-w-0 flex-col gap-4">
           <UpdateForm projectId={project.id} progress={project.progress} disabled={isCompleted} />
 
           <section id="build-log" className="border-app-divider bg-app-paper scroll-mt-20 border">
@@ -301,7 +297,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             {updates.length ? (
               <ul className="divide-app-divider divide-y">
                 {updates.map((update) => (
-                  <li key={update.id} className="px-4 py-4">
+                  <li key={update.id} className="px-4 py-2.5">
                     <UserRow
                       fullName={update.author.fullName}
                       username={update.author.username}
@@ -327,12 +323,12 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 ))}
               </ul>
             ) : (
-              <p className="text-app-body px-4 py-8 text-sm leading-6">No updates yet.</p>
+              <EmptyState variant="inline" eyebrow="Quiet" title="No updates yet." />
             )}
           </section>
         </div>
 
-        <aside className="flex flex-col gap-6">
+        <aside className="flex flex-col gap-4">
           <div id="verification" className="scroll-mt-20">
             <SignaturePanel
               projectId={project.id}
@@ -355,8 +351,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           ) : null}
 
           <section id="roster" className="border-app-divider bg-app-paper scroll-mt-20 border">
-            <div className="border-app-divider border-b px-5 py-4">
-              <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+            <div className="border-app-divider border-b px-4 py-2.5">
+              <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
                 Roster
               </p>
             </div>
@@ -369,7 +365,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                   member.role !== ProjectRole.OWNER &&
                   member.user.id !== user.id;
                 return (
-                  <li key={member.id} className="px-5 py-4">
+                  <li key={member.id} className="px-4 py-2.5">
                     <UserRow
                       fullName={member.user.fullName}
                       username={member.user.username}
@@ -400,14 +396,14 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
           {pendingInvites.length ? (
             <section className="border-app-divider bg-app-paper border">
-              <div className="border-app-divider border-b px-5 py-4">
-                <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+              <div className="border-app-divider border-b px-4 py-2.5">
+                <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
                   Pending invites
                 </p>
               </div>
               <ul className="divide-app-divider divide-y">
                 {pendingInvites.map((invite) => (
-                  <li key={invite.id} className="px-5 py-4">
+                  <li key={invite.id} className="px-4 py-2.5">
                     <UserRow
                       fullName={invite.toUser.fullName}
                       username={invite.toUser.username}
@@ -427,15 +423,15 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
           {canInvite ? (
             <section className="border-app-divider bg-app-paper border">
-              <div className="border-app-divider border-b px-5 py-4">
-                <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
+              <div className="border-app-divider border-b px-4 py-2.5">
+                <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
                   Invite
                 </p>
               </div>
               {inviteSuggestions.length ? (
                 <ul className="divide-app-divider divide-y">
                   {inviteSuggestions.map(({ candidate, breakdown }) => (
-                    <li key={candidate.id} className="space-y-3 px-5 py-4">
+                    <li key={candidate.id} className="space-y-3 px-4 py-2.5">
                       <UserRow
                         fullName={candidate.fullName}
                         username={candidate.username}
@@ -468,14 +464,13 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                   ))}
                 </ul>
               ) : (
-                <p className="text-app-body text-body-sm px-5 py-5 leading-6">
-                  No open builders to invite yet.{" "}
-                  <Link href="/partners" className="border-app-ink border-b pb-0.5">
-                    Browse partners
-                  </Link>
-                </p>
+                <EmptyState
+                  variant="inline"
+                  eyebrow="Empty pool"
+                  title="No open builders to invite yet."
+                />
               )}
-              <div className="border-app-divider border-t px-5 py-4">
+              <div className="border-app-divider border-t px-4 py-2.5">
                 <Link
                   href="/partners"
                   className="text-app-ink text-sm font-medium underline underline-offset-2"
@@ -509,15 +504,6 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           </div>
         </aside>
       </section>
-    </div>
-  );
-}
-
-function ProjectMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="p-4">
-      <dt className="text-app-meta text-xs">{label}</dt>
-      <dd className="text-app-ink mt-1 text-base font-semibold">{value}</dd>
     </div>
   );
 }

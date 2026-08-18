@@ -88,7 +88,7 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
       <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
         Finish line
       </p>
-      <h2 className="mt-3 font-serif text-3xl font-light">Mark this build finished?</h2>
+      <h2 className="mt-3 text-3xl font-medium">Mark this build finished?</h2>
       <p className="text-app-body mt-3 text-[16px] leading-6">
         This locks progress at 100% and unlocks publishing.
       </p>
@@ -116,10 +116,7 @@ export function ProjectCompletionPanel({ projectId, disabled }: ProjectCompletio
             <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
               Project finished
             </p>
-            <h3
-              id="project-complete-title"
-              className="mt-4 font-serif text-4xl leading-tight font-light"
-            >
+            <h3 id="project-complete-title" className="mt-4 text-4xl leading-tight font-medium">
               Project finished!
             </h3>
             <p className="text-app-body mt-4 text-[16px] leading-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/ui/app-button";
 import { cn } from "@/lib/utils";
 import { createProject, type ProjectFormState } from "./actions";
 import { useBriefReport } from "./brief-signal";
@@ -33,7 +33,7 @@ export function ProjectForm({ embedded = false }: { embedded?: boolean }) {
           required
           onChange={(event) => report("name", event.target.value)}
           placeholder="KCL founder matching graph"
-          className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink border px-3 py-3 text-sm transition-colors outline-none"
+          className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-accent border px-3 py-3 text-sm transition-colors outline-none"
         />
       </div>
 
@@ -52,7 +52,7 @@ export function ProjectForm({ embedded = false }: { embedded?: boolean }) {
           required
           onChange={(event) => report("description", event.target.value)}
           placeholder="What problem are you solving, who is it for, and what kind of partner would make it real?"
-          className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink resize-none border px-3 py-3 text-sm leading-6 transition-colors outline-none"
+          className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-accent resize-none border px-3 py-3 text-sm leading-6 transition-colors outline-none"
         />
       </div>
 
@@ -69,7 +69,7 @@ export function ProjectForm({ embedded = false }: { embedded?: boolean }) {
             name="techStack"
             onChange={(event) => report("techStack", event.target.value)}
             placeholder="Next.js, Prisma, Postgres"
-            className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink border px-3 py-3 text-sm transition-colors outline-none"
+            className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-accent border px-3 py-3 text-sm transition-colors outline-none"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function ProjectForm({ embedded = false }: { embedded?: boolean }) {
             maxLength={80}
             onChange={(event) => report("estimatedTime", event.target.value)}
             placeholder="4 weeks"
-            className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-ink border px-3 py-3 text-sm transition-colors outline-none"
+            className="border-app-divider bg-app-wash text-app-ink placeholder:text-app-muted focus:border-app-accent border px-3 py-3 text-sm transition-colors outline-none"
           />
         </div>
       </div>
@@ -102,7 +102,7 @@ export function ProjectForm({ embedded = false }: { embedded?: boolean }) {
               name="visibility"
               value="PUBLIC"
               defaultChecked
-              className="accent-app-ink mt-1"
+              className="accent-app-accent mt-1"
             />
             <span>
               <span className="block font-semibold">Public</span>
@@ -112,7 +112,12 @@ export function ProjectForm({ embedded = false }: { embedded?: boolean }) {
             </span>
           </label>
           <label className="border-app-divider bg-app-wash flex cursor-pointer items-start gap-3 border p-4 text-sm">
-            <input type="radio" name="visibility" value="PRIVATE" className="accent-app-ink mt-1" />
+            <input
+              type="radio"
+              name="visibility"
+              value="PRIVATE"
+              className="accent-app-accent mt-1"
+            />
             <span>
               <span className="block font-semibold">Private</span>
               <span className="text-app-label mt-1 block">
@@ -124,18 +129,13 @@ export function ProjectForm({ embedded = false }: { embedded?: boolean }) {
       </fieldset>
 
       {state.error ? (
-        <p className="border-app-divider bg-app-wash text-app-ink border p-3 text-sm">
+        <p className="border-app-signal/30 bg-app-signal/10 text-app-signal border p-3 text-sm">
           {state.error}
         </p>
       ) : null}
 
       <div className="flex justify-end">
-        <Button
-          disabled={isPending}
-          className="bg-app-ink text-app-paper hover:bg-app-accent-hover rounded-full px-6"
-        >
-          {isPending ? "Creating..." : "Create project"}
-        </Button>
+        <AppButton disabled={isPending}>{isPending ? "Creating..." : "Create project"}</AppButton>
       </div>
     </form>
   );

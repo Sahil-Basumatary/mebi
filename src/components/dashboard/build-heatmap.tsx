@@ -72,7 +72,10 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
   const [scrollLeft, setScrollLeft] = useState(0);
   // Server and first client render both use UTC, then the grid settles onto the
   // viewer's real zone once the provider detects it — no hydration mismatch.
-  const days = useMemo(() => buildActivityYear(events, resolvedTimezone), [events, resolvedTimezone]);
+  const days = useMemo(
+    () => buildActivityYear(events, resolvedTimezone),
+    [events, resolvedTimezone],
+  );
   const weeks = useMemo(() => {
     const columns: BuildDay[][] = [];
     for (let index = 0; index < days.length; index += 7) {
@@ -116,22 +119,14 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
   }, [viewport, weeks.length]);
   const step = cell + GAP;
   const gridWidth = weeks.length * step - GAP;
-  const stats = [
-    {
-      label: "Current streak",
-      value: `${summary.currentStreak}`,
-      unit: summary.currentStreak === 1 ? "day" : "days",
-    },
-    {
-      label: "Longest streak",
-      value: `${summary.longestStreak}`,
-      unit: summary.longestStreak === 1 ? "day" : "days",
-    },
-    { label: "Active days", value: `${summary.activeDays}`, unit: "of 365" },
-  ];
-  const anchorX = hovered
-    ? RAIL_WIDTH + RAIL_GAP + hovered.week * step + cell / 2 - scrollLeft
-    : 0;
+  const activityMeta = [
+    summary.total > 0
+      ? `${new Intl.NumberFormat("en-GB").format(summary.total)} event${summary.total === 1 ? "" : "s"}`
+      : null,
+    summary.currentStreak > 0 ? `${summary.currentStreak}-day streak` : null,
+    summary.activeDays > 0 ? `${summary.activeDays} active days` : null,
+  ].filter((item): item is string => Boolean(item));
+  const anchorX = hovered ? RAIL_WIDTH + RAIL_GAP + hovered.week * step + cell / 2 - scrollLeft : 0;
   const tooltipLeft = viewport
     ? Math.min(Math.max(anchorX, TOOLTIP_WIDTH / 2), viewport - TOOLTIP_WIDTH / 2)
     : anchorX;
@@ -142,8 +137,7 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
           Build activity
         </p>
         <p className="text-app-meta font-mono text-[11px] tracking-[0.08em]">
-          {new Intl.NumberFormat("en-GB").format(summary.total)} build event
-          {summary.total === 1 ? "" : "s"} in the last year
+          {activityMeta.length ? activityMeta.join(" · ") : "No build events in the last year"}
         </p>
       </div>
 
@@ -207,7 +201,7 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
                           }
                           style={{ width: cell, height: cell }}
                           className={cn(
-                            "rounded-[2px] transition-shadow duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ink",
+                            "focus-visible:outline-app-ink rounded-[2px] transition-shadow duration-150 focus-visible:outline-2 focus-visible:outline-offset-2",
                             LEVEL_CLASS[level],
                             isHovered && "shadow-[0_0_0_1.5px_var(--app-ink)]",
                           )}
@@ -230,7 +224,7 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
               top: step + hovered.row * step - 8,
             }}
           >
-            <p className="text-app-paper font-serif text-sm leading-snug font-light">
+            <p className="text-app-paper text-sm leading-snug font-medium">
               {eventLabel(hovered.day.count)}
             </p>
             <p className="text-app-meta mt-1 font-mono text-[10px] tracking-[0.08em]">
@@ -242,7 +236,9 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
 
       <div className="mt-5 flex flex-wrap items-center justify-end gap-4">
         <div className="flex items-center gap-1.5">
-          <span className="text-app-meta text-[9px] font-semibold tracking-[0.12em] uppercase">Less</span>
+          <span className="text-app-meta text-[9px] font-semibold tracking-[0.12em] uppercase">
+            Less
+          </span>
           {LEVEL_CLASS.map((tone) => (
             <span
               key={tone}
@@ -251,23 +247,11 @@ export function BuildHeatmap({ events, className }: BuildHeatmapProps) {
               className={cn("rounded-[2px]", tone)}
             />
           ))}
-          <span className="text-app-meta text-[9px] font-semibold tracking-[0.12em] uppercase">More</span>
+          <span className="text-app-meta text-[9px] font-semibold tracking-[0.12em] uppercase">
+            More
+          </span>
         </div>
       </div>
-
-      <dl className="border-app-divider mt-auto grid grid-cols-2 gap-x-8 gap-y-6 border-t pt-7 sm:grid-cols-3">
-        {stats.map((stat) => (
-          <div key={stat.label}>
-            <dt className="text-app-label text-[10px] font-semibold tracking-[0.18em] uppercase">
-              {stat.label}
-            </dt>
-            <dd className="text-app-ink mt-3 font-serif text-3xl leading-none font-light">
-              {stat.value}
-            </dd>
-            <dd className="text-app-meta mt-2 font-mono text-[10px] tracking-[0.08em]">{stat.unit}</dd>
-          </div>
-        ))}
-      </dl>
     </div>
   );
 }

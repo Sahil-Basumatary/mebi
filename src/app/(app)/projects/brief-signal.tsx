@@ -49,7 +49,7 @@ function FlatCheckbox({ checked }: { checked: boolean }) {
       aria-hidden
       className={cn(
         "mt-1 flex h-4 w-4 shrink-0 items-center justify-center border transition-colors duration-300",
-        checked ? "border-app-ink bg-app-ink" : "border-app-divider bg-transparent",
+        checked ? "border-app-accent bg-app-accent" : "border-app-divider bg-transparent",
       )}
     >
       <svg viewBox="0 0 12 12" fill="none" className="h-2.5 w-2.5">
@@ -58,7 +58,10 @@ function FlatCheckbox({ checked }: { checked: boolean }) {
           strokeWidth="1.8"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={cn("transition-colors duration-300", checked ? "stroke-app-paper" : "stroke-transparent")}
+          className={cn(
+            "transition-colors duration-300",
+            checked ? "stroke-app-paper" : "stroke-transparent",
+          )}
         />
       </svg>
     </span>
@@ -80,7 +83,7 @@ export function BriefChecklist() {
       <p className="text-app-label text-[11px] font-semibold tracking-[0.24em] uppercase">
         Brief checklist
       </p>
-      <ul className="mt-4 grid gap-3.5">
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
         {CHECKLIST.map((item) => {
           const filled = signal[item.field];
           return (
@@ -101,7 +104,7 @@ export function BriefChecklist() {
           );
         })}
       </ul>
-      <p className="text-app-meta mt-5 font-mono text-[11px] tracking-[0.2em] uppercase">
+      <p className="text-app-meta mt-3 font-mono text-[11px] tracking-[0.2em] uppercase">
         {done === CHECKLIST.length ? "Brief ready" : `${done} / ${CHECKLIST.length} complete`}
       </p>
     </div>

@@ -139,7 +139,7 @@ export function SignaturePanel({
         <p className="text-app-label text-[12px] font-semibold tracking-[0.3em] uppercase">
           Verification
         </p>
-        <p className="text-app-ink mt-2 font-serif text-2xl font-light">
+        <p className="text-app-ink mt-2 text-2xl font-medium">
           {verified ? "Verified build" : "Awaiting peer signatures"}
         </p>
         <p className="text-app-body text-body-sm mt-2 leading-5">

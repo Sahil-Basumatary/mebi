@@ -7,8 +7,9 @@ import {
   DataRow,
   EmptyState,
   MetaLine,
+  PageHeader,
+  PanelHeader,
   ProgressBar,
-  Section,
   UserRow,
 } from "@/components/layout";
 import { AppButton } from "@/components/ui/app-button";
@@ -40,8 +41,6 @@ export default async function HomePage() {
     partnerPool,
     updateEvents,
     briefCount,
-    activeCount,
-    teamUpdateCount,
     loggedCount,
     witnessCount,
   ] = await Promise.all([
@@ -94,12 +93,6 @@ export default async function HomePage() {
       take: 500,
     }),
     prisma.project.count({ where: memberProjectWhere(user.id) }),
-    prisma.project.count({
-      where: { ...memberProjectWhere(user.id), status: "ACTIVE" },
-    }),
-    prisma.projectUpdate.count({
-      where: { project: memberProjectWhere(user.id) },
-    }),
     prisma.projectUpdate.count({
       where: {
         authorId: user.id,
@@ -172,56 +165,54 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
-      <header className="border-app-divider bg-app-paper flex flex-col gap-4 border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-app-label text-xs font-semibold tracking-[0.14em] uppercase">
-            Workspace
-          </p>
-          <h1 className="text-app-ink mt-1 font-serif text-4xl leading-none font-light">Home</h1>
-          <p className="text-app-body mt-2 text-sm">{displayName(user.fullName, user.username)}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {publishedCount > 0 && user.username ? (
-            <AppButton asChild variant="secondary">
-              <Link href={`/u/${user.username}`}>Public profile</Link>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        density="compact"
+        eyebrow="Workspace"
+        title="Home"
+        description={displayName(user.fullName, user.username)}
+        actions={
+          <>
+            {publishedCount > 0 && user.username ? (
+              <AppButton asChild variant="secondary">
+                <Link href={`/u/${user.username}`}>Public profile</Link>
+              </AppButton>
+            ) : null}
+            <AppButton asChild>
+              <Link href="/projects#new-project">New project</Link>
             </AppButton>
-          ) : null}
-          <AppButton asChild>
-            <Link href="/projects#new-project">New project</Link>
-          </AppButton>
-        </div>
-      </header>
-
-      <dl className="border-app-divider bg-app-paper grid grid-cols-2 divide-x divide-y border sm:grid-cols-4 sm:divide-y-0">
-        <HomeStat label="Projects" value={briefCount} />
-        <HomeStat label="Active" value={activeCount} />
-        <HomeStat label="Updates" value={teamUpdateCount} />
-        <HomeStat label="Published" value={publishedCount} />
-      </dl>
-
-      <Section eyebrow="Proof path" title="Build status">
-        <BuildPath stages={buildStages} />
-      </Section>
-
-      <Section
-        eyebrow="Projects"
-        title="Current work"
-        action={
-          <AppButton asChild variant="secondary" size="sm">
-            <Link href="/projects">All projects</Link>
-          </AppButton>
+          </>
         }
+      />
+
+      <div className="border-app-divider bg-app-paper border">
+        <PanelHeader eyebrow="Proof path" title="Build status" />
+        <BuildPath stages={buildStages} className="border-0" />
+      </div>
+
+      <DataList
+        ariaLabel="Current projects"
+        toolbar={
+          <PanelHeader
+            eyebrow="Projects"
+            title="Current work"
+            action={
+              <AppButton asChild variant="secondary" size="sm">
+                <Link href="/projects">All projects</Link>
+              </AppButton>
+            }
+          />
+        }
+        empty={<EmptyState variant="inline" eyebrow="Empty pipeline" title="No builds yet." />}
       >
-        {projects.length ? (
-          <DataList ariaLabel="Current projects">
-            {projects.map((project) => {
+        {projects.length
+          ? projects.map((project) => {
               const lastActivity = project.updates[0]?.createdAt ?? project.updatedAt;
               return (
                 <DataRow key={project.id} className="p-0">
                   <Link
                     href={`/projects/${project.id}`}
-                    className="hover:bg-app-wash grid gap-4 px-4 py-4 transition-colors md:grid-cols-[minmax(0,1fr)_10rem] md:items-center"
+                    className="hover:bg-app-wash grid gap-4 px-4 py-2.5 transition-colors md:grid-cols-[minmax(0,1fr)_10rem] md:items-center"
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -246,37 +237,37 @@ export default async function HomePage() {
                   </Link>
                 </DataRow>
               );
-            })}
-          </DataList>
-        ) : (
-          <EmptyState
-            eyebrow="Empty pipeline"
-            title="No builds yet."
-            action={
-              <AppButton asChild>
-                <Link href="/projects#new-project">Create project</Link>
-              </AppButton>
-            }
-          />
-        )}
-      </Section>
+            })
+          : null}
+      </DataList>
 
       {fixedProject && !user.profilePrivate ? (
-        <Section
-          eyebrow="Missing seat"
-          title={`Who should join ${fixedProject.name}?`}
-          action={
-            <Link
-              href="/partners"
-              className="border-app-ink text-app-ink shrink-0 border-b pb-0.5 text-sm font-medium transition-opacity hover:opacity-60"
-            >
-              Full directory
-            </Link>
+        <DataList
+          ariaLabel="Suggested partners"
+          toolbar={
+            <PanelHeader
+              eyebrow="Missing seat"
+              title={`Who should join ${fixedProject.name}?`}
+              action={
+                <Link
+                  href="/partners"
+                  className="border-app-ink text-app-ink shrink-0 border-b pb-0.5 text-sm font-medium transition-opacity hover:opacity-60"
+                >
+                  Full directory
+                </Link>
+              }
+            />
+          }
+          empty={
+            <EmptyState
+              variant="inline"
+              eyebrow="No overlap yet"
+              title="No matching builders yet."
+            />
           }
         >
-          {inviteSuggestions.length ? (
-            <DataList ariaLabel="Suggested partners">
-              {inviteSuggestions.map(({ candidate, breakdown }) => {
+          {inviteSuggestions.length
+            ? inviteSuggestions.map(({ candidate, breakdown }) => {
                 const shared = [...breakdown.sharedSkills, ...breakdown.sharedInterests].slice(
                   0,
                   4,
@@ -314,36 +305,14 @@ export default async function HomePage() {
                     />
                   </DataRow>
                 );
-              })}
-            </DataList>
-          ) : (
-            <EmptyState
-              eyebrow="No overlap yet"
-              title="No matching builders yet."
-              action={
-                <AppButton asChild variant="secondary">
-                  <Link href="/partners">Browse partners</Link>
-                </AppButton>
-              }
-            />
-          )}
-        </Section>
+              })
+            : null}
+        </DataList>
       ) : null}
 
-      <Section eyebrow="Activity" title="Build history">
-        <div className="bg-app-paper border-app-divider border p-4 lg:p-5">
-          <BuildHeatmap events={buildEvents} />
-        </div>
-      </Section>
-    </div>
-  );
-}
-
-function HomeStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="p-4">
-      <dt className="text-app-meta text-xs">{label}</dt>
-      <dd className="text-app-ink mt-1 text-2xl font-semibold tabular-nums">{value}</dd>
+      <div className="bg-app-paper border-app-divider border p-4">
+        <BuildHeatmap events={buildEvents} />
+      </div>
     </div>
   );
 }

@@ -131,9 +131,7 @@ function Scene({
   useFrame(({ clock, camera, size }) => {
     const t = animate ? clock.getElapsedTime() : 0;
     // Sideways sway keeps the vertical rhythm intact while still feeling alive.
-    const sways = nodes.map((_, index) =>
-      animate ? Math.sin(t * 1.15 + index * 0.9) * 0.04 : 0,
-    );
+    const sways = nodes.map((_, index) => (animate ? Math.sin(t * 1.15 + index * 0.9) * 0.04 : 0));
     nodes.forEach((node, index) => {
       const holder = nodeRefs.current[index];
       if (!holder) return;
@@ -290,11 +288,7 @@ export function ProjectTimeline({ projects, className }: ProjectTimelineProps) {
   useEffect(() => {
     if (!glide) return;
     const interval = window.setInterval(() => {
-      const nearest = MathUtils.clamp(
-        Math.round(-focusRef.current / SPACING),
-        0,
-        nodes.length - 1,
-      );
+      const nearest = MathUtils.clamp(Math.round(-focusRef.current / SPACING), 0, nodes.length - 1);
       setActiveDot((current) => (current === nearest ? current : nearest));
     }, 180);
     return () => window.clearInterval(interval);
@@ -359,11 +353,13 @@ export function ProjectTimeline({ projects, className }: ProjectTimelineProps) {
       >
         <div key={panelNode.id} className="panel-fade">
           <p className="text-[10px] font-semibold tracking-[0.22em] text-[#8f8f8f] uppercase">
-            {panelNode.kind === "origin" ? "Origin" : panelNode.kind === "completed" ? "Completed" : "Active"}
+            {panelNode.kind === "origin"
+              ? "Origin"
+              : panelNode.kind === "completed"
+                ? "Completed"
+                : "Active"}
           </p>
-          <p className="mt-2 font-serif text-xl leading-snug font-light text-[#000000]">
-            {panelNode.name}
-          </p>
+          <p className="mt-2 text-xl leading-snug font-medium text-[#000000]">{panelNode.name}</p>
           <p className="mt-2 text-[12px] leading-5 text-[#555555]">{panelNode.detail}</p>
           {panelNode.progress !== null ? (
             <div className="mt-3">
