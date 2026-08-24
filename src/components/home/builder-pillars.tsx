@@ -28,7 +28,7 @@ export function BuilderPillars() {
             <KineticLine
               as="h2"
               variant="headline"
-              className="max-w-lg font-sans text-[clamp(2.2rem,4vw,4.2rem)] leading-[1.05] font-medium text-[#ffffff]"
+              className="max-w-lg font-serif text-[clamp(2.2rem,4vw,4.2rem)] leading-[1.05] font-light tracking-[-0.04em] text-[#ffffff]"
             >
               Exceptional career growth for individual students
             </KineticLine>

@@ -168,6 +168,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.marketing {
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, "Times New Roman", serif;
+}
+
 .forum-canvas {
   background: #e7e7e4;
 }

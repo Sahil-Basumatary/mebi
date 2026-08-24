@@ -1,7 +1,6 @@
 # Hackollab brand marks
 
-Official wordmark: serif lockup in a thin rectangular frame (Blackstone-style).
-Palette: black `#000000` and white `#FFFFFF` only.
+Official wordmark: serif lockup in a thin rectangular plaque (Blackstone-style). The word sits in the optical centre of the frame. Palette: black `#000000` and white `#FFFFFF` only.
 
 ## Files
 

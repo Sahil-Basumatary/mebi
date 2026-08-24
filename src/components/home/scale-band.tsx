@@ -33,7 +33,7 @@ export function ScaleBand() {
           <KineticLine
             delay={70}
             variant="headline"
-            className="mt-12 font-sans text-[clamp(2.25rem,4vw,4rem)] leading-[1.08] font-medium"
+            className="mt-12 font-serif text-[clamp(2.25rem,4vw,4rem)] leading-[1.08] font-light tracking-[-0.02em]"
           >
             Hackollab gives students a clear path to building their own software products like no
             other.
@@ -42,7 +42,7 @@ export function ScaleBand() {
         <div className="mt-24 grid gap-px overflow-hidden border border-[#d8d8d8] bg-[#d8d8d8] md:grid-cols-3">
           {tiles.map((tile, index) => (
             <KineticLine key={tile.unit} delay={index * 70} className="bg-[#ffffff] p-9 lg:p-11">
-              <p className="font-sans text-[5.5rem] leading-none font-medium text-[#000000]">
+              <p className="font-serif text-[5.5rem] leading-none font-light text-[#000000]">
                 {tile.value}
               </p>
               <p className="mt-4 text-[14px] font-semibold tracking-[0.24em] text-[#555555] uppercase">

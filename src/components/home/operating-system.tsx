@@ -1,25 +1,48 @@
 import { KineticLine } from "@/components/home/kinetic-line";
+import { cn } from "@/lib/utils";
 
 const steps = [
   {
     index: "01",
     title: "Profile",
     body: "Skills, goals, and commitment level are captured in a structured profile that allows for meaningful matches.",
+    image: "/home/os-profile.png",
+    alt: "Hands on a laptop in a KCL hardware lab, with a 3D printer beside the keyboard.",
+    position: "object-[50%_42%]",
+    slot: "lg:col-start-1 lg:row-start-1",
+    photo: "aspect-[3/2]",
   },
   {
     index: "02",
     title: "Match",
     body: "Students publish a precise request: the role they need, the project stage, and the proof they want to build.",
+    image: "/home/os-match.png",
+    alt: "A group of students gathered around a hardware prototype on a lab bench.",
+    position: "object-[50%_40%]",
+    slot: "lg:col-start-1 lg:row-start-2",
+    photo: "aspect-[3/2]",
   },
   {
     index: "03",
     title: "Build",
-    body: "Ownership, progress, and blockers is visible to eliminate confusion and keep teams aligned.",
+    body: "Ownership, progress, and blockers are visible to eliminate confusion and keep teams aligned.",
+    image: "/home/os-build.png",
+    alt: "Two students assembling a hardware chassis at a workshop bench.",
+    position: "object-[48%_35%]",
+    slot: "lg:col-start-2 lg:row-start-1 lg:row-span-2",
+    photo: "min-h-[22rem] flex-1 lg:min-h-0",
+    tall: true,
   },
   {
     index: "04",
     title: "Prove",
     body: "Each project leaves behind a record you can pitch in a spring week, internship, or graduate interview.",
+    image: "/home/os-prove.png",
+    alt: "A student soldering a circuit at a workshop bench.",
+    position: "object-[45%_28%]",
+    slot: "lg:col-span-2",
+    photo: "aspect-[2.35/1]",
+    wide: true,
   },
 ];
 
@@ -36,27 +59,53 @@ export function OperatingSystem() {
             as="p"
             delay={50}
             variant="headline"
-            className="max-w-3xl font-sans text-[clamp(2.35rem,4.2vw,4.8rem)] leading-[1.04] font-medium text-[#000000]"
+            className="max-w-3xl font-serif text-[clamp(2.35rem,4.2vw,4.8rem)] leading-[1.04] font-light tracking-[-0.025em] text-[#000000]"
           >
             A single path from idea to interview-ready proof.
           </KineticLine>
         </div>
-        <div className="mt-24 grid gap-px overflow-hidden border border-[#d8d8d8] bg-[#d8d8d8] md:grid-cols-2">
+        <div className="mt-24 grid gap-8 lg:grid-cols-2 lg:gap-10">
           {steps.map((step, index) => (
             <KineticLine
               key={step.index}
               delay={index * 60}
-              className="group flex min-h-[19rem] flex-col justify-between bg-[#ffffff] p-9 transition-colors hover:bg-[#f4f4f4] lg:p-11"
+              className={cn("flex flex-col", step.slot, step.tall && "lg:h-full")}
             >
-              <span className="font-sans text-[2rem] leading-none font-medium text-[#777777]">
-                {step.index}
-              </span>
-              <div>
-                <h3 className="font-sans text-[2.2rem] font-medium text-[#000000]">{step.title}</h3>
-                <p className="mt-5 max-w-md text-[17px] leading-7 font-normal text-[#333333]">
-                  {step.body}
-                </p>
-              </div>
+              <article
+                className={cn("border border-[#000000]", step.tall && "flex h-full flex-col")}
+              >
+                <div className={cn("overflow-hidden bg-[#f4f4f4]", step.photo)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={step.image}
+                    alt={step.alt}
+                    className={`h-full w-full object-cover ${step.position}`}
+                  />
+                </div>
+                <div
+                  className={cn(
+                    "border-t border-[#000000] px-5 py-5",
+                    step.wide && "lg:flex lg:items-end lg:justify-between lg:gap-12",
+                  )}
+                >
+                  <div>
+                    <p className="font-serif text-[1.35rem] leading-none font-light text-[#777777]">
+                      {step.index}
+                    </p>
+                    <h3 className="mt-3 font-serif text-[1.85rem] leading-none font-light tracking-[-0.015em] text-[#000000]">
+                      {step.title}
+                    </h3>
+                  </div>
+                  <p
+                    className={cn(
+                      "mt-4 max-w-md text-[16px] leading-6 text-[#333333]",
+                      step.wide && "lg:mt-0 lg:max-w-xl",
+                    )}
+                  >
+                    {step.body}
+                  </p>
+                </div>
+              </article>
             </KineticLine>
           ))}
         </div>

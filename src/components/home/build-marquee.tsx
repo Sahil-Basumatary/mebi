@@ -24,7 +24,7 @@ function MarqueeGroup({
     <div className="flex shrink-0 items-center" aria-hidden={hidden || undefined}>
       {Array.from({ length: repeat }).map((_, index) => (
         <div key={index} className="flex shrink-0 items-center">
-          <span className="font-sans text-[clamp(11rem,11vw,18rem)] leading-none font-medium whitespace-nowrap text-[#f2f2f2]">
+          <span className="font-serif text-[clamp(11rem,11vw,18rem)] leading-none font-normal tracking-[-0.02em] whitespace-nowrap text-[#f2f2f2]">
             <span className="font-semibold">{firstWord}</span>
             {restText ? ` ${restText}` : ""}
           </span>

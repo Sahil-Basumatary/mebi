@@ -54,7 +54,7 @@ Dark mode flips product `app-*` tokens via `.dark` on `<html>`. Toggle lives in 
 
 Tracking: `tracking-eyebrow` (0.3em), `tracking-rail` (0.24em), `tracking-chip` (0.16em), `tracking-meta` (0.08em), `tracking-display` (-0.04em).
 
-Fonts: Roboto (`font-sans`) for UI and titles. Titles use `font-medium`, not a second display face. System mono for metadata. `--font-serif` is aliased to Roboto so leftover `font-serif` classes cannot resurrect Times.
+Fonts: Roboto (`font-sans`) for product UI and titles (`font-medium`). Marketing `/` display type uses Newsreader (`font-serif` + `font-light`) inside `.marketing` only. `--font-serif` stays aliased to Roboto everywhere else so leftover classes cannot resurrect Times. System mono for metadata.
 
 ## Layout primitives
 
@@ -70,7 +70,7 @@ Prefer `src/components/layout/*` over hand-rolled page markup:
 - `StatusSpine` — identity, streak, one next action (owned by the group layout)
 - `AppButton` — product CTA (`primary` accent, `danger` signal)
 
-Shared display helpers live in `src/lib/user-display.ts` (`ROLE_LABEL`, `displayName`, `initials`). Next-action resolution lives in `src/lib/next-action.ts`. Brand wordmarks live in `public/brand/` and render through `BrandMark`.
+Shared display helpers live in `src/lib/user-display.ts` (`ROLE_LABEL`, `displayName`, `initials`). Next-action resolution lives in `src/lib/next-action.ts`. Brand wordmarks live in `public/brand/` and render through `BrandMark`. Site chrome footers live in `SiteFooter` (`marketing` on `/`, `public` on `/privacy` `/u` `/b`, `compact` on auth). Do not add a full footer inside the signed-in app shell.
 
 ## Shell
 

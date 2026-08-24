@@ -31,7 +31,7 @@ export function HomeHero() {
       <div className="relative z-10 flex flex-1 flex-col">
         <div className="mx-auto flex w-full max-w-[88rem] items-center justify-between gap-8 px-6 pt-16 pb-6 lg:px-20">
           <Link href="/" aria-label="Hackollab home" className="shrink-0">
-            <BrandMark variant="white" className="h-12 lg:h-14" />
+            <BrandMark variant="white" className="h-[4.5rem]" />
           </Link>
           <div className="flex items-center gap-10 xl:gap-12">
             <nav
@@ -64,12 +64,12 @@ export function HomeHero() {
           <KineticLine
             as="h1"
             variant="headline"
-            className="font-sans text-[clamp(3rem,7vw,6rem)] leading-[0.98] font-medium text-[#ffffff] [text-shadow:0_2px_28px_rgba(0,0,0,0.55)]"
+            className="font-serif text-[clamp(3rem,7vw,6rem)] leading-[0.98] font-light tracking-[-0.02em] text-[#ffffff] [text-shadow:0_2px_28px_rgba(0,0,0,0.55)]"
           >
             <span className="block text-[0.82em]">
               <span className="font-semibold">Build</span> <span className="font-normal">with</span>
             </span>
-            <span className="ml-[0.8em] block font-medium">Hackollab</span>
+            <span className="ml-[0.8em] block font-light">Hackollab</span>
           </KineticLine>
           <div className="lg:-mb-12">
             <KineticLine
