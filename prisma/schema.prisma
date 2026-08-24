@@ -49,6 +49,8 @@ enum NotificationType {
   REQUEST_ACCEPTED
   REQUEST_DECLINED
   FORUM_REPLY
+  PROJECT_UPDATE
+  PROJECT_SIGNED
 }
 
 enum ThemePreference {
@@ -98,6 +100,8 @@ model User {
   notifyProjectActivity Boolean         @default(true)
   notifyWeeklyDigest Boolean            @default(false)
   notifyMarketing  Boolean              @default(false)
+  lastDigestAt     DateTime?
+  lastMarketingAt  DateTime?
   onboarded        Boolean              @default(false)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
@@ -315,4 +319,18 @@ model ForumPostVote {
 
   @@unique([postId, userId])
   @@index([userId])
+}
+
+model NewsletterSignup {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  firstName        String
+  ipHash           String
+  userAgent        String?
+  unsubscribeToken String    @unique
+  unsubscribedAt   DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([ipHash, updatedAt])
 }

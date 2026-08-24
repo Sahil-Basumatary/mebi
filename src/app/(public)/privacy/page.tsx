@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "How Hackollab collects, uses, and protects personal data for UK university builders.",
 };
 
-const UPDATED = "10 August 2026";
+const UPDATED = "18 August 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -153,6 +153,21 @@ export default function PrivacyPolicyPage() {
             </li>
           </ul>
 
+          <h3 className="text-app-ink pt-2 text-base font-semibold">3.6 Early-access list</h3>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              first name and KCL email if you join from the marketing page (this does not create an
+              account);
+            </li>
+            <li>
+              a hashed network identifier and limited browser string used only to rate-limit abuse.
+            </li>
+          </ul>
+          <p>
+            We use this only to send the occasional notes you asked for, and to honour unsubscribe
+            requests. You can leave the list from the link in those emails.
+          </p>
+
           <p>
             We do not require special-category data (such as health, religion, or political
             opinions). Please do not submit that kind of information in profiles, messages, forum
@@ -297,6 +312,19 @@ export default function PrivacyPolicyPage() {
               ).
             </li>
             <li>
+              <span className="text-app-ink font-medium">Resend</span> — email delivery for the
+              early-access list when that mail path is enabled (
+              <a
+                href="https://resend.com/legal/privacy-policy"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2"
+              >
+                Resend privacy
+              </a>
+              ).
+            </li>
+            <li>
               <span className="text-app-ink font-medium">Professional advisers or authorities</span>{" "}
               — if required to comply with law, enforce terms, or protect rights, safety, and
               security.
@@ -366,6 +394,11 @@ export default function PrivacyPolicyPage() {
               under product rules.
             </li>
             <li>
+              <span className="text-app-ink font-medium">Early-access list</span> — until you
+              unsubscribe, after which we keep a suppression record so we do not email you again by
+              mistake.
+            </li>
+            <li>
               <span className="text-app-ink font-medium">Security and server logs</span> — for a
               limited operational period, then deleted or aggregated.
             </li>
@@ -414,7 +447,8 @@ export default function PrivacyPolicyPage() {
               sahil@sahilbasumatary.dev
             </a>
             . We may need to verify your identity first. You can also update many profile and
-            preference fields directly in Settings.
+            preference fields directly in Settings, and leave the early-access list from the
+            unsubscribe link in those emails.
           </p>
           <p>
             ICO website:{" "}
@@ -488,15 +522,6 @@ export default function PrivacyPolicyPage() {
           </p>
         </section>
       </div>
-
-      <footer className="border-app-divider mt-12 flex flex-wrap gap-4 border-t pt-6 text-sm">
-        <Link href="/" className="text-app-ink underline underline-offset-2">
-          Home
-        </Link>
-        <Link href="/sign-up" className="text-app-ink underline underline-offset-2">
-          Sign up
-        </Link>
-      </footer>
     </article>
   );
 }
