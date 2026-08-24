@@ -2,7 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
 import { SkipLink } from "@/components/layout/skip-link";
-import { prisma } from "@/lib/prisma";
+import { ensureUserFromClerk } from "@/lib/ensure-user";
 import { OnboardingForm } from "./onboarding-form";
 
 export default async function OnboardingPage() {
@@ -19,16 +19,11 @@ export default async function OnboardingPage() {
     redirect("/sign-in");
   }
 
-  const dbUser = await prisma.user.upsert({
-    where: { clerkId: userId },
-    update: {},
-    create: {
-      clerkId: userId,
-      email,
-      fullName: clerkUser?.fullName ?? null,
-      username: clerkUser?.username ?? null,
-      imageUrl: clerkUser?.imageUrl ?? null,
-    },
+  const dbUser = await ensureUserFromClerk({
+    clerkId: userId,
+    email,
+    fullName: clerkUser?.fullName ?? null,
+    imageUrl: clerkUser?.imageUrl ?? null,
   });
 
   if (dbUser.onboarded) {

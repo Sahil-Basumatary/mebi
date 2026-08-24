@@ -2,6 +2,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { ensureUserFromClerk, isEmailTakenError, isUsernameTakenError } from "@/lib/ensure-user";
 import { prisma } from "@/lib/prisma";
 import { validateUsername } from "@/lib/username";
 
@@ -81,34 +82,39 @@ export async function completeOnboarding(
     return { error: "That username is already taken." };
   }
 
-  await prisma.user.upsert({
-    where: { clerkId: userId },
-    update: {
-      email,
-      fullName,
-      username: usernameCheck.value,
-      bio,
-      imageUrl,
-      skills,
-      interests,
-      role: roleValue,
-      prefersSolo,
-      onboarded: true,
-    },
-    create: {
-      clerkId: userId,
-      email,
-      fullName,
-      username: usernameCheck.value,
-      bio,
-      imageUrl,
-      skills,
-      interests,
-      role: roleValue,
-      prefersSolo,
-      onboarded: true,
-    },
+  await ensureUserFromClerk({
+    clerkId: userId,
+    email,
+    fullName,
+    imageUrl,
   });
+
+  try {
+    await prisma.user.update({
+      where: { clerkId: userId },
+      data: {
+        email,
+        fullName,
+        username: usernameCheck.value,
+        bio,
+        imageUrl,
+        skills,
+        interests,
+        role: roleValue,
+        prefersSolo,
+        onboarded: true,
+      },
+    });
+  } catch (error) {
+    if (isUsernameTakenError(error)) {
+      return { error: "That username is already taken." };
+    }
+    if (isEmailTakenError(error)) {
+      return { error: "That email is already linked to another account. Sign in instead." };
+    }
+    console.error(error);
+    return { error: "Could not save your profile. Refresh and try again." };
+  }
 
   redirect("/start");
 }

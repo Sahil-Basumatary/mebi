@@ -2,6 +2,7 @@ import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type { WebhookEvent } from "@clerk/nextjs/server";
+import { ensureUserFromClerk } from "@/lib/ensure-user";
 import { prisma } from "@/lib/prisma";
 
 type ClerkEmailAddress = {
@@ -78,21 +79,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Clerk user missing primary email" }, { status: 400 });
     }
 
-    await prisma.user.upsert({
-      where: { clerkId: userPayload.id },
-      update: {
-        email,
-        fullName: getFullName(userPayload),
-        username: userPayload.username ?? null,
-        imageUrl: userPayload.image_url ?? null,
-      },
-      create: {
-        clerkId: userPayload.id,
-        email,
-        fullName: getFullName(userPayload),
-        username: userPayload.username ?? null,
-        imageUrl: userPayload.image_url ?? null,
-      },
+    await ensureUserFromClerk({
+      clerkId: userPayload.id,
+      email,
+      fullName: getFullName(userPayload),
+      imageUrl: userPayload.image_url ?? null,
     });
   }
 
