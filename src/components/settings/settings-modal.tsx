@@ -18,8 +18,10 @@ import {
   useEffect,
   useRef,
   useState,
+  Suspense,
   type ReactNode,
 } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { cn } from "@/lib/utils";
 import { getSettingsData, type SettingsData } from "./actions";
@@ -32,6 +34,19 @@ import { SecurityPanel } from "./security-panel";
 
 type SectionId = "profile" | "preferences" | "notifications" | "connections" | "security";
 type SubviewId = "emails";
+
+const SECTION_IDS = new Set<SectionId>([
+  "profile",
+  "preferences",
+  "notifications",
+  "connections",
+  "security",
+]);
+
+function parseSettingsSection(raw: string | null): SectionId | null {
+  if (raw && SECTION_IDS.has(raw as SectionId)) return raw as SectionId;
+  return null;
+}
 
 const SECTIONS = [
   {
@@ -127,6 +142,25 @@ function useSettingsModalStore() {
   return store;
 }
 
+function SettingsDeepLink({ open }: { open: (section?: SectionId) => void }) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const settingsParam = searchParams.get("settings");
+
+  useEffect(() => {
+    const section = parseSettingsSection(settingsParam);
+    if (!section) return;
+    open(section);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("settings");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [settingsParam, open, pathname, router, searchParams]);
+
+  return null;
+}
+
 export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [section, setSection] = useState<SectionId>("profile");
@@ -200,7 +234,12 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
 
   return (
     <SettingsModalStoreContext.Provider value={store}>
-      <SettingsModalContext.Provider value={{ open }}>{children}</SettingsModalContext.Provider>
+      <SettingsModalContext.Provider value={{ open }}>
+        <Suspense fallback={null}>
+          <SettingsDeepLink open={open} />
+        </Suspense>
+        {children}
+      </SettingsModalContext.Provider>
     </SettingsModalStoreContext.Provider>
   );
 }

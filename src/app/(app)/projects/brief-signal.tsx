@@ -70,7 +70,7 @@ function FlatCheckbox({ checked }: { checked: boolean }) {
 
 const CHECKLIST: { field: BriefField; label: string; hint: string }[] = [
   { field: "name", label: "Project named", hint: "Clear and searchable" },
-  { field: "description", label: "Problem described", hint: "At least 40 characters" },
+  { field: "description", label: "Problem described", hint: "At least 60 characters" },
   { field: "techStack", label: "Stack suggested", hint: "Tools and languages" },
   { field: "estimatedTime", label: "Time estimated", hint: "Expected duration" },
 ];

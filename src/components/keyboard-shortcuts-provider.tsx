@@ -19,6 +19,7 @@ import {
   updateLastVisitedPath,
   updateShortcutBindings,
 } from "@/components/settings/actions";
+import { CommandPalette } from "@/components/command-palette";
 import { useSettingsModal } from "@/components/settings/settings-modal";
 import {
   comboFromKeyboardEvent,
@@ -53,126 +54,11 @@ export function useKeyboardShortcuts() {
   return context;
 }
 
-const NAV_ITEMS = [
-  { href: "/home", label: "Home", keywords: "home build dashboard" },
-  { href: "/projects", label: "Projects", keywords: "projects build" },
-  { href: "/partners", label: "Partners", keywords: "partners people" },
-  { href: "/inbox", label: "Requests", keywords: "inbox requests" },
-  { href: "/forum", label: "Forum", keywords: "forum threads partners lft chat" },
-  { href: "/proof", label: "Proof", keywords: "proof community evidence" },
-] as const;
-
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;
   const tag = target.tagName;
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
-}
-
-function CommandPalette({
-  open,
-  onClose,
-  onOpenSettings,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onOpenSettings: () => void;
-}) {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-      return;
-    }
-    const id = window.setTimeout(() => inputRef.current?.focus(), 0);
-    return () => window.clearTimeout(id);
-  }, [open]);
-
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const base = [
-      ...NAV_ITEMS.map((item) => ({
-        id: item.href,
-        label: item.label,
-        hint: item.href,
-        run: () => router.push(item.href),
-        haystack: `${item.label} ${item.keywords}`,
-      })),
-      {
-        id: "settings",
-        label: "Open settings",
-        hint: "Preferences",
-        run: onOpenSettings,
-        haystack: "settings preferences account",
-      },
-    ];
-    if (!q) return base;
-    return base.filter((item) => item.haystack.includes(q));
-  }, [query, router, onOpenSettings]);
-
-  if (!open || typeof document === "undefined") return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-[140] flex items-start justify-center bg-black/35 px-4 pt-[12vh]">
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label="Close"
-        onClick={onClose}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search"
-        className="border-app-border bg-app-canvas relative z-[141] w-full max-w-xl overflow-hidden rounded-none border shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
-      >
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.stopPropagation();
-              onClose();
-            }
-            if (event.key === "Enter" && results[0]) {
-              event.preventDefault();
-              results[0].run();
-              onClose();
-            }
-          }}
-          aria-label="Search pages and actions"
-          placeholder="Search pages and actions…"
-          className="border-app-border text-app-fg placeholder:text-app-muted-2 h-12 w-full border-b bg-transparent px-4 text-[15px] outline-none"
-        />
-        <ul className="max-h-72 overflow-y-auto p-1.5">
-          {results.length === 0 ? (
-            <li className="text-app-muted px-3 py-6 text-center text-sm">No matches</li>
-          ) : (
-            results.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    item.run();
-                    onClose();
-                  }}
-                  className="text-app-fg hover:bg-app-hover flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors"
-                >
-                  <span>{item.label}</span>
-                  <span className="text-app-muted-2 text-xs">{item.hint}</span>
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-    </div>,
-    document.body,
-  );
 }
 
 function ComboChips({ combo }: { combo: string }) {
@@ -566,6 +452,7 @@ export function KeyboardShortcutsProvider({ children }: { children: ReactNode })
     <KeyboardShortcutsContext.Provider value={value}>
       {children}
       <CommandPalette
+        key={paletteOpen ? "open" : "closed"}
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         onOpenSettings={() => {

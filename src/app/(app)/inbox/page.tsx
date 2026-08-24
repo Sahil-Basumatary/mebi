@@ -179,7 +179,13 @@ export default async function InboxPage({
                       <MetaLine className="mt-2">
                         <span>{timeAgo(item.createdAt)}</span>
                         <span aria-hidden>·</span>
-                        <span>{item.type === "FORUM_REPLY" ? "Forum" : "Request"}</span>
+                        <span>
+                          {item.type === "FORUM_REPLY"
+                            ? "Forum"
+                            : item.type === "PROJECT_UPDATE" || item.type === "PROJECT_SIGNED"
+                              ? "Project"
+                              : "Request"}
+                        </span>
                         {!item.read ? <Chip tone="signal">new</Chip> : null}
                       </MetaLine>
                     </div>

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireOnboardedUser } from "@/lib/current-user";
 import { intersectTags } from "@/lib/match";
 import { getProjectMembership } from "@/lib/project-access";
+import { createNotification } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 
 // ratelimit
@@ -180,17 +181,16 @@ export async function sendProjectRequest(
       },
     });
 
-    await tx.notification.create({
-      data: {
-        userId: target.id,
-        type: "REQUEST_RECEIVED",
-        message:
-          kind === ProjectRequestKind.INVITE
-            ? `${senderName} invited you to ${project.name}.`
-            : `${senderName} asked to join ${project.name}.`,
-        actorName: senderName,
-        requestId: request.id,
-      },
+    await createNotification(tx, {
+      userId: target.id,
+      type: "REQUEST_RECEIVED",
+      message:
+        kind === ProjectRequestKind.INVITE
+          ? `${senderName} invited you to ${project.name}.`
+          : `${senderName} asked to join ${project.name}.`,
+      actorName: senderName,
+      requestId: request.id,
+      href: "/inbox",
     });
   });
 
@@ -240,14 +240,13 @@ export async function respondToRequest(
         data: { status: "DECLINED", respondedAt: new Date() },
       });
 
-      await tx.notification.create({
-        data: {
-          userId: request.fromUserId,
-          type: "REQUEST_DECLINED",
-          message: `${responderName} declined your request on ${request.project.name}.`,
-          actorName: responderName,
-          requestId: request.id,
-        },
+      await createNotification(tx, {
+        userId: request.fromUserId,
+        type: "REQUEST_DECLINED",
+        message: `${responderName} declined your request on ${request.project.name}.`,
+        actorName: responderName,
+        requestId: request.id,
+        href: "/inbox?tab=sent",
       });
     });
 
@@ -278,14 +277,13 @@ export async function respondToRequest(
       },
     });
 
-    await tx.notification.create({
-      data: {
-        userId: request.fromUserId,
-        type: "REQUEST_ACCEPTED",
-        message: `${responderName} accepted — you're on ${request.project.name} together.`,
-        actorName: responderName,
-        requestId: request.id,
-      },
+    await createNotification(tx, {
+      userId: request.fromUserId,
+      type: "REQUEST_ACCEPTED",
+      message: `${responderName} accepted — you're on ${request.project.name} together.`,
+      actorName: responderName,
+      requestId: request.id,
+      href: `/projects/${request.projectId}`,
     });
   });
 

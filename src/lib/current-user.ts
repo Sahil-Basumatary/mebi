@@ -20,6 +20,16 @@ export const requireOnboardedUser = cache(async () => {
   return user;
 });
 
+export async function getOnboardedUserOrNull() {
+  const { userId } = await auth();
+  if (!userId) return null;
+  const user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+  });
+  if (!user?.onboarded) return null;
+  return user;
+}
+
 // Resolves the signed-in user's saved theme so the root layout can seed
 // next-themes on the server and avoid a flash on first paint. Logged-out
 // visitors (marketing/auth) fall back to the app's default light palette.

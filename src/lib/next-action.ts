@@ -45,7 +45,7 @@ export function resolveNextAction({
   if (!user.bio || user.skills.length === 0) {
     return {
       label: "Complete profile",
-      href: "/onboarding",
+      href: "/home?settings=profile",
       detail: "Add a bio and skills so partners can find you.",
     };
   }

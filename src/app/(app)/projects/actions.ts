@@ -13,6 +13,8 @@ import {
   MAX_ATTESTATION_CHARS,
   MIN_ATTESTATION_CHARS,
 } from "@/lib/proof";
+import { notifyProjectMembers, createNotification } from "@/lib/notify";
+import { displayName } from "@/lib/user-display";
 import { prisma } from "@/lib/prisma";
 import { slugify, withSlugSuffix } from "@/lib/slug";
 
@@ -152,7 +154,7 @@ export async function postProjectUpdate(
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { id: true, status: true, progress: true },
+    select: { id: true, name: true, status: true, progress: true },
   });
 
   if (!project) {
@@ -167,6 +169,7 @@ export async function postProjectUpdate(
     return { error: "Progress can only move forward." };
   }
 
+  const actor = displayName(user.fullName, user.username);
   await prisma.$transaction(async (tx) => {
     await tx.projectUpdate.create({
       data: {
@@ -183,6 +186,15 @@ export async function postProjectUpdate(
         data: { progress },
       });
     }
+
+    await notifyProjectMembers(tx, {
+      projectId: project.id,
+      exceptUserId: user.id,
+      type: "PROJECT_UPDATE",
+      message: `${actor} posted on ${project.name}.`,
+      actorName: actor,
+      href: `/projects/${project.id}`,
+    });
   });
 
   revalidatePath("/home");
@@ -207,6 +219,15 @@ export async function markProjectComplete(
     return { completed: false, error: "Only the project owner can mark it complete." };
   }
 
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, name: true },
+  });
+  if (!project) {
+    return { completed: false, error: "Project not found." };
+  }
+
+  const actor = displayName(user.fullName, user.username);
   await prisma.$transaction(async (tx) => {
     await tx.project.update({
       where: { id: projectId },
@@ -224,6 +245,15 @@ export async function markProjectComplete(
         body: "Marked the project complete.",
         progress: 100,
       },
+    });
+
+    await notifyProjectMembers(tx, {
+      projectId,
+      exceptUserId: user.id,
+      type: "PROJECT_UPDATE",
+      message: `${actor} marked ${project.name} complete.`,
+      actorName: actor,
+      href: `/projects/${projectId}`,
     });
   });
 
@@ -325,6 +355,21 @@ export async function signProofContribution(
         subjectId,
         statement,
       },
+    });
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { name: true },
+  });
+  if (project) {
+    const actor = displayName(user.fullName, user.username);
+    await createNotification(prisma, {
+      userId: subjectId,
+      type: "PROJECT_SIGNED",
+      message: `${actor} signed your work on ${project.name}.`,
+      actorName: actor,
+      href: `/projects/${projectId}`,
     });
   }
 

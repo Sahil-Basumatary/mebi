@@ -26,17 +26,19 @@ export const COOKIE_CATEGORIES: {
   {
     id: "preferences",
     label: "Preferences",
-    description: "Remembers theme, locale, and other display choices across visits.",
+    description:
+      "Remembers theme on this device across visits. Signed-in theme still saves to your account.",
   },
   {
     id: "analytics",
     label: "Analytics",
-    description: "Helps us understand product usage so we can improve Hackollab.",
+    description:
+      "Anonymous product analytics (Vercel) so we can see which pages break or get used.",
   },
   {
     id: "marketing",
     label: "Marketing",
-    description: "Used for campaign measurement and relevant product updates.",
+    description: "Stores campaign source (UTM) on this device. No ad network is loaded.",
   },
 ];
 
