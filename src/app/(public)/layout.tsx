@@ -21,6 +21,18 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             >
               Privacy
             </Link>
+            <Link
+              href="/terms"
+              className="text-app-chrome-muted hover:text-app-chrome-fg text-sm transition-colors"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/contact"
+              className="text-app-chrome-muted hover:text-app-chrome-fg text-sm transition-colors"
+            >
+              Contact
+            </Link>
             <AppButton asChild size="sm">
               <Link href="/sign-up">Build with us</Link>
             </AppButton>

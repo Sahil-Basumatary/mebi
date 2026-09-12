@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · Hackollab",
@@ -7,7 +6,7 @@ export const metadata: Metadata = {
     "How Hackollab collects, uses, and protects personal data for UK university builders.",
 };
 
-const UPDATED = "18 August 2026";
+const UPDATED = "25 August 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -42,10 +41,10 @@ export default function PrivacyPolicyPage() {
           <p>
             Privacy contact:{" "}
             <a
-              href="mailto:sahil@sahilbasumatary.dev"
+              href="mailto:support@hackollab.com"
               className="text-app-link font-medium underline underline-offset-2"
             >
-              sahil@sahilbasumatary.dev
+              support@hackollab.com
             </a>
           </p>
           <p>
@@ -70,12 +69,14 @@ export default function PrivacyPolicyPage() {
               use projects, partner discovery, forum, requests, proof, leaderboards, or settings;
             </li>
             <li>publish or view public profiles and public proof pages;</li>
-            <li>contact us about privacy or support.</li>
+            <li>contact us about privacy or support;</li>
+            <li>connect selected GitHub repositories;</li>
+            <li>use Hackollab AI on those repositories after consent.</li>
           </ul>
           <p>
-            The service is currently intended for UK university students (in particular King’s
-            College London users with eligible institutional email addresses). Access may be limited
-            by email allowlists or similar controls.
+            The service is currently intended for UK university students aged 18 or over (in
+            particular King’s College London users with eligible institutional email addresses).
+            Access may be limited by email allowlists or similar controls.
           </p>
         </section>
 
@@ -165,7 +166,38 @@ export default function PrivacyPolicyPage() {
           </ul>
           <p>
             We use this only to send the occasional notes you asked for, and to honour unsubscribe
-            requests. You can leave the list from the link in those emails.
+            requests.             You can leave the list from the link in those emails.
+          </p>
+
+          <h3 className="text-app-ink pt-2 text-base font-semibold">3.7 Support messages</h3>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>email, subject, and message you submit on the contact form;</li>
+            <li>a hashed network identifier and limited browser string used only to rate-limit abuse.</li>
+          </ul>
+          <p>
+            We keep support submissions for 90 days, then delete them, unless we must retain a
+            record for a security or legal issue.
+          </p>
+
+          <h3 className="text-app-ink pt-2 text-base font-semibold">3.8 GitHub and AI</h3>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              GitHub App installation identifiers and the selected repository metadata needed to
+              read files, commits, and pull requests;
+            </li>
+            <li>
+              derived architecture maps, file hashes, commit reviews, documentation drafts, and
+              learning-progress notes generated from that material;
+            </li>
+            <li>
+              AI usage counts (request buckets, token totals, model class, latency) without storing full
+              prompt logs by default;
+            </li>
+            <li>your explicit consent timestamp before private repository content is sent to an AI provider.</li>
+          </ul>
+          <p>
+            We fetch current source from GitHub when needed rather than keeping a full private
+            repository copy. You can revoke GitHub access at any time.
           </p>
 
           <p>
@@ -222,6 +254,14 @@ export default function PrivacyPolicyPage() {
                   [
                     "Respond to privacy or support requests",
                     "Legitimate interests; legal obligation",
+                  ],
+                  [
+                    "Read selected GitHub repositories and keep an architecture map",
+                    "Contract; consent for private repository AI processing",
+                  ],
+                  [
+                    "Provide Hackollab AI reviews, hints, and documentation drafts",
+                    "Contract; consent",
                   ],
                   [
                     "Optional product updates / marketing emails (if you opt in)",
@@ -313,7 +353,7 @@ export default function PrivacyPolicyPage() {
             </li>
             <li>
               <span className="text-app-ink font-medium">Resend</span> — email delivery for the
-              early-access list when that mail path is enabled (
+              early-access list and support inbox when that mail path is enabled (
               <a
                 href="https://resend.com/legal/privacy-policy"
                 target="_blank"
@@ -323,6 +363,26 @@ export default function PrivacyPolicyPage() {
                 Resend privacy
               </a>
               ).
+            </li>
+            <li>
+              <span className="text-app-ink font-medium">GitHub</span> — if you install the
+              Hackollab GitHub App on selected repositories (
+              <a
+                href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2"
+              >
+                GitHub privacy
+              </a>
+              ).
+            </li>
+            <li>
+              <span className="text-app-ink font-medium">AI providers</span> — paid application
+              programming interfaces used to generate reviews and hints (currently expected to
+              include Google Gemini and/or OpenAI, and possibly Anthropic). We use paid tiers that
+              state they do not train on API customer content. Provider identity can change; we
+              will keep this list accurate.
             </li>
             <li>
               <span className="text-app-ink font-medium">Professional advisers or authorities</span>{" "}
@@ -399,6 +459,15 @@ export default function PrivacyPolicyPage() {
               mistake.
             </li>
             <li>
+              <span className="text-app-ink font-medium">Support messages</span> — 90 days, then
+              deleted unless a legal or security hold applies.
+            </li>
+            <li>
+              <span className="text-app-ink font-medium">GitHub-derived maps and AI drafts</span> —
+              while the repository stays connected and your account remains open, then deleted or
+              anonymised after disconnect or account deletion.
+            </li>
+            <li>
               <span className="text-app-ink font-medium">Security and server logs</span> — for a
               limited operational period, then deleted or aggregated.
             </li>
@@ -441,14 +510,15 @@ export default function PrivacyPolicyPage() {
           <p>
             To exercise these rights, email{" "}
             <a
-              href="mailto:sahil@sahilbasumatary.dev"
+              href="mailto:support@hackollab.com"
               className="text-app-link font-medium underline underline-offset-2"
             >
-              sahil@sahilbasumatary.dev
+              support@hackollab.com
             </a>
             . We may need to verify your identity first. You can also update many profile and
-            preference fields directly in Settings, and leave the early-access list from the
-            unsubscribe link in those emails.
+            preference fields directly in Settings, export GitHub-derived AI drafts and usage
+            summaries, withdraw AI consent, disconnect GitHub, and leave the early-access list from
+            the unsubscribe link in those emails.
           </p>
           <p>
             ICO website:{" "}
@@ -466,10 +536,9 @@ export default function PrivacyPolicyPage() {
         <section className="space-y-3">
           <h2 className="text-app-ink text-2xl font-medium">12. Children</h2>
           <p>
-            Hackollab is aimed at university students in the UK. It is not directed at children
-            under 13, and we do not knowingly collect personal data from children under 13. If you
-            believe a child has provided personal data, contact us and we will take appropriate
-            steps.
+            Hackollab is aimed at university students in the UK aged 18 or over. It is not directed
+            at children. If you believe someone under 18 has created an account, contact us and we
+            will take appropriate steps.
           </p>
         </section>
 
@@ -477,8 +546,9 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-app-ink text-2xl font-medium">13. Automated decision-making</h2>
           <p>
             We use product logic such as match scoring and leaderboard ranking based on activity you
-            generate in the service. These features help surface relevant partners or rankings. They
-            are not used to make legal or similarly significant decisions about you without human
+            generate in the service, and AI-generated reviews or hints based on repositories you
+            connect. These features help surface partners, rankings, and learning feedback. They are
+            not used to make legal or similarly significant decisions about you without human
             involvement.
           </p>
         </section>
@@ -502,10 +572,10 @@ export default function PrivacyPolicyPage() {
             <br />
             Email:{" "}
             <a
-              href="mailto:sahil@sahilbasumatary.dev"
+              href="mailto:support@hackollab.com"
               className="text-app-link font-medium underline underline-offset-2"
             >
-              sahil@sahilbasumatary.dev
+              support@hackollab.com
             </a>
             <br />
             Web:{" "}

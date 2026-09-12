@@ -71,6 +71,12 @@ export function SiteFooter({ variant }: SiteFooterProps) {
           <Link href="/privacy" className="hover:text-[#ffffff]">
             Privacy
           </Link>
+          <Link href="/terms" className="hover:text-[#ffffff]">
+            Terms
+          </Link>
+          <Link href="/contact" className="hover:text-[#ffffff]">
+            Contact
+          </Link>
           <CookieSettingsButton className="hover:text-[#ffffff]" />
         </div>
       </footer>
@@ -129,6 +135,21 @@ export function SiteFooter({ variant }: SiteFooterProps) {
               <li>
                 <Link href="/privacy" className={linkClass}>
                   Privacy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className={linkClass}>
+                  Terms of Use
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className={linkClass}>
+                  Contact us
+                </Link>
+              </li>
+              <li>
+                <Link href="/support" className={linkClass}>
+                  Get support
                 </Link>
               </li>
               <li>

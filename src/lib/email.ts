@@ -1,9 +1,10 @@
 import "server-only";
 
 type SendEmailInput = {
-  to: string;
+  to: string | string[];
   subject: string;
   text: string;
+  replyTo?: string;
   headers?: Record<string, string>;
 };
 
@@ -23,9 +24,10 @@ export async function sendResendEmail(input: SendEmailInput): Promise<{ sent: bo
       },
       body: JSON.stringify({
         from,
-        to: [input.to],
+        to: Array.isArray(input.to) ? input.to : [input.to],
         subject: input.subject,
         text: input.text,
+        reply_to: input.replyTo,
         headers: input.headers,
       }),
     });
