@@ -14,6 +14,8 @@ import {
   updateDiscordConnection,
   updateGithubConnection,
   updateLinkedinConnection,
+  disconnectGithubApp,
+  type SettingsData,
 } from "./actions";
 import { PrefToggle } from "./pref-ui";
 
@@ -160,9 +162,11 @@ function ConnectionCard({
 
 export function ConnectionsPanel({
   initial,
+  githubApp,
   onSaved,
 }: {
   initial: ConnectionsInitial;
+  githubApp: SettingsData["githubApp"];
   onSaved?: () => void;
 }) {
   const [pending, startTransition] = useTransition();
@@ -185,6 +189,21 @@ export function ConnectionsPanel({
   const [showCalendar, setShowCalendar] = useState(initial.showCalendar);
   const [calendarDraft, setCalendarDraft] = useState("");
   const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [githubNotice, setGithubNotice] = useState<string | null>(null);
+  const [appError, setAppError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("github");
+    if (status === "connected") setGithubNotice("GitHub App connected. Link a repository from a project.");
+    if (status === "pending") setGithubNotice("GitHub is waiting on an org owner to approve the install.");
+    if (status === "error") setGithubNotice("GitHub App setup failed. Try installing again.");
+    if (status) {
+      params.delete("github");
+      const qs = params.toString();
+      window.history.replaceState({}, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     setGithub(initial.githubUsername);
@@ -259,6 +278,82 @@ export function ConnectionsPanel({
 
   return (
     <div className="space-y-4">
+      <div className="border-app-border rounded-lg border p-4">
+        <div className="flex items-start gap-3">
+          <span className="border-app-border bg-app-surface text-app-fg flex h-9 w-9 shrink-0 items-center justify-center rounded-md border">
+            <GithubMark className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-app-fg text-sm font-medium">GitHub App</p>
+            <p className="text-app-muted mt-1 text-[13px] leading-[18px]">
+              Selected-repository, read-only access for Hackollab AI. We never store a long-lived GitHub
+              user token and we never push commits or pull requests.
+            </p>
+            {githubNotice ? <p className="text-app-fg mt-2 text-sm">{githubNotice}</p> : null}
+            {appError ? <p className="text-app-signal mt-2 text-sm">{appError}</p> : null}
+            {githubApp.installations.length ? (
+              <ul className="mt-4 space-y-3">
+                {githubApp.installations.map((installation) => (
+                  <li key={installation.installationId} className="space-y-2">
+                    <p className="text-app-fg text-sm">
+                      @{installation.accountLogin} · {installation.repos.length} repositor
+                      {installation.repos.length === 1 ? "y" : "ies"}
+                    </p>
+                    <ul className="text-app-muted text-[13px]">
+                      {installation.repos.slice(0, 8).map((repo) => (
+                        <li key={repo.id}>
+                          {repo.owner}/{repo.name}
+                          {repo.projectName ? ` · ${repo.projectName}` : ""}
+                          {repo.private ? " · private" : ""}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={`https://github.com/settings/installations/${installation.installationId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-app-fg text-sm underline underline-offset-2"
+                      >
+                        Manage on GitHub
+                      </a>
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => {
+                          setAppError(null);
+                          startTransition(async () => {
+                            const result = await disconnectGithubApp(installation.installationId);
+                            if (result.error) {
+                              setAppError(result.error);
+                              return;
+                            }
+                            onSaved?.();
+                          });
+                        }}
+                        className="text-app-muted hover:text-app-fg text-sm disabled:opacity-50"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : githubApp.configured ? (
+              <a
+                href="/api/github/install"
+                className="bg-app-fg text-app-canvas hover:opacity-90 mt-4 inline-flex h-8 items-center rounded-md px-3 text-sm font-medium"
+              >
+                Install GitHub App
+              </a>
+            ) : (
+              <p className="text-app-muted mt-3 text-sm">
+                GitHub App credentials are not configured on this environment.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
       <ConnectionCard
         title="GitHub"
         hint="Your GitHub handle for teammates and public proof pages."

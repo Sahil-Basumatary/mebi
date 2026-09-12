@@ -9,6 +9,7 @@ import {
   LogOut,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   X,
 } from "lucide-react";
 import {
@@ -30,9 +31,10 @@ import { EmailsPane } from "./email-manager";
 import { NotificationsPanel } from "./notifications-panel";
 import { PreferencesPanel } from "./preferences-panel";
 import { ProfileForm } from "./profile-form";
+import { PlanPanel } from "./plan-panel";
 import { SecurityPanel } from "./security-panel";
 
-type SectionId = "profile" | "preferences" | "notifications" | "connections" | "security";
+type SectionId = "profile" | "preferences" | "notifications" | "connections" | "security" | "plan";
 type SubviewId = "emails";
 
 const SECTION_IDS = new Set<SectionId>([
@@ -41,6 +43,7 @@ const SECTION_IDS = new Set<SectionId>([
   "notifications",
   "connections",
   "security",
+  "plan",
 ]);
 
 function parseSettingsSection(raw: string | null): SectionId | null {
@@ -70,6 +73,11 @@ const SECTIONS = [
     description: "Manage linked accounts and what appears on your profile.",
   },
   {
+    id: "plan",
+    title: "Plan & AI",
+    description: "See your Hackollab AI allowance, consent, and Pro positioning.",
+  },
+  {
     id: "security",
     title: "Security",
     description: "Manage your login, password, and account protection.",
@@ -80,10 +88,9 @@ const ACCOUNT_NAV = [
   { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "connections", label: "Connections", icon: Link2 },
+  { id: "plan", label: "Plan & AI", icon: Sparkles },
   { id: "security", label: "Security", icon: ShieldCheck },
 ] as const;
-
-const SUPPORT_URL = "https://github.com/Sahil-Basumatary/mebi/issues/new/choose";
 
 const navItemClass = (active: boolean) =>
   cn(
@@ -342,7 +349,7 @@ export function SettingsModalHost() {
           </div>
 
           <div className="border-app-border ml-1 flex shrink-0 items-center gap-1 border-l pl-1 sm:mt-auto sm:ml-0 sm:flex-col sm:items-stretch sm:gap-0.5 sm:border-t sm:border-l-0 sm:p-3 sm:pt-2">
-            <a href={SUPPORT_URL} target="_blank" rel="noreferrer" className={navItemClass(false)}>
+            <a href="/contact" className={navItemClass(false)}>
               <CircleHelp size={16} strokeWidth={1.75} />
               Get support
             </a>
@@ -421,8 +428,12 @@ export function SettingsModalHost() {
                           calendarUrl: data.profile.calendarUrl,
                           showCalendar: data.profile.showCalendar,
                         }}
+                        githubApp={data.githubApp}
                         onSaved={refreshData}
                       />
+                    ) : null}
+                    {section === "plan" ? (
+                      <PlanPanel key={dataStamp} initial={data.plan} onSaved={refreshData} />
                     ) : null}
                     {section === "security" ? (
                       <SecurityPanel

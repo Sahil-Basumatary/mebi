@@ -25,6 +25,11 @@ import {
   type CookieConsentState,
 } from "@/lib/cookie-consent";
 import { validateUsername } from "@/lib/username";
+import { FOUNDING_PRO_GBP, STANDARD_PRO_GBP, nextUtcMonthStart } from "@/lib/ai/quota";
+import { usageSummary } from "@/lib/ai/metering";
+import { loadEntitlements, setAiConsent, setUserAiDisabled } from "@/lib/entitlements";
+import { githubAppSlug, deleteRemoteInstallation } from "@/lib/github/app";
+import { disconnectInstallation, listUserInstallations } from "@/lib/github/install";
 
 export type ProfileState = {
   error: string | null;
@@ -65,6 +70,43 @@ export type SettingsData = {
     role: "BUILDER" | "SPECIALIST" | "LEARNER" | "";
     prefersSolo: boolean;
     profilePrivate: boolean;
+  };
+  plan: {
+    tier: "FREE" | "PRO";
+    foundingOffer: boolean;
+    planGrantedUntil: string | null;
+    resetAt: string;
+    aiConsent: boolean;
+    aiDisabled: boolean;
+    usage: {
+      standard: {
+        allowance: number;
+        used: number;
+        reserved: number;
+        remaining: number;
+      };
+      advanced: {
+        allowance: number;
+        used: number;
+        reserved: number;
+        remaining: number;
+      };
+    };
+    prices: { standard: string; founding: string };
+  };
+  githubApp: {
+    configured: boolean;
+    installations: Array<{
+      installationId: string;
+      accountLogin: string;
+      repos: Array<{
+        id: string;
+        owner: string;
+        name: string;
+        private: boolean;
+        projectName: string | null;
+      }>;
+    }>;
   };
 };
 
@@ -168,7 +210,13 @@ export async function getSettingsData(): Promise<SettingsData | null> {
     return null;
   }
 
-  const shortcutBindings = await loadShortcutBindingsForUser(userId);
+  const [shortcutBindings, snapshot, installations] = await Promise.all([
+    loadShortcutBindingsForUser(userId),
+    loadEntitlements(user.id),
+    listUserInstallations(user.id),
+  ]);
+  const plan = snapshot?.plan ?? "FREE";
+  const usage = await usageSummary(user.id, plan);
 
   return {
     email: user.email,
@@ -209,6 +257,33 @@ export async function getSettingsData(): Promise<SettingsData | null> {
       role: (user.role ?? "") as "BUILDER" | "SPECIALIST" | "LEARNER" | "",
       prefersSolo: user.prefersSolo,
       profilePrivate: user.profilePrivate,
+    },
+    plan: {
+      tier: plan,
+      foundingOffer: snapshot?.foundingOffer ?? false,
+      planGrantedUntil: user.planGrantedUntil?.toISOString() ?? null,
+      resetAt: nextUtcMonthStart(new Date()).toISOString(),
+      aiConsent: Boolean(snapshot?.aiConsentAt),
+      aiDisabled: snapshot?.aiDisabled ?? false,
+      usage: {
+        standard: usage.standard,
+        advanced: usage.advanced,
+      },
+      prices: { standard: STANDARD_PRO_GBP, founding: FOUNDING_PRO_GBP },
+    },
+    githubApp: {
+      configured: Boolean(githubAppSlug()),
+      installations: installations.map((installation) => ({
+        installationId: installation.installationId,
+        accountLogin: installation.accountLogin,
+        repos: installation.repositories.map((repo) => ({
+          id: repo.id,
+          owner: repo.owner,
+          name: repo.name,
+          private: repo.private,
+          projectName: repo.project?.name ?? null,
+        })),
+      })),
     },
   };
 }
@@ -327,17 +402,26 @@ export async function deleteAccount(): Promise<{ error: string | null }> {
     return { error: "You need to sign in first." };
   }
 
-  // Clear our data first — every relation cascades off User, so this removes the
-  // profile, projects, requests, memberships, and notifications in one delete.
-  // Ignore a missing row so a half-provisioned account can still be torn down.
+  const user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    select: { githubInstallations: { select: { installationId: true } } },
+  });
+  if (user) {
+    for (const installation of user.githubInstallations) {
+      try {
+        await deleteRemoteInstallation(installation.installationId);
+      } catch {
+        // GitHub may already have removed the installation.
+      }
+    }
+  }
+
   try {
     await prisma.user.delete({ where: { clerkId: userId } });
   } catch {
     // No DB row to remove; fall through to deleting the identity itself.
   }
 
-  // Deleting the Clerk identity is the source-of-truth step: once it's gone the
-  // session is invalid and the account can never sign in again.
   try {
     const client = await clerkClient();
     await client.users.deleteUser(userId);
@@ -691,4 +775,122 @@ export async function updateCookieConsent(input: {
   });
 
   return next;
+}
+
+export async function updateAiConsent(consented: boolean): Promise<{ error: string | null; consented: boolean }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", consented: false };
+  }
+  const user = await prisma.user.findUnique({ where: { clerkId: userId }, select: { id: true } });
+  if (!user) {
+    return { error: "Account not found.", consented: false };
+  }
+  await setAiConsent(user.id, consented);
+  return { error: null, consented };
+}
+
+export async function updateAiDisabled(disabled: boolean): Promise<{ error: string | null; disabled: boolean }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", disabled: false };
+  }
+  const user = await prisma.user.findUnique({ where: { clerkId: userId }, select: { id: true } });
+  if (!user) {
+    return { error: "Account not found.", disabled: false };
+  }
+  await setUserAiDisabled(user.id, disabled);
+  return { error: null, disabled };
+}
+
+export async function disconnectGithubApp(installationId: string): Promise<{ error: string | null }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first." };
+  }
+  const user = await prisma.user.findUnique({ where: { clerkId: userId }, select: { id: true } });
+  if (!user) {
+    return { error: "Account not found." };
+  }
+  const ok = await disconnectInstallation(user.id, installationId);
+  if (!ok) {
+    return { error: "That GitHub installation is not on this account." };
+  }
+  return { error: null };
+}
+
+export async function exportAiWorkspace(): Promise<{ error: string | null; payload: string | null }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "You need to sign in first.", payload: null };
+  }
+  const user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    select: { id: true, email: true },
+  });
+  if (!user) {
+    return { error: "Account not found.", payload: null };
+  }
+
+  const [usageEvents, hintSessions, drafts, reviews, installations] = await Promise.all([
+    prisma.aiUsageEvent.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        requestId: true,
+        capability: true,
+        action: true,
+        credits: true,
+        status: true,
+        inputTokens: true,
+        outputTokens: true,
+        model: true,
+        latencyMs: true,
+        costMicros: true,
+        createdAt: true,
+      },
+    }),
+    prisma.aiHintSession.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: { prompt: true, response: true, ladderStep: true, createdAt: true, projectId: true },
+    }),
+    prisma.aiDocumentDraft.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: { kind: true, title: true, body: true, createdAt: true, projectId: true },
+    }),
+    prisma.repoCommitReview.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: { sha: true, title: true, body: true, findings: true, createdAt: true },
+    }),
+    listUserInstallations(user.id),
+  ]);
+
+  const payload = JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      email: user.email,
+      usageEvents,
+      hintSessions,
+      drafts,
+      reviews,
+      repositories: installations.flatMap((installation) =>
+        installation.repositories.map((repo) => ({
+          owner: repo.owner,
+          name: repo.name,
+          private: repo.private,
+          projectName: repo.project?.name ?? null,
+        })),
+      ),
+    },
+    null,
+    2,
+  );
+  return { error: null, payload };
 }
