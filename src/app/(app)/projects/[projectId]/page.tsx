@@ -16,6 +16,7 @@ import { PublishPanel } from "../publish-panel";
 import { RemoveMemberButton } from "../remove-member-button";
 import { SignaturePanel } from "../signature-panel";
 import { UpdateForm } from "../update-form";
+import { ProjectAiPanel } from "../project-ai-panel";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -43,6 +44,33 @@ function formatStamp(date: Date): string {
     minute: "2-digit",
   }).format(date);
 }
+
+function asLanguageMap(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: Record<string, number> = {};
+  for (const [key, count] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof count === "number") out[key] = count;
+  }
+  return out;
+}
+
+function asModules(value: unknown): Array<{ path: string; role: string; language: string | null }> {
+  if (!Array.isArray(value)) return [];
+  const modules: Array<{ path: string; role: string; language: string | null }> = [];
+  for (const row of value) {
+    if (!row || typeof row !== "object") continue;
+    const item = row as { path?: unknown; role?: unknown; language?: unknown };
+    if (typeof item.path !== "string" || typeof item.role !== "string") continue;
+    modules.push({
+      path: item.path,
+      role: item.role,
+      language: typeof item.language === "string" ? item.language : null,
+    });
+  }
+  return modules;
+}
+
+export const maxDuration = 60;
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const [{ projectId }, user] = await Promise.all([params, requireOnboardedUser()]);
@@ -140,6 +168,40 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           })
         : Promise.resolve([]),
     ]);
+
+  const [linkedRepo, linkableRepos, hintSessions, documentDrafts] = await Promise.all([
+    prisma.githubRepository.findUnique({
+      where: { projectId: project.id },
+      include: {
+        architecture: true,
+        commitReviews: {
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { id: true, sha: true, title: true, createdAt: true },
+        },
+      },
+    }),
+    prisma.githubRepository.findMany({
+      where: {
+        installation: { userId: user.id },
+        OR: [{ projectId: null }, { projectId: project.id }],
+      },
+      select: { id: true, owner: true, name: true, private: true },
+      orderBy: [{ owner: "asc" }, { name: "asc" }],
+    }),
+    prisma.aiHintSession.findMany({
+      where: { projectId: project.id, userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: { id: true, prompt: true, ladderStep: true, createdAt: true, response: true },
+    }),
+    prisma.aiDocumentDraft.findMany({
+      where: { projectId: project.id },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: { id: true, kind: true, title: true, body: true, createdAt: true },
+    }),
+  ]);
 
   const memberIds = new Set(members.map((member) => member.user.id));
   const pendingInviteIds = new Set(pendingInvites.map((invite) => invite.toUser.id));
@@ -266,6 +328,9 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           className="border-app-divider flex flex-wrap gap-1 border-t px-4 py-2"
         >
           <AppButton asChild variant="ghost" size="sm">
+            <a href="#hackollab-ai">Hackollab AI</a>
+          </AppButton>
+          <AppButton asChild variant="ghost" size="sm">
             <a href="#build-log">Build log</a>
           </AppButton>
           <AppButton asChild variant="ghost" size="sm">
@@ -283,6 +348,40 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
       <section className="grid gap-4 xl:grid-cols-[1fr_20rem]">
         <div className="flex min-w-0 flex-col gap-4">
           <UpdateForm projectId={project.id} progress={project.progress} disabled={isCompleted} />
+
+          <ProjectAiPanel
+            projectId={project.id}
+            linked={
+              linkedRepo
+                ? {
+                    id: linkedRepo.id,
+                    owner: linkedRepo.owner,
+                    name: linkedRepo.name,
+                    private: linkedRepo.private,
+                    defaultBranch: linkedRepo.defaultBranch,
+                    lastSyncedAt: linkedRepo.lastSyncedAt?.toISOString() ?? null,
+                    summary: linkedRepo.architecture?.summary ?? null,
+                    languages: asLanguageMap(linkedRepo.architecture?.languages),
+                    modules: asModules(linkedRepo.architecture?.modules),
+                  }
+                : null
+            }
+            linkable={linkableRepos}
+            reviews={(linkedRepo?.commitReviews ?? []).map((review) => ({
+              id: review.id,
+              sha: review.sha,
+              title: review.title,
+              createdAt: review.createdAt.toISOString(),
+            }))}
+            hints={hintSessions.map((hint) => ({
+              ...hint,
+              createdAt: hint.createdAt.toISOString(),
+            }))}
+            drafts={documentDrafts.map((draft) => ({
+              ...draft,
+              createdAt: draft.createdAt.toISOString(),
+            }))}
+          />
 
           <section id="build-log" className="border-app-divider bg-app-paper scroll-mt-20 border">
             <div className="border-app-divider flex items-center justify-between border-b px-4 py-3">
