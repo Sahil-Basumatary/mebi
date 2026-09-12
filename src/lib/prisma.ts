@@ -11,7 +11,7 @@ const adapter = new PrismaPg({
   connectionString: databaseUrl,
 });
 
-const SCHEMA_STAMP = "20260818180000"; // bump after prisma generate so dev does not keep a stale client
+const SCHEMA_STAMP = "20260909120000";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

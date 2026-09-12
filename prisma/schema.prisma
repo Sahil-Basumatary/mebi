@@ -64,6 +64,37 @@ enum StartupPreference {
   LAST_VISITED
 }
 
+enum PlanTier {
+  FREE
+  PRO
+}
+
+enum AiCapability {
+  BACKGROUND
+  FREE
+  ADVANCED
+}
+
+enum AiActionKind {
+  ARCHITECTURE
+  COMMIT_REVIEW
+  HINT
+  DOCS
+  BACKGROUND_INDEX
+}
+
+enum AiUsageStatus {
+  RESERVED
+  SETTLED
+  REFUNDED
+}
+
+enum AiDocumentKind {
+  README
+  ADR
+  ARCHITECTURE
+}
+
 model User {
   id               String               @id @default(cuid())
   clerkId          String               @unique
@@ -103,6 +134,11 @@ model User {
   lastDigestAt     DateTime?
   lastMarketingAt  DateTime?
   onboarded        Boolean              @default(false)
+  plan             PlanTier             @default(FREE)
+  foundingOffer    Boolean              @default(false)
+  planGrantedUntil DateTime?
+  aiConsentAt      DateTime?
+  aiDisabled       Boolean              @default(false)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   projects         Project[]
@@ -118,6 +154,13 @@ model User {
   forumLastPosts   ForumThread[]        @relation("ForumThreadsLastPoster")
   forumPosts       ForumPost[]          @relation("ForumPostsAuthored")
   forumVotes       ForumPostVote[]
+  githubInstallations GithubInstallation[]
+  githubInstallNonces GithubInstallNonce[]
+  aiUsagePeriods   AiUsagePeriod[]
+  aiUsageEvents    AiUsageEvent[]
+  learningMistakes LearningMistake[]
+  hintSessions     AiHintSession[]
+  documentDrafts   AiDocumentDraft[]
 }
 
 // One row per remapped action. Missing rows mean "use the product default".
@@ -156,6 +199,9 @@ model Project {
   signatures    ProofSignature[]
   requests      ProjectRequest[]
   forumThreads  ForumThread[]
+  githubRepository GithubRepository?
+  hintSessions  AiHintSession[]
+  documentDrafts AiDocumentDraft[]
 
   @@index([ownerId, status])
   @@index([visibility, status])
@@ -333,4 +379,206 @@ model NewsletterSignup {
   updatedAt        DateTime  @updatedAt
 
   @@index([ipHash, updatedAt])
+}
+
+model ContactSubmission {
+  id        String    @id @default(cuid())
+  email     String
+  subject   String
+  message   String
+  ipHash    String
+  userAgent String?
+  mailedAt  DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([ipHash, createdAt])
+  @@index([expiresAt])
+}
+
+model AppFlag {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AiUsagePeriod {
+  id                String   @id @default(cuid())
+  userId            String
+  periodStart       DateTime
+  creditsUsed       Int      @default(0)
+  creditsReserved   Int      @default(0)
+  advancedUsed      Int      @default(0)
+  advancedReserved  Int      @default(0)
+  costMicrosUsed    Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodStart])
+  @@index([periodStart])
+}
+
+model AiUsageEvent {
+  id           String         @id @default(cuid())
+  userId       String
+  requestId    String         @unique
+  capability   AiCapability
+  action       AiActionKind
+  credits      Int
+  status       AiUsageStatus  @default(RESERVED)
+  inputTokens  Int?
+  outputTokens Int?
+  model        String?
+  latencyMs    Int?
+  costMicros   Int?
+  createdAt    DateTime       @default(now())
+  settledAt    DateTime?
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model GithubInstallation {
+  id             String              @id @default(cuid())
+  userId         String
+  installationId String              @unique
+  accountLogin   String
+  accountId      String
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositories   GithubRepository[]
+
+  @@index([userId])
+}
+
+model GithubInstallNonce {
+  id        String   @id @default(cuid())
+  userId    String
+  nonce     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model GithubWebhookDelivery {
+  id          String   @id
+  event       String
+  processedAt DateTime @default(now())
+}
+
+model GithubRepository {
+  id             String              @id @default(cuid())
+  installationId String
+  githubRepoId   String              @unique
+  owner          String
+  name           String
+  defaultBranch  String
+  private        Boolean             @default(false)
+  projectId      String?             @unique
+  lastSyncedAt   DateTime?
+  lastIndexedSha String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  installation   GithubInstallation  @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  project        Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  architecture   RepoArchitecture?
+  files          RepoFileIndex[]
+  commitReviews  RepoCommitReview[]
+  hintSessions   AiHintSession[]
+  documentDrafts AiDocumentDraft[]
+
+  @@index([installationId])
+}
+
+model RepoArchitecture {
+  id            String           @id @default(cuid())
+  repositoryId  String           @unique
+  summary       String
+  languages     Json
+  dependencies  Json
+  modules       Json
+  sourceSha     String
+  generatedAt   DateTime         @default(now())
+  repository    GithubRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model RepoFileIndex {
+  id           String           @id @default(cuid())
+  repositoryId String
+  path         String
+  hash         String
+  language     String?
+  bytes        Int
+  role         String
+  summary      String?
+  updatedAt    DateTime         @updatedAt
+  repository   GithubRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, path])
+  @@index([repositoryId, role])
+}
+
+model RepoCommitReview {
+  id           String           @id @default(cuid())
+  repositoryId String
+  userId       String
+  sha          String
+  title        String
+  body         String
+  findings     Json
+  createdAt    DateTime         @default(now())
+  repository   GithubRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, sha])
+  @@index([repositoryId, createdAt])
+}
+
+model LearningMistake {
+  id         String   @id @default(cuid())
+  userId     String
+  category   String
+  detail     String
+  count      Int      @default(1)
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+}
+
+model AiHintSession {
+  id           String            @id @default(cuid())
+  userId       String
+  projectId    String
+  repositoryId String?
+  prompt       String
+  response     String
+  ladderStep   Int               @default(1)
+  createdAt    DateTime          @default(now())
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  repository   GithubRepository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([projectId, createdAt])
+}
+
+model AiDocumentDraft {
+  id           String            @id @default(cuid())
+  userId       String
+  projectId    String
+  repositoryId String?
+  kind         AiDocumentKind
+  title        String
+  body         String
+  createdAt    DateTime          @default(now())
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  repository   GithubRepository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
 }
