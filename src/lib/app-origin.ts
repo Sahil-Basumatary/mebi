@@ -9,3 +9,7 @@ export function appOrigin(): string | null {
   if (vercel) return `https://${vercel.replace(/^https?:\/\//, "")}`;
   return null;
 }
+
+export function resolveAppOrigin(request?: Request): string {
+  return appOrigin() || (request ? new URL(request.url).origin : "http://localhost:3000");
+}
